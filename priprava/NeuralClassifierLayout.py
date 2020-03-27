@@ -16,8 +16,6 @@ STARTING_MAX_ITER_STEPS = 200
 
 import time
 
-from bokeh.document import without_document_lock
-from tornado import gen
 
 class ButtonStr:
     # activation button
@@ -115,8 +113,6 @@ class NeuralClassifierLayout(ClassifierLayout):
 
         self.fit_button.disabled = False
 
-    @gen.coroutine
-    @without_document_lock
     def __dis_button(self):
         self.fit_button.disabled = True
 
@@ -182,7 +178,6 @@ class NeuralClassifierLayout(ClassifierLayout):
             self.iteration_slider.end = self.max_iter_steps
             self.iteration_slider.step = self.iter_step
             self.iteration_slider.value = self.max_iter_steps
-
 
     @staticmethod
     def __text2layers(layers_str):

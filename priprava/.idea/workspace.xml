@@ -2,21 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="4d7026cd-2f18-4d9b-995e-76958012a101" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/other.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/rSettings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ClassifierLayout.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Layout.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/NeuralClassifierLayout.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/plotting_utilities.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/polynomial_regression.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/trash.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/priprava.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/priprava.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../SMER.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../dotazy.txt" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/bokeh_plot.py" beforeDir="false" afterPath="$PROJECT_DIR$/bokeh_plot.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/interactive_points.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/sandbox.py" beforeDir="false" afterPath="$PROJECT_DIR$/sandbox.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../prototype/data_gen.py" beforeDir="false" afterPath="$PROJECT_DIR$/../prototype/data_gen.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NeuralClassifierLayout.py" beforeDir="false" afterPath="$PROJECT_DIR$/NeuralClassifierLayout.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../progress.txt" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -303,6 +293,7 @@
       <workItem from="1584800876329" duration="3189000" />
       <workItem from="1584870124816" duration="5213000" />
       <workItem from="1585099509805" duration="752000" />
+      <workItem from="1585313140271" duration="70000" />
     </task>
     <servers />
   </component>
@@ -310,10 +301,6 @@
     <option name="version" value="1" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="418" y="211" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1576594998817">
-      <screen x="0" y="26" width="1920" height="1054" />
-    </state>
-    <state x="418" y="211" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.26.1920.1054@0.26.1920.1054" timestamp="1576594998817" />
     <state x="643" y="1365" width="624" height="534" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog" timestamp="1577643680363">
       <screen x="0" y="1080" width="1920" height="1080" />
     </state>
@@ -326,11 +313,6 @@
       <screen x="0" y="471" width="1920" height="1054" />
     </state>
     <state width="517" height="466" key="DebuggerActiveHint/0.471.1920.1054/1920.0.1920.1080@0.471.1920.1054" timestamp="1582288842209" />
-    <state x="743" y="756" width="424" height="483" key="FileChooserDialogImpl" timestamp="1576671759226">
-      <screen x="0" y="471" width="1920" height="1054" />
-    </state>
-    <state x="743" y="311" width="424" height="483" key="FileChooserDialogImpl/0.26.1920.1054@0.26.1920.1054" timestamp="1576596165956" />
-    <state x="743" y="756" key="FileChooserDialogImpl/0.471.1920.1054/1920.0.1920.1080@0.471.1920.1054" timestamp="1576671759226" />
     <state width="1868" height="203" key="GridCell.Tab.0.bottom" timestamp="1584625644528">
       <screen x="0" y="382" width="1920" height="1054" />
     </state>
@@ -487,12 +469,8 @@
     <state width="1878" height="301" key="GridCell.Tab.1.right/1920.223.1920.1080/0.26.1920.1054@0.26.1920.1054" timestamp="1583852630196" />
     <state width="1878" height="292" key="GridCell.Tab.1.right/1920.278.1920.1080/0.26.1920.1054@0.26.1920.1054" timestamp="1581360049893" />
     <state width="1878" height="292" key="GridCell.Tab.1.right/1920.278.1920.1080/0.304.1920.776@1920.278.1920.1080" timestamp="1581355889901" />
-    <state x="456" y="188" key="SettingsEditor" timestamp="1576595042434">
-      <screen x="0" y="26" width="1920" height="1054" />
-    </state>
-    <state x="456" y="188" key="SettingsEditor/0.26.1920.1054@0.26.1920.1054" timestamp="1576595042434" />
-    <state x="639" y="380" key="com.intellij.ide.util.TipDialog" timestamp="1585099509799">
-      <screen x="0" y="26" width="1920" height="1054" />
+    <state x="2559" y="669" key="com.intellij.ide.util.TipDialog" timestamp="1585313140705">
+      <screen x="1920" y="306" width="1920" height="1080" />
     </state>
     <state x="639" y="1443" key="com.intellij.ide.util.TipDialog/0.1080.1920.1080/1347.0.1920.1080@0.1080.1920.1080" timestamp="1583056104820" />
     <state x="1986" y="363" key="com.intellij.ide.util.TipDialog/0.1080.1920.1080/1347.0.1920.1080@1347.0.1920.1080" timestamp="1581596800681" />
@@ -506,6 +484,7 @@
     <state x="2559" y="586" key="com.intellij.ide.util.TipDialog/1920.223.1920.1080/0.249.1920.831@1920.223.1920.1080" timestamp="1583683431877" />
     <state x="639" y="565" key="com.intellij.ide.util.TipDialog/1920.278.1920.1080/0.304.1920.776@0.304.1920.776" timestamp="1583081805422" />
     <state x="2559" y="641" key="com.intellij.ide.util.TipDialog/1920.278.1920.1080/0.304.1920.776@1920.278.1920.1080" timestamp="1581351662404" />
+    <state x="2559" y="669" key="com.intellij.ide.util.TipDialog/1920.306.1920.1080/0.332.1920.748@1920.306.1920.1080" timestamp="1585313140705" />
     <state x="624" y="1325" width="662" height="614" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1582988900153">
       <screen x="0" y="1080" width="1920" height="1080" />
     </state>

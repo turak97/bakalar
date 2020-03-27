@@ -1,7 +1,0 @@
-pointdraw tool 
-- kdyz jsou data v ColumnDataSoruce v numpy nebo pandas dataframu, tak to spadne, bere to jen obycejne pythonovske pole, takze se to bude uvnitr prevadet
-- data to pridava neserazene, tudiz doufam, ze modely, co budu testovat nevyzaduji serazena data
-
-28.12 
-- zacinam delat na SVM - zatim jen zaklady (basic vykresleni, co to vubec zere za data)
-

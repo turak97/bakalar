@@ -14,7 +14,6 @@ import Layout
 import bokeh
 
 
-# TODO: zprovoznit cluster data
 # TODO: pri polynomech vyssich radu jdou hodnoty moc dohaje, zoptimalizovat, aby lina nesla zbytecne moc nahoru, buguje se to pak pri polynomech 10 radu a vys
 
 # TODO: BUG - linearni regrese pro vice y bodu na jediny x bod
@@ -49,7 +48,7 @@ def polynomial_plots(x_data, y_data, min_degree, max_degree,
 
 
 # Creates figure and data for polynomial regression plot
-def polynomial_sources(x_data, y_data, min_degree, max_degree,
+def polynomial_line_sources(x_data, y_data, min_degree, max_degree,
                    starting_degree, x_ext, y_ext):
 
     x_plot, y_plots = polynomial_plots(x_data, y_data, min_degree, max_degree, domain_ext=x_ext)
@@ -84,26 +83,19 @@ def polynomial_layout_update(line_source_visible, line_sources_available,
 
 
 # create a figure and slider for plotting polynomial regression
-def polynomial_layout(data_source, radio_group, palette,
-                      min_degree=1, max_degree=10, starting_degree=-1,
-                      x_ext=2, y_ext=0.3):
-    if starting_degree < min_degree or starting_degree > max_degree:
-        starting_degree = min_degree
-
-    x_data = data_source.data['x']
-    y_data = data_source.data['y']
+def polynomial_layout(name, data, plot_info):
 
     # create source for figure and slider
-    line_source_visible, line_sources_available = polynomial_sources(
-        x_data=x_data, y_data=y_data,
-        min_degree=min_degree, max_degree=max_degree,
-        starting_degree=starting_degree,
-        x_ext=x_ext, y_ext=y_ext
+    line_source_visible, line_sources_available = polynomial_line_sources(
+        x_data=data.x_data, y_data=data.y_data,
+        min_degree=plot_info.pol_min_degree, max_degree=plot_info.pol_max_degree,
+        starting_degree=plot_info.pol_min_degree,
+        x_ext=plot_info.x_extension, y_ext=plot_info.y_extension
     )
 
     # create figure
-    x_min, x_max = np.min(x_data), np.max(x_data)
-    x_range_extension = (x_max - x_min) * x_ext
+    x_min, x_max = np.min(data.x_data), np.max(data.x_data)
+    x_range_extension = (x_max - x_min) * plot_info.x_extension
     fig = polynomial_figure(x_from=x_min - x_range_extension,
                             x_to=x_max + x_range_extension,
                             source=line_source_visible)
@@ -111,15 +103,15 @@ def polynomial_layout(data_source, radio_group, palette,
     fig.line('x', 'y', source=line_source_visible, line_width=2)
 
     # add original data to the figure and prepare PointDrawTool to make them interactive
-    move_circle = fig.circle('x', 'y', source=data_source, size=7)
+    move_circle = fig.circle('x', 'y', source=plot_info.plot_source, size=7)
     point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value='added', add=True)
     fig.add_tools(point_draw_tool)
 
     # create slider
     slider = Slider(title='Polynom degree',
-                    value=starting_degree,
-                    start=min_degree,
-                    end=max_degree,
+                    value=plot_info.pol_min_degree,
+                    start=plot_info.pol_min_degree,
+                    end=plot_info.pol_max_degree,
                     step=1)
 
     # make slider interactive with figure
@@ -136,34 +128,29 @@ def polynomial_layout(data_source, radio_group, palette,
             source_visible.change.emit();
         """)
 
-    pol_lay = PolynomialLayout(fig=fig, slider=slider, data_source=data_source,
+    pol_lay = PolynomialLayout(name=name, fig=fig, slider=slider,
                                line_source_visible=line_source_visible,
-                               line_sources_available=line_sources_available,
-                               min_degree=min_degree, max_degree=max_degree,
-                               x_ext=x_ext)
+                               line_sources_available=line_sources_available)
 
     return pol_lay
 
 
-class PolynomialLayout(Layout.Layout):
-    def __init__(self, fig, slider,
-                 data_source, line_source_visible, line_sources_available,
-                 min_degree, max_degree, x_ext):
+class PolynomialLayout(Layout.SubLayout):
+    def __init__(self, name, fig, slider,
+                 line_source_visible, line_sources_available,):
+        self.name = name
         self.layout = column(slider, fig)
-        self.data_source = data_source
+        self.fig = fig
         self.slider = slider
         self.line_source_visible = line_source_visible
         self.line_sources_available = line_sources_available
-        self.min_degree = min_degree
-        self.max_degree = max_degree
-        self.x_ext = x_ext
 
-    def layout_update(self):
+    def data_update(self, data, plot_info):
         polynomial_layout_update(
             line_source_visible=self.line_source_visible,
             line_sources_available=self.line_sources_available,
-            x_data_new=self.data_source.data['x'], y_data_new=self.data_source.data['y'],
-            min_degree=self.min_degree, max_degree=self.max_degree,
+            x_data_new=data.x_data, y_data_new=data.y_data,
             slider_value=self.slider.value,
-            x_ext=self.x_ext)
+            min_degree=plot_info.pol_min_degree, max_degree=plot_info.pol_max_degree,
+            x_ext=plot_info.x_extension)
 

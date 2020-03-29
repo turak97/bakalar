@@ -105,6 +105,7 @@ class NeuralClassifierLayout(ClassifierLayout):
         new_layers = self.__text2layers(self.layers_input.value)
         self.classifier.hidden_layer_sizes = new_layers
 
+
         self.figure_update()
         self.__set_visible_renderer(self.slider_steps)
 

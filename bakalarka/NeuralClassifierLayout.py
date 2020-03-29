@@ -55,9 +55,9 @@ class NeuralClassifierLayout(ClassifierLayout):
                                           range(1, self.slider_steps + 1)):  # first one is Circle
             if self.__logarithmic_steps:
                 """
-                in fact it is not logarithmic (I chose this name because I find it intuitive).
-                This option allows user to see in more clearly the begging of the learning
-                process when the changes are much more significant.
+                in fact it is not logarithmic (I chose this name because I find it rather intuitive).
+                This option allows user to see the begging of the learning
+                process when the changes are much more significant in more detail.
                 For  5000 iterations max and 10 steps it will be:
                 50, 111, 187, 285, 416, 600, 875, 1333, 2250, 5000
                 """
@@ -79,20 +79,6 @@ class NeuralClassifierLayout(ClassifierLayout):
             self.iteration_slider.title = "Iterations logarithmic: " + str(
                 int(self.iteration_slider.value / (self.slider_steps - visible + 1))) + " ... "
 
-    def __activation_change(self, attr, old, new):
-        new_activation = self.__label2activation_str(
-            self.activation_button.labels[new]
-        )
-        self.classifier.activation = new_activation
-        self.figure_update()
-
-    def __solver_change(self, attr, old, new):
-        new_solver = self.__label2solver_str(
-            self.solver_button.labels[new]
-        )
-        self.classifier.solver = new_solver
-        self.figure_update()
-
     def __refit(self):
         self.fit_button.disabled = True  # disabling button so there are peaceful conditions for fitting model
         self.__logarithmic_steps = self.logarithm_button.active
@@ -101,10 +87,7 @@ class NeuralClassifierLayout(ClassifierLayout):
 
         self.__update_iteration_params(int(self.max_iterations_input.value),
                                        int(self.slider_steps_input.value))
-
-        new_layers = self.__text2layers(self.layers_input.value)
-        self.classifier.hidden_layer_sizes = new_layers
-
+        self.__update_classifier_params()
 
         self.figure_update()
         self.__set_visible_renderer(self.slider_steps)
@@ -142,7 +125,6 @@ class NeuralClassifierLayout(ClassifierLayout):
                     ButtonStr.TANH, ButtonStr.LINEAR], active=3,
             width=total_width
         )
-        self.activation_button.on_change('active', self.__activation_change)
         activation_text = Div(text="Activation function in hidden layers:")
         activation_group = column(activation_text, self.activation_button)
 
@@ -151,7 +133,6 @@ class NeuralClassifierLayout(ClassifierLayout):
                     ButtonStr.ADAM], active=2,
             width=total_width
         )
-        self.solver_button.on_change('active', self.__solver_change)
         solver_text = Div(text="Weigh optimization solver:")
         solver_group = column(solver_text, self.solver_button)
 
@@ -173,6 +154,19 @@ class NeuralClassifierLayout(ClassifierLayout):
             self.iteration_slider.end = self.max_iter_steps
             self.iteration_slider.step = self.iter_step
             self.iteration_slider.value = self.max_iter_steps
+
+    def __update_classifier_params(self):
+        new_activation = self.__label2activation_str(
+            self.activation_button.labels[self.activation_button.active]
+        )
+        self.classifier.activation = new_activation
+
+        new_solver = self.__label2solver_str(
+            self.solver_button.labels[self.solver_button.active]
+        )
+        self.classifier.solver = new_solver
+
+        self.classifier.hidden_layer_sizes = self.__text2layers(self.layers_input.value)
 
     @staticmethod
     def __text2layers(layers_str):

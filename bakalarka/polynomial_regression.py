@@ -1,6 +1,7 @@
 import numpy as np
 from bokeh.layouts import row, column
-from bokeh.models import ColumnDataSource, Slider, CustomJS, PointDrawTool
+from bokeh.models import ColumnDataSource, Slider, PointDrawTool
+from bokeh.models.callbacks import CustomJS
 from bokeh.plotting import figure
 
 from sklearn.preprocessing import PolynomialFeatures
@@ -104,7 +105,7 @@ def polynomial_layout(name, data, plot_info):
 
     # add original data to the figure and prepare PointDrawTool to make them interactive
     move_circle = fig.circle('x', 'y', source=plot_info.plot_source, size=7)
-    point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value='added', add=True)
+    point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value='black', add=True)
     fig.add_tools(point_draw_tool)
 
     # create slider
@@ -115,7 +116,7 @@ def polynomial_layout(name, data, plot_info):
                     step=1)
 
     # make slider interactive with figure
-    slider.callback = CustomJS(  # TODO: upravit/zjistit zdroj pro citaci
+    js_callback = CustomJS(  # TODO: upravit/zjistit zdroj pro citaci
         args=dict(source_visible=line_source_visible,
                   source_available=line_sources_available), code="""
             var selected_function = cb_obj.value;
@@ -127,6 +128,7 @@ def polynomial_layout(name, data, plot_info):
             // Update the plot
             source_visible.change.emit();
         """)
+    slider.js_on_change('value', js_callback)
 
     pol_lay = PolynomialLayout(name=name, fig=fig, slider=slider,
                                line_source_visible=line_source_visible,

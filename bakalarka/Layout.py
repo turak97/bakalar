@@ -48,12 +48,15 @@ class Layout:
         self.dropdown = Dropdown(label="+ add model", button_type="primary", menu=self.menu)
         self.dropdown.on_click(self.__new_sub_layout)
         self.radio_group = RadioGroup(
-            labels=["class 0", "class 1", "class 2"], active=0)
+            labels=["class 0", "class 1", "class 2"], active=0,
+            width=100
+        )
         self.sub_layouts = []
         self.info = Div(text="Hello world!")
-        self.layout = column(column(row(self.dropdown),
-                                    self.info,
-                                    self.radio_group), row())
+        self.layout = column(column(self.dropdown,
+                                    self.info),
+                             row(self.radio_group,
+                                 row()))
 
         self.data = data
         self.plot_source = plot_source
@@ -69,7 +72,7 @@ class Layout:
         sub_layout = pu.resolution(model=model_res, name=model_name,
                                    data=self.data, plot_info=self.plot_info)
         self.sub_layouts.append(sub_layout)
-        self.layout.children[1] = pu.list_to_row(self.sub_layouts)
+        self.layout.children[1].children[1] = pu.list_to_row(self.sub_layouts)
         self.__update_checkbox_column()
 
         self._info("Done")
@@ -78,7 +81,7 @@ class Layout:
         self._info("Deleting layout...")
         removed_i = new[0]  # list(set(old) - set(new))[0]
         del self.sub_layouts[removed_i]
-        self.layout.children[1] = pu.list_to_row(self.sub_layouts)
+        self.layout.children[1].children[1] = pu.list_to_row(self.sub_layouts)
         self.__update_checkbox_column()
         self._info("Done")
 

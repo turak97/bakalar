@@ -12,3 +12,12 @@ source env/bin/activate
 
 pip install -r requirements.txt 
 
+How to run:
+
+source evn/bin/activate
+
+bokeh serve bakalarka/bokeh_plot.py 
+
+then copy the localhost adress (usually http://localhost:5006/bokeh_plot )
+
+Have a fun

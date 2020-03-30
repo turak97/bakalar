@@ -21,6 +21,7 @@ class PlotInfo:
         self.x_extension = x_extension
         self.y_extension = y_extension
         self.mesh_step_size = mesh_step_size
+        self.immediate_update = False
 
     # new_i is starting index of the new rows (where attribute 'color' is 'added')
     def update_color(self, new_class, f, new_i):

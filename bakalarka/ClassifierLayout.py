@@ -1,7 +1,5 @@
 import numpy as np
-from bokeh.layouts import row
-from bokeh.models import PointDrawTool, LinearColorMapper
-from bokeh.plotting import figure
+from bokeh.models import PointDrawTool, LinearColorMapper, Button
 
 # import matplotlib.pyplot as plt
 
@@ -92,8 +90,14 @@ class ClassifierLayout(SubLayout):
         self.fig.renderers[i].glyph.dw = img_data.dw
         self.fig.renderers[i].glyph.dh = img_data.dh
 
+    def _refit(self):
+        self.figure_update()
+
     def _init_button_layout(self):
-        pass
+        self.fit_button = Button(label="Fit", button_type="success")
+        self.fit_button.on_click(self._refit)
+
+        self.layout.children[2] = self.fit_button
 
     def _indie_plot(self):
         pass

@@ -9,14 +9,10 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 
 import data_gen as dg
-import plotting_utilities as pu
 import Layout
 
-import bokeh
-
-
-# TODO: pri polynomech vyssich radu jdou hodnoty moc dohaje, zoptimalizovat, aby lina nesla zbytecne moc nahoru, buguje se to pak pri polynomech 10 radu a vys
-
+# TODO: pri polynomech vyssich radu jdou hodnoty moc dohaje, zoptimalizovat,
+#  aby lina nesla zbytecne moc nahoru, buguje se to pak pri polynomech 10 radu a vys
 # TODO: BUG - linearni regrese pro vice y bodu na jediny x bod
 
 

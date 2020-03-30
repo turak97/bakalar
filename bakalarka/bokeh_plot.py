@@ -1,19 +1,10 @@
-import numpy as np
+
 from bokeh.layouts import row, column
-from bokeh.models import ColumnDataSource, RadioGroup, \
-    Slider, CustomJS, CheckboxButtonGroup, Select
-from bokeh.models.widgets import Dropdown
-from bokeh.plotting import figure, show
-from bokeh.events import DoubleTap
+from bokeh.models import ColumnDataSource
 from bokeh.io import curdoc
-from bokeh.models import WheelZoomTool
-from bokeh.models import PointDrawTool
-from bokeh.models import BoxSelectTool, LassoSelectTool
 import bokeh
 
 import data_gen as dg
-import polynomial_regression as pr
-import ClassifierLayout as svm
 import plotting_utilities as pu
 
 import Layout as lo
@@ -23,10 +14,12 @@ import Layout as lo
 # TODO: pouzit patch pro update dat?
 
 # TODO: u Widgetu menit vlastnosti pres update a ne primo
+# TODO: zprovoznit vice moznosti generovani dat
+# TODO: moznost nahrat vlastni CVScko, opakovane generovat data
 
 
 POL_FROM_DGR = 1
-POL_TO_DGR = 5
+POL_TO_DGR = 10
 
 CLASSES_COUNT = 3
 
@@ -64,7 +57,6 @@ def bokeh_plot(x_data, y_data, classification=None,
 
 
 # data = dg.polynom_data(clusters=1, density=10, polynom=np.array([1 / 10, 1]), interval=(-50, 50))
-
 init_data = dg.cluster_data(x_interval=(0, 30), y_interval=(-10, 10),
                        clusters=3, av_cluster_size=8, clust_size_vol=3)
 

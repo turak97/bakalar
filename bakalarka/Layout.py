@@ -1,14 +1,17 @@
 
 import numpy as np
-import polynomial_regression as pr
-from bokeh.models import ColumnDataSource, RadioGroup, \
-    Slider, CustomJS, CheckboxButtonGroup, Select
+from bokeh.models import RadioGroup, CheckboxButtonGroup
 from bokeh.models.widgets import Dropdown
 from bokeh.layouts import row, column
 import plotting_utilities as pu
-from bokeh.models import BoxSelectTool, LassoSelectTool, Div
+from bokeh.models import LassoSelectTool, Div
 
 from bokeh.plotting import figure
+
+# TODO: promennou na umisteni RadioGroupy a SubLayoutu v Layoutu
+# TODO: pouze jeden logovaci vypis
+# TODO: nabidka palet
+# TODO: Layout bude tvorit PlotInfo v konstruktoru?
 
 
 def concat(x, y):
@@ -53,15 +56,26 @@ class Layout:
         )
         self.sub_layouts = []
         self.info = Div(text="Hello world!")
+        self.options = CheckboxButtonGroup(labels=["Immediate update"], width=150,
+                                           active=[0])
+        self.options.on_change('active', self.__options_change)
         self.layout = column(column(self.dropdown,
+                                    self.options,
                                     self.info),
                              row(self.radio_group,
-                                 row()))
+                                 row()))  # row() is a place for added SubLayouts
 
         self.data = data
         self.plot_source = plot_source
         self.plot_source.on_change('data', self.__data_change)
         self.plot_info = plot_info
+        self.plot_info.immediate_update = 0 in self.options.active  # is Immediate update active?
+
+    def __options_change(self, attr, old, new):
+        if 0 in new:  # immediate update active
+            self.plot_info.immediate_update = True
+        else:
+            self.plot_info.immediate_update = False
 
     def __new_sub_layout(self, value):
         # model_res_str is for resolution to sci kit model
@@ -101,9 +115,10 @@ class Layout:
         else:
             self.data.replace_data(self.plot_source)
 
-        for lay in self.sub_layouts:
-            self._info("Updating figure " + lay.name + "...")
-            lay.figure_update()
+        if self.plot_info.immediate_update:
+            for lay in self.sub_layouts:
+                self._info("Updating figure " + lay.name + "...")
+                lay.figure_update()
         self._info("Done")
 
     def _info(self, message):

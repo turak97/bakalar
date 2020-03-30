@@ -14,8 +14,6 @@ warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
 STARTING_SLIDER_STEPS = 5
 STARTING_MAX_ITER_STEPS = 200
 
-import time
-
 
 class ButtonStr:
     # activation button
@@ -68,18 +66,7 @@ class NeuralClassifierLayout(ClassifierLayout):
 
         self._info("Done")
 
-    def __set_visible_renderer(self, visible):
-        for renderer, i in zip(self.fig.renderers[1:], range(1, len(self.fig.renderers))):
-            if i == visible:
-                renderer.visible = True
-            else:
-                renderer.visible = False
-
-        if self.__logarithmic_steps:
-            self.iteration_slider.title = "Iterations logarithmic: " + str(
-                int(self.iteration_slider.value / (self.slider_steps - visible + 1))) + " ... "
-
-    def __refit(self):
+    def _refit(self):
         self.fit_button.disabled = True  # disabling button so there are peaceful conditions for fitting model
         self.__logarithmic_steps = self.logarithm_button.active
         if not self.__logarithmic_steps:
@@ -93,10 +80,6 @@ class NeuralClassifierLayout(ClassifierLayout):
         self.__set_visible_renderer(self.slider_steps)
 
         self.fit_button.disabled = False
-
-    def __slider_change(self, attr, old, new):
-        visible = int(self.iteration_slider.value/self.iter_step)
-        self.__set_visible_renderer(visible)
 
     def _init_button_layout(self):
         """creates buttons bellow the figure and sets the trigger functions on them"""
@@ -137,11 +120,26 @@ class NeuralClassifierLayout(ClassifierLayout):
         solver_group = column(solver_text, self.solver_button)
 
         self.fit_button = Button(label="Fit", button_type="success")
-        self.fit_button.on_click(self.__refit)
+        self.fit_button.on_click(self._refit)
 
         self.layout.children[2] = column(self.fit_button, slider_group,
                                          layers_input, activation_group,
                                          solver_group)
+
+    def __set_visible_renderer(self, visible):
+        for renderer, i in zip(self.fig.renderers[1:], range(1, len(self.fig.renderers))):
+            if i == visible:
+                renderer.visible = True
+            else:
+                renderer.visible = False
+
+        if self.__logarithmic_steps:
+            self.iteration_slider.title = "Iterations logarithmic: " + str(
+                int(self.iteration_slider.value / (self.slider_steps - visible + 1))) + " ... "
+
+    def __slider_change(self, attr, old, new):
+        visible = int(self.iteration_slider.value / self.iter_step)
+        self.__set_visible_renderer(visible)
 
     def __update_iteration_params(self, max_iter_steps, slider_steps):
         # this sequence prevents unwanted behaviour when max_iter_steps/slider_steps needs to be rounded
@@ -174,7 +172,7 @@ class NeuralClassifierLayout(ClassifierLayout):
 
     @staticmethod
     def __label2activation_str(label):
-        """transoform string from button to string that classifier expects"""
+        """transform string from button to string that classifier expects"""
         if label == ButtonStr.IDENTITY:
             return "identity"
         elif label == ButtonStr.SIGMOID:

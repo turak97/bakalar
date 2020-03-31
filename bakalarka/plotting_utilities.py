@@ -1,14 +1,15 @@
 
 
 from bokeh.layouts import row, column
-import numpy as np
-import polynomial_regression as pr
+from bokeh.models import LinearColorMapper
 from sklearn import svm
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 
 from NeuralClassifierLayout import NeuralClassifierLayout
 from ClassifierLayout import ClassifierLayout
+
+import polynomial_regression as pr
 
 
 class PlotInfo:
@@ -22,6 +23,7 @@ class PlotInfo:
         self.y_extension = y_extension
         self.mesh_step_size = mesh_step_size
         self.immediate_update = False
+        self.color_mapper = LinearColorMapper(palette=self.palette, low=0, high=3)
 
     # new_i is starting index of the new rows (where attribute 'color' is 'added')
     def update_color(self, new_class, f, new_i):

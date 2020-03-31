@@ -77,10 +77,9 @@ class ClassifierLayout(SubLayout):
 
     def _new_fig_renderer(self, img_data):
         # create a new image renderer
-        mapper = LinearColorMapper(palette=self.plot_info.palette, low=0, high=3)
         self.fig.image(image=[img_data.d], x=img_data.x_min, y=img_data.y_min,
                        dw=img_data.dw, dh=img_data.dh,
-                       color_mapper=mapper, global_alpha=0.5)
+                       color_mapper=self.plot_info.color_mapper, global_alpha=0.5)
 
     def _update_fig_renderer(self, img_data, i):
         # updating image data by directly changing them in figure

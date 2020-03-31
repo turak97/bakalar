@@ -17,6 +17,8 @@ import Layout as lo
 # TODO: zprovoznit vice moznosti generovani dat
 # TODO: moznost nahrat vlastni CVScko, opakovane generovat data
 
+# TODO: pridat nabidky modelu pro ostatni klasifikacni modely
+
 
 POL_FROM_DGR = 1
 POL_TO_DGR = 10

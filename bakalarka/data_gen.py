@@ -5,7 +5,7 @@ import numpy as np
 
 
 def classify(length, classes):
-    return np.array([np.int(random.randint(0, classes - 1)) for _ in range(length)])
+    return [str(random.randint(0, classes - 1)) for _ in range(length)]
 
 
 # TODO: fce check values
@@ -67,7 +67,8 @@ def cluster_data(x_interval=(-100, 100),
 
     x_values = np.array([])
     y_values = np.array([])
-    classification = np.empty(dtype=np.int, shape=0)
+    classification = []
+    # classification = np.empty(dtype=np.int, shape=0)
 
     clusters_made = 0
     while clusters_made < clusters:
@@ -80,7 +81,8 @@ def cluster_data(x_interval=(-100, 100),
 
         x_values = np.append(x_values, x_cluster)
         y_values = np.append(y_values, y_cluster)
-        classification = np.append(classification, [np.int(clusters_made)] * cluster_size)
+        classification += [str(clusters_made)] * cluster_size
+        # classification = np.append(classification, [np.int(clusters_made)] * cluster_size)
 
         clusters_made += 1
 

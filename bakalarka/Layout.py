@@ -1,6 +1,6 @@
 
 import numpy as np
-from bokeh.models import RadioGroup, CheckboxButtonGroup, ColorBar, RadioButtonGroup, ColorPicker
+from bokeh.models import CheckboxButtonGroup, RadioButtonGroup, ColorPicker, Button
 from bokeh.models.widgets import Dropdown
 from bokeh.layouts import row, column
 import plotting_utilities as pu
@@ -8,10 +8,13 @@ from bokeh.models import LassoSelectTool, Div
 
 from bokeh.plotting import figure
 
-# TODO: promennou na umisteni RadioGroupy a SubLayoutu v Layoutu
+# TODO: pekneji osetrit picker (aby nenastal pripad dvou stejnych barev)
 # TODO: pouze jeden logovaci vypis
-# TODO: nabidka palet
 # TODO: Layout bude tvorit PlotInfo v konstruktoru?
+
+
+CLASS_BUTTON_WIDTH = 100
+MAX_CLASS_NAME_LENGTH = 8
 
 
 def concat(x, y):
@@ -19,11 +22,12 @@ def concat(x, y):
 
 
 class Data:
-    def __init__(self, x_data, y_data, classification):
+    def __init__(self, x_data, y_data, classification, classes_count):
         self.x_data = x_data
         self.y_data = y_data
         self.cls_X = concat(x_data, y_data)
         self.classification = classification
+        self.classes_count = classes_count
 
     def push_new_points(self, source, c):
         new_from_i = len(source.data['x']) - 1
@@ -46,45 +50,137 @@ class Data:
 
 
 class Layout:
-    def __init__(self, data, plot_source, plot_info):
+    def __init__(self, data, plot_info):
         self.plot_info = plot_info
         self.data = data
-        self.plot_source = plot_source
-        self.plot_source.on_change('data', self.__data_change)
-
-        self.__model_selection_init()
-        self.__info = Div(text="Hello world!")
-        self.__class_selection_init()
+        self.plot_info.plot_source.on_change('data', self.__data_change)
 
         self.__sub_layouts = []
 
-        self.layout = column(column(self.__dropdown,
-                                    self.__options,
-                                    self.__info),
-                             row(self.__radio_group,
+        options = self.__model_selection_init()
+        self.__info = Div(text="Hello world!")
+        class_selection = self.__class_selection_init()
+
+        self.layout = column(column(self.__info,
+                                    self.__dropdown,
+                                    row(options, class_selection)
+                                    ),
+                             row(
                                  row()))  # row() is a place for added SubLayouts
-        self.__sl0, self.__sl1 = 1, 1  # SubLayouts position
+        self.__sl0, self.__sl1 = 1, 0  # SubLayouts position
+        self.__dp0, self.__dp1 = 0, 1  # DropDown position
+        self.__cs0, self.__cs1, self.__cs2 = 0, 2, 1  # __class_selection position
 
     def __model_selection_init(self):
-        """Creates __dropdown and __options attribute, updates immediate_update in plot_info"""
-        menu = [("Polynomial regression", "reg.polynomial"), None, ("SVC linear", "clas.svc_linear"),
-                ("SVC Polynomial", "clas.svc_poly"), ("SVC Sigmoid", "clas.svc_sigmoid"),
-                ("K nearest neighbours", "clas.knn"), ("Naive Bayes", "clas.bayes"),
-                ("Neural classification", "clas.neural")]
+        """Creates __dropdown, __options and __fit_all attribute, updates immediate_update in plot_info
+        returns column of options
+        """
+        menu = [("Polynomial regression", "reg.polynomial"), None,
+                ("SVM classification", "cls.svm"),
+                ("K nearest neighbours", "cls.knn"), ("Naive Bayes (Gaussian)", "cls.bayes"),
+                ("Neural classification", "cls.neural")]
 
-        self.__dropdown = Dropdown(label="+ add model", button_type="primary", menu=menu)
+        self.__dropdown = Dropdown(label="+ add model", button_type="primary", menu=menu,
+                                   width_policy="fixed", width=170
+                                   )
         self.__dropdown.on_click(self.__new_sub_layout)
 
+        self.__fit_all = Button(label="Fit all", button_type="success", width=150)
+        self.__fit_all.on_click(self.__update_sublayouts)
+
         self.__options = CheckboxButtonGroup(labels=["Immediate update"], width=150,
-                                           active=[0])
+                                             active=[]  # affects immediate_update in plot_info
+                                             )
         self.__options.on_change('active', self.__options_change)
-        self.plot_info.immediate_update = 0 in self.__options.active  # is Immediate update active?
+        self.plot_info.immediate_update = False
+
+        return column(self.__options, self.__fit_all)
 
     def __class_selection_init(self):
-        self.__radio_group = RadioGroup(
-            labels=["class 0", "class 1", "class 2"], active=0,
-            width=100
+        classes_count = len(self.plot_info.uniq_values)
+        try:
+            old_active = self.__class_select_button.active
+        except AttributeError:
+            old_active = 0
+
+        button_width = CLASS_BUTTON_WIDTH * self.data.classes_count
+        picker_width = CLASS_BUTTON_WIDTH - self.__normalise_picker_width(classes_count)
+        self.__color_pickers = [ColorPicker(
+            title="",
+            width=picker_width, width_policy="fixed",
+            color=self.plot_info.palette[i]
+        ) for i in range(self.data.classes_count)]
+        for picker in self.__color_pickers:
+            picker.on_change('color', self.__change_color)
+        self.__class_select_button = RadioButtonGroup(
+            labels=self.__normalise_uniq_values(self.plot_info.uniq_values),
+            active=old_active,
+            width=button_width, width_policy="fixed"
         )
+
+        if classes_count > 9:
+            return column(row(self.__color_picker),
+                          row(self.__class_select_button))
+
+        self.__new_class_button = Button(label="+ new class", button_type="primary",
+                                         width=CLASS_BUTTON_WIDTH, width_policy="fixed"
+                                         )
+        self.__new_class_button.on_click(self.__new_class)
+        return column(row(self.__color_pickers),
+                      row(self.__class_select_button, self.__new_class_button))
+
+    @staticmethod
+    def __normalise_picker_width(classes_count):
+        if classes_count <= 2:
+            return 5
+        if classes_count <= 4:
+            return 7
+        if classes_count <= 6:
+            return 8
+        return 9
+
+    @staticmethod
+    def __normalise_uniq_values(uniq_values):
+        def normalise_val(val):
+            if len(val) == MAX_CLASS_NAME_LENGTH:
+                return val
+            if len(val) < MAX_CLASS_NAME_LENGTH:
+                while len(val) < MAX_CLASS_NAME_LENGTH:
+                    if len(val) % 2 == 0:
+                        val = val + u'\u00A0'
+                    else:
+                        val = u'\u00A0' + val
+                return val
+            # now len(val) > MAX_CLASS_NAME_LENGTH
+            return val[:3] + ".." + val[(len(val) - 3):]
+
+        normalised = []
+        for uq in uniq_values:
+            normalised.append(normalise_val(uq))
+        return normalised
+
+    def __change_color(self, attr, old, new):
+        # two colors check
+        if new == "#000000":
+            for picker in self.__color_pickers:
+                if picker.color == "#000000":
+                    picker.color = old
+                    return
+
+        self.plot_info.replace_color(
+            old_color=old, new_color=new, f=self.__data_change
+        )
+
+        for layout in self.__sub_layouts:
+            layout.update_renderer_colors()
+
+    def __new_class(self):
+        self.data.classes_count += 1
+        self.plot_info.add_new_color(
+            class_name=self.__new_name(prev=self.plot_info.uniq_values[-1]))
+
+        __class_selection = self.__class_selection_init()
+        self.layout.children[self.__cs0].children[self.__cs1].children[self.__cs2] = __class_selection
 
     def __options_change(self, attr, old, new):
         if 0 in new:  # immediate update active
@@ -101,6 +197,7 @@ class Layout:
         sub_layout = pu.resolution(model=model_res, name=model_name,
                                    data=self.data, plot_info=self.plot_info)
         self.__sub_layouts.append(sub_layout)
+
         self.layout.children[self.__sl0].children[self.__sl1] = pu.list_to_row(self.__sub_layouts)
         self.__update_checkbox_column()
 
@@ -119,25 +216,36 @@ class Layout:
         checkbox_button = CheckboxButtonGroup(labels=labels, default_size=200*len(self.__sub_layouts),
                                               active=[])
         checkbox_button.on_change('active', self.__del_sub_layout)
-        self.layout.children[0].children[0] = row(checkbox_button, self.__dropdown)
+        self.layout.children[self.__dp0].children[self.__dp1] = row(checkbox_button, self.__dropdown)
 
     def __data_change(self, attr, old, new):
         self._info("Updating data...")
         if len(old['x']) < len(new['x']):  # new point/s added
-            self.plot_info.update_color(new_class=self.__radio_group.active,
-                                        f=self.__data_change, new_i=len(old['x']))
-            self.data.push_new_points(self.plot_source, self.__radio_group.active)
+            new_class = self.plot_info.uniq_values[self.__class_select_button.active]
+            self.plot_info.update_color_newly_added(new_class,
+                                                    new_i=len(old['x']), f=self.__data_change)
+            self.data.push_new_points(self.plot_info.plot_source, self.__class_select_button.active)
         else:
-            self.data.replace_data(self.plot_source)
+            self.data.replace_data(self.plot_info.plot_source)
 
         if self.plot_info.immediate_update:
-            for lay in self.__sub_layouts:
-                self._info("Updating figure " + lay.name + "...")
-                lay.figure_update()
+            self.__update_sublayouts()
         self._info("Done")
+
+    def __update_sublayouts(self):
+        self.__fit_all.update(disabled=True)
+        for lay in self.__sub_layouts:
+            self._info("Updating figure " + lay.name + "...")
+            lay.refit()
+        self.__fit_all.update(disabled=False)
 
     def _info(self, message):
         self.__info.text = str(message)
+
+    def __new_name(self, prev):
+        if prev.isdigit():
+            return str(int(prev) + 1)
+        return "extra " + str(len(self.plot_info.uniq_values))
 
 
 class SubLayout:
@@ -151,7 +259,7 @@ class SubLayout:
         # last one row() is for children needs changed in _init_button_layout
         self.layout = column(self.info, self.fig, row())
 
-    def figure_update(self):
+    def refit(self):
         pass
 
     def _init_button_layout(self):

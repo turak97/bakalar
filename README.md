@@ -16,8 +16,8 @@ How to run:
 
 source evn/bin/activate
 
-bokeh serve bakalarka/bokeh_plot.py 
-
-then copy the localhost adress (usually http://localhost:5006/bokeh_plot )
+python3 bokeh_plot.py
+or
+python3 bokeh_plot.py -h for options
 
 Have a fun

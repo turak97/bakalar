@@ -1,6 +1,7 @@
 import numpy as np
-from bokeh.models import PointDrawTool, LinearColorMapper, Button
+from bokeh.models import PointDrawTool, Button
 
+from constants import MESH_STEP_SIZE
 
 # import matplotlib.pyplot as plt
 
@@ -8,7 +9,7 @@ from Layout import SubLayout
 
 
 class ImageData:
-    def __init__(self, x_min, x_max, y_min, y_max, mesh_step_size):
+    def __init__(self, x_min, x_max, y_min, y_max):
         self.x_min = x_min
         self.x_max = x_max
         self.y_min = y_min
@@ -16,8 +17,8 @@ class ImageData:
         self.dw = x_max - x_min
         self.dh = y_max - y_min
 
-        self.xx, self.yy = np.meshgrid(np.arange(x_min, x_max, mesh_step_size),
-                                       np.arange(y_min, y_max, mesh_step_size))
+        self.xx, self.yy = np.meshgrid(np.arange(x_min, x_max, MESH_STEP_SIZE),
+                                       np.arange(y_min, y_max, MESH_STEP_SIZE))
 
         self.d = []
 
@@ -36,8 +37,7 @@ class ClassifierSubLayout(SubLayout):
         """
         SubLayout.__init__(self, name, data, plot_info)
 
-        self._info("Initialising layout and fitting data...")
-        self._init_button_layout()
+        self._info("Initialising sublayout and fitting data...")
 
         # add original data to the figure and prepare PointDrawTool to make them interactive
         # this renderer MUST be the FIRST one
@@ -47,6 +47,16 @@ class ClassifierSubLayout(SubLayout):
 
         self.classifier = classifier
         self.refit()
+        self._info("Initialising DONE")
+
+    def refit(self):
+        self._info("Updating model and fitting data...")
+        self._update_classifier_params()
+        self._figure_update()
+        self._info("Fitting and updating DONE")
+
+    def _update_classifier_params(self):
+        pass
 
     def update_renderer_colors(self):
         """
@@ -62,15 +72,17 @@ class ClassifierSubLayout(SubLayout):
         figure must have an 'image' renderer as SECOND (at index 1) renderer,
         where will be directly changed data
         """
-        self._info("Updating model and fitting data...")
 
         self._img_data = ImageData(self.data.x_data.min() - 1, self.data.x_data.max() + 1,
-                                   self.data.y_data.min() - 1, self.data.y_data.max() + 1,
-                                   self.plot_info.mesh_step_size)
+                                   self.data.y_data.min() - 1, self.data.y_data.max() + 1)
 
-        self._fit_and_render(1)
+        # print("BUGCHECK***")
+        # print(len(self.data.cls_X[0]))
+        # print(len(self.data.cls_X[1]))
+        # print(len(self.data.classification))
+        # print("***")
 
-        self._info("Done")
+        self._fit_and_render(1)  # renderer at index 1 contains classifier image
 
     def _fit_and_render(self, renderer_i):
         """
@@ -78,6 +90,7 @@ class ClassifierSubLayout(SubLayout):
         expects attribute self.__img_data
         """
         self._info("Fitting data and updating figure, step: " + str(renderer_i))
+
         self.classifier.fit(self.data.cls_X, self.data.classification)
 
         raw_d = self.classifier.predict(np.c_[self._img_data.xx.ravel(),
@@ -104,14 +117,11 @@ class ClassifierSubLayout(SubLayout):
         self.fig.renderers[i].glyph.dw = self._img_data.dw
         self.fig.renderers[i].glyph.dh = self._img_data.dh
 
-    def refit(self):
-        self._figure_update()
-
     def _init_button_layout(self):
         self.fit_button = Button(label="Fit", button_type="success")
         self.fit_button.on_click(self.refit)
 
-        self.layout.children[2] = self.fit_button
+        self.layout.children[1] = self.fit_button
 
     def _indie_plot(self):
         pass

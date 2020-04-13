@@ -1,49 +1,87 @@
 
 from bokeh.layouts import row, column
 from bokeh.models import CategoricalColorMapper, ColumnDataSource
-from sklearn import svm
 
 import StandartClassifierSubLayouts
-from ClassifierLayout import ClassifierSubLayout
+from DataSandbox import DataSandbox
+from ClassifierSubLayout import ClassifierSubLayout
+
+from numpy import empty
 
 import polynomial_regression as pr
 
+# TODO: pekneji reprezentovat plot_source_init_data
+
 
 class PlotInfo:
-    def __init__(self, plot_source_init_data,
-                 uniq_values, pol_min_degree, pol_max_degree,
-                 palette, x_extension, y_extension, mesh_step_size):
+    def __init__(self, df,
+                 pol_min_degree, pol_max_degree,
+                 palette, x_extension, y_extension):
         self.pol_min_degree = pol_min_degree
         self.pol_max_degree = pol_max_degree
         self.palette = palette
         self.x_extension = x_extension
         self.y_extension = y_extension
-        self.mesh_step_size = mesh_step_size
         self.immediate_update = False
-        self.uniq_values = uniq_values  # TODO: Del?
-        self.color_mapper = CategoricalColorMapper(palette=self.palette, factors=uniq_values)
 
-        self.color_dict = self.__uniq_vals2color_dict()
-        self.plot_source = ColumnDataSource(
+        uniq_values = sorted(list(set(df['classification'])))
+        self.color_mapper = CategoricalColorMapper(palette=self.palette, factors=uniq_values)
+        self.color_dict = self.__uniq_vals2color_dict(uniq_values)
+
+        self.plot_source = ColumnDataSource(df)
+        self.plot_source.remove('index')
+        self.plot_source.add([self.color_dict[val] for val in df['classification']], 'color')
+
+        self.plot_source_trigger = None
+
+    def set_plot_source_trigger(self, f):
+        self.plot_source.on_change('data', f)
+        self.plot_source_trigger = f
+
+    def replace_data(self, x, y, classification):
+        uniq_values = sorted(list(set(classification)))
+        self.color_mapper = CategoricalColorMapper(palette=self.palette, factors=uniq_values)
+        self.color_dict = self.__uniq_vals2color_dict(uniq_values)
+
+        self.plot_source.remove_on_change('data', self.plot_source_trigger)
+        self.plot_source.update(
             data=dict(
-                x=plot_source_init_data[0],
-                y=plot_source_init_data[1],
-                classification=plot_source_init_data[2],  # .toList()
-                color=[self.color_dict[val] for val in plot_source_init_data[2]]
+                x=x,
+                y=y,
+                classification=classification,
+                color=[self.color_dict[val] for val in classification]
             )
         )
+        self.plot_source.on_change('data', self.plot_source_trigger)
+
+        self.append_data(empty(shape=0), empty(shape=0), [])
+
+    def append_data(self, x_new, y_new, classification_new):
+
+        colors = [self.color_dict[cls] for cls in classification_new]
+        new_data = {
+            'x': x_new.tolist(),
+            'y': y_new.tolist(),
+            'classification': classification_new,
+            'color': colors
+        }
+
+        self.plot_source.stream(new_data)
+
+    def uniq_values(self):
+        return sorted(self.color_dict.keys())
 
     def add_new_color(self, class_name):
         """add a new color possibility"""
-        self.uniq_values.append(class_name)
-        self.color_mapper = CategoricalColorMapper(palette=self.palette, factors=self.uniq_values)
-        self.color_dict[class_name] = self.palette[len(self.uniq_values) - 1]
+        prev_last_index = len(self.uniq_values()) - 1
+        self.color_dict[class_name] = self.palette[prev_last_index + 1]
+        self.color_mapper = CategoricalColorMapper(palette=self.palette, factors=self.uniq_values())
 
-    def update_color_newly_added(self, new_class, new_i, f):
+    def update_color_newly_added(self, new_class, new_i):
         """updates color in newly added data
         new_i is starting index of the new rows (where attribute 'color' is 'added')
         """
-        self.plot_source.remove_on_change('data', f)  # unsubscribe f, so there wont be an unwanted trigger
+        self.plot_source.remove_on_change('data', self.plot_source_trigger)  # unsubscribe f, so there wont be an unwanted trigger
 
         source_len = len(self.plot_source.data['x'])
 
@@ -53,13 +91,13 @@ class PlotInfo:
         }
         self.plot_source.patch(patches)
 
-        self.plot_source.on_change('data', f)  # subscribe again
+        self.plot_source.on_change('data', self.plot_source_trigger)  # subscribe again
 
-    def replace_color(self, old_color, new_color, f):
-        self.plot_source.remove_on_change('data', f)
+    def replace_color(self, old_color, new_color):
+        self.plot_source.remove_on_change('data', self.plot_source_trigger)
         patch = []
         for i, color in zip(range(len(self.plot_source.data['color'])), self.plot_source.data['color']):
-            if color == old_color:
+            if color == old_color:  # find old color occurrences and add then into the patch
                 patch.append((i, new_color))
 
         patches = {
@@ -79,20 +117,24 @@ class PlotInfo:
 
         self.color_mapper.palette = self.palette
 
-        self.plot_source.on_change('data', f)
+        self.plot_source.on_change('data', self.plot_source_trigger)
 
-    def __uniq_vals2color_dict(self):
+    def __uniq_vals2color_dict(self, uniq_values):
         """Map classification values to integers such as
         ["setosa", "virginica", "setosa"] -> {0: 'setosa', 1: 'virginica'}
         """
         values_dict = {}
-        for uq, i in zip(self.uniq_values, range(len(self.uniq_values))):
+        for uq, i in zip(uniq_values, range(len(uniq_values))):
             values_dict[uq] = self.palette[i]
         return values_dict
 
 
 def list_to_row(lay_list):
     return row([lay.layout for lay in lay_list])
+
+
+def data_sandbox(name, data, plot_info, class_select_button):
+    return DataSandbox(name, data, plot_info, class_select_button)
 
 
 def resolution(model, name, data, plot_info):
@@ -104,7 +146,7 @@ def resolution(model, name, data, plot_info):
     if type_ == "cls":
         if kind == "neural":
             return StandartClassifierSubLayouts.NeuralClassifier(
-                name=name, data=data, plot_info=plot_info,
+                name=name, data=data, plot_info=plot_info
             )
         elif kind == "svm":
             return StandartClassifierSubLayouts.SvmClassifier(

@@ -1,6 +1,4 @@
 
-from ClassifierLayout import ClassifierSubLayout, ImageData
-
 from bokeh.models import RadioButtonGroup, TextInput, Button, Div, Slider, Toggle, Select
 from bokeh.layouts import row, column
 
@@ -9,15 +7,17 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 
+from math import ceil
+
+from ClassifierSubLayout import ClassifierSubLayout, ImageData
+from constants import NEURAL_DEF_ACTIVATION, NEURAL_DEF_LAYERS, NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_SLIDER_STEPS
+
 import warnings
 from sklearn.exceptions import ConvergenceWarning
 warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
 
-from math import ceil
 
-
-STARTING_SLIDER_STEPS = 5
-STARTING_MAX_ITER_STEPS = 200
+# TODO: define all default values as constants
 
 
 class BayesClassifier(ClassifierSubLayout):
@@ -40,9 +40,11 @@ class KnnClassifier(ClassifierSubLayout):
 
         ClassifierSubLayout.__init__(self, name, classifier, data, plot_info)
 
-    def refit(self):
-        self.__update_classifier_params()
-        self._figure_update()
+    # def refit(self):
+    #     self._info("Updating model and fitting data...")
+    #     self.__update_classifier_params()
+    #     self._figure_update()
+    #     self._info("Fitting and updating DONE")
 
     def _init_button_layout(self):
         """creates buttons bellow the figure and sets the trigger functions on them"""
@@ -61,13 +63,13 @@ class KnnClassifier(ClassifierSubLayout):
             options=[str(i) for i in range(1, 20)], width=70)
         n_neighbors_text = Div(text="Number of neighbors to use: ")
 
-        self.layout.children[2] = column(fit_button,
+        self.layout.children[1] = column(fit_button,
                                          self.algo_button,
                                          row(n_neighbors_text,
                                              self.n_neighbors_button)
                                          )
 
-    def __update_classifier_params(self):
+    def _update_classifier_params(self):
         new_algo = self.__label2algo_str(
             self.__chosen_algo()
         )
@@ -103,9 +105,11 @@ class SvmClassifier(ClassifierSubLayout):
 
         ClassifierSubLayout.__init__(self, name, classifier, data, plot_info)
 
-    def refit(self):
-        self.__update_classifier_params()
-        self._figure_update()
+    # def refit(self):
+    #     self._info("Updating model and fitting data...")
+    #     self.__update_classifier_params()
+    #     self._figure_update()
+    #     self._info("Fitting and updating DONE")
 
     def _init_button_layout(self):
         """creates buttons bellow the figure and sets the trigger functions on them"""
@@ -126,14 +130,14 @@ class SvmClassifier(ClassifierSubLayout):
         self.__regularization_parameter_input = TextInput(value="1.0", width=75)
         regularization_parameter_text = Div(text="Regularization parameter: ")
 
-        self.layout.children[2] = column(fit_button,
+        self.layout.children[1] = column(fit_button,
                                          self.kernel_button,
                                          row(regularization_parameter_text,
                                              self.__regularization_parameter_input),
                                          row(degree_text, self.degree_button)
                                          )
 
-    def __update_classifier_params(self):
+    def _update_classifier_params(self):
         new_kernel = self.__label2kernel_str(
             self.__chosen_kernel()
         )
@@ -183,10 +187,9 @@ class NeuralClassifier(ClassifierSubLayout):
         creates attribute self.name, self.classifier, self.fig, self.layout
         self.data, self.plot_info from super
         """
-        classifier = MLPClassifier(activation='tanh', hidden_layer_sizes=(10, 10), random_state=1,
-                                   max_iter=200, tol=0)  # max_iter is irrelevant at this point
+        classifier = MLPClassifier(random_state=1, tol=0)  # other parameters are gained from buttons
         # initialise iteration parameters for slider and classifier fitting
-        self.__update_iteration_params(STARTING_MAX_ITER_STEPS, STARTING_SLIDER_STEPS)
+        self.__update_iteration_params(NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_SLIDER_STEPS)
         self.__logarithmic_steps = False
 
         ClassifierSubLayout.__init__(self, name, classifier, data, plot_info)
@@ -217,19 +220,19 @@ class NeuralClassifier(ClassifierSubLayout):
         self._info("Done")
 
     def refit(self):
+        self._info("Updating model and fitting data...")
         self.fit_button.disabled = True  # disabling button so there are peaceful conditions for fitting model
         self.__logarithmic_steps = self.logarithm_button.active
-        if not self.__logarithmic_steps:
-            self.iteration_slider.title = "Iterations"
 
         self.__update_iteration_params(int(self.max_iterations_input.value),
                                        int(self.slider_steps_input.value))
-        self.__update_classifier_params()
+        self._update_classifier_params()
 
         self._figure_update()
         self.__set_visible_renderer(self.slider_steps)
 
         self.fit_button.disabled = False
+        self._info("Fitting and updating DONE")
 
     def _init_button_layout(self):
         """creates buttons bellow the figure and sets the trigger functions on them"""
@@ -249,20 +252,20 @@ class NeuralClassifier(ClassifierSubLayout):
                                   self.logarithm_button)
                               )
 
-        self.layers_input = TextInput(value="10, 10")
+        self.layers_input = TextInput(value=NEURAL_DEF_LAYERS)
         layers_text = Div(text="Hidden layers sizes:")
         layers_input = column(layers_text, row(self.layers_input))
 
         self.activation_button = RadioButtonGroup(
             labels=[self.ButtonStr.IDENTITY, self.ButtonStr.SIGMOID,
-                    self.ButtonStr.TANH, self.ButtonStr.LINEAR], active=3,
+                    self.ButtonStr.TANH, self.ButtonStr.LINEAR], active=NEURAL_DEF_ACTIVATION,
             width=total_width
         )
         activation_text = Div(text="Activation function in hidden layers:")
         activation_group = column(activation_text, self.activation_button)
 
         self.solver_button = RadioButtonGroup(
-            labels=[self.ButtonStr.LBFGS, self.ButtonStr.GRADIENT,self.ButtonStr.ADAM],
+            labels=[self.ButtonStr.LBFGS, self.ButtonStr.GRADIENT, self.ButtonStr.ADAM],
             active=2,
             width=total_width
         )
@@ -273,7 +276,7 @@ class NeuralClassifier(ClassifierSubLayout):
         self.fit_button.on_click(self.refit)
 
         # add all of those at the position in the sublayout
-        self.layout.children[2] = column(self.fit_button, slider_group,
+        self.layout.children[1] = column(self.fit_button, slider_group,
                                          layers_input, activation_group,
                                          solver_group)
 
@@ -285,8 +288,12 @@ class NeuralClassifier(ClassifierSubLayout):
                 renderer.visible = False
 
         if self.__logarithmic_steps:
+            self.iteration_slider.show_value = False
             self.iteration_slider.title = "Iterations logarithmic: " + str(
-                int(self.iteration_slider.value / (self.slider_steps - visible + 1))) + " ... "
+                int(self.iteration_slider.value / (self.slider_steps - visible + 1)))
+        else:
+            self.iteration_slider.show_value = True
+            self.iteration_slider.title = "Iterations"
 
     def __slider_change(self, attr, old, new):
         visible = int(self.iteration_slider.value / self.iter_step)
@@ -304,7 +311,7 @@ class NeuralClassifier(ClassifierSubLayout):
             self.iteration_slider.step = self.iter_step
             self.iteration_slider.value = self.max_iter_steps
 
-    def __update_classifier_params(self):
+    def _update_classifier_params(self):
         new_activation = self.__label2activation_str(
             self.activation_button.labels[self.activation_button.active]
         )

@@ -1,15 +1,46 @@
 import random
 import math
 
+from shapely.geometry import Point
+from shapely.geometry.polygon import Polygon
 import numpy as np
+import pandas as pd
 
 
-def classify(length, classes):
-    return [str(random.randint(0, classes - 1)) for _ in range(length)]
+def classify(length, classes_list):
+    return [random.choice(classes_list) for _ in range(length)]
+
+
+# generates cluster inside a polygon
+# generates only x and y values, NOT classification
+def polygon_data(polygon_vertices, cluster_size=-1):
+    polygon = Polygon(polygon_vertices)
+
+    if cluster_size == 0:
+        return [np.empty(dtype=int), np.empty(dtype=int)]
+
+    if cluster_size < 0:
+        cluster_size = max(int(polygon.area * random.uniform(0.3, 1.5)), 1)
+
+    x_min, y_min, x_max, y_max = polygon.bounds
+
+    x_values = np.zeros(shape=cluster_size)
+    y_values = np.zeros(shape=cluster_size)
+    points_created = 0
+    while points_created < cluster_size:
+        x, y = random.uniform(x_min, x_max), random.uniform(y_min, y_max)
+        point_candidate = Point(x, y)
+        if not polygon.contains(point_candidate):
+            continue
+        x_values[points_created] = x
+        y_values[points_created] = y
+        points_created += 1
+
+    return [x_values, y_values]
 
 
 # TODO: fce check values
-# generuje clustry na x ose, ty potom mergne (a seradi), dogeneruje y hodnoty a k nim pricte dispersi
+# generuje clustry na x ose, ty potom mergne (a seradi), dogeneruje y hodnoty a k nim pricte disperzi
 def polynom_data(polynom=np.array([1/100, 1/5, -1, 1]),
                  interval=(-400, 400),
                  clusters=3,
@@ -68,25 +99,41 @@ def cluster_data(x_interval=(-100, 100),
     x_values = np.array([])
     y_values = np.array([])
     classification = []
-    # classification = np.empty(dtype=np.int, shape=0)
 
     clusters_made = 0
     while clusters_made < clusters:
         x_from, x_to = gen_interval(x_interval, scale / clust_range_coef(clusters))
         y_from, y_to = gen_interval(y_interval, scale / clust_range_coef(clusters))
 
-        cluster_size = av_cluster_size + abs(random.randint(-clust_size_vol, clust_size_vol))
+        cluster_size = av_cluster_size + random.randint(-clust_size_vol, clust_size_vol)
         x_cluster = gen_clust_beta(x_from, x_to, cluster_size)
         y_cluster = gen_clust_beta(y_from, y_to, cluster_size)
 
         x_values = np.append(x_values, x_cluster)
         y_values = np.append(y_values, y_cluster)
         classification += [str(clusters_made)] * cluster_size
-        # classification = np.append(classification, [np.int(clusters_made)] * cluster_size)
 
         clusters_made += 1
 
     return [x_values, y_values, classification]
+
+
+def cluster_data_pandas(x_interval=(-100, 100),
+                        y_interval=(-100, 100),
+                        clusters=3,
+                        av_cluster_size=15,
+                        clust_size_vol=-1,
+                        size=0.2,
+                        rand_seed=1):
+    x, y, classifiaction = cluster_data(x_interval=x_interval,
+                                        y_interval=y_interval,
+                                        clusters=clusters,
+                                        av_cluster_size=av_cluster_size,
+                                        clust_size_vol=clust_size_vol,
+                                        size=size,
+                                        rand_seed=rand_seed)
+    d = {'x': x, 'y': y, 'classification': classifiaction}
+    return pd.DataFrame(data=d)
 
 
 # TODO pridat vyjimky do intervalu (leva mez vetsi nez prava)
@@ -137,18 +184,6 @@ def gen_clust_beta(from_, to_, size):
         vals[i] = random.betavariate(alpha, beta)
     vals = rerange(vals, (from_, to_))
     return vals
-
-
-# def cut_out_values(array, min_, max_):
-#     min_i = np.argmax(array >= min_)
-#     max_i = np.argmax(array > max_)
-#     # dealing with situation when max_ is bigger than max(arr) because np.argmax returns 0 then
-#     # when min_ is bigger than max(arr) likewise
-#     if min_i == 0 and array[-1] <= min_:
-#         min_i = len(array)
-#     if max_i == 0 and array[0] <= max_:
-#         max_i = len(array)
-#     return array[min_i:max_i]
 
 
 # helps clusters to be smaller when there is more of them

@@ -1,7 +1,7 @@
 import numpy as np
 from bokeh.models import PointDrawTool, Button
 
-from constants import MESH_STEP_SIZE
+from constants import MESH_STEP_SIZE, EMPTY_VALUE_COLOR
 
 # import matplotlib.pyplot as plt
 
@@ -42,7 +42,7 @@ class ClassifierSubLayout(SubLayout):
         # add original data to the figure and prepare PointDrawTool to make them interactive
         # this renderer MUST be the FIRST one
         move_circle = self.fig.circle('x', 'y', color='color', source=plot_info.plot_source, size=7)
-        point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value='black', add=True)
+        point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
         self.fig.add_tools(point_draw_tool)
 
         self.classifier = classifier
@@ -90,7 +90,10 @@ class ClassifierSubLayout(SubLayout):
         expects attribute self.__img_data
         """
         self._info("Fitting data and updating figure, step: " + str(renderer_i))
-
+        print(self.data.cls_X)
+        print(type(self.data.cls_X[0]))
+        print(self.data.classification)
+        print(type(self.data.classification))
         self.classifier.fit(self.data.cls_X, self.data.classification)
 
         raw_d = self.classifier.predict(np.c_[self._img_data.xx.ravel(),

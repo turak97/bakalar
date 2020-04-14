@@ -7,7 +7,7 @@ from bokeh.layouts import row, column
 from bokeh.plotting import figure
 
 import plotting_utilities as pu
-from constants import CLASS_SELECT_BUTTON_WIDTH, MAX_CLASS_NAME_LENGTH
+from constants import CLASS_SELECT_BUTTON_WIDTH, MAX_CLASS_NAME_LENGTH, EMPTY_VALUE_COLOR
 from in_n_out import save_source
 
 
@@ -41,7 +41,7 @@ class Data:
 
         to_append_x = np.array(source.data['x'][new_from_i:])
         to_append_y = np.array(source.data['y'][new_from_i:])
-        to_append_class = [np.int(c)] * (source_len - new_from_i)
+        to_append_class = [c] * (source_len - new_from_i)
 
         self.x_data = np.append(self.x_data, to_append_x)
         self.y_data = np.append(self.y_data, to_append_y)
@@ -266,11 +266,13 @@ class Layout:
 
     def __data_change(self, attr, old, new):
         self._info("Updating data...")
-        if len(old['x']) < len(new['x']):  # + 1 == new point added  # TODO: zjednodusit, pridava se jen 1 bod
-            new_class = self.plot_info.uniq_values()[self.__class_select_button.active]
-            self.plot_info.update_color_newly_added(new_class,
-                                                    new_i=len(old['x']))
-            self.data.push_new_points(self.plot_info.plot_source, self.__class_select_button.active)
+        if len(old['x']) < len(new['x']):
+            if new['color'][-1] == EMPTY_VALUE_COLOR:
+                new_class = self.plot_info.uniq_values()[self.__class_select_button.active]
+                self.plot_info.update_color_newly_added(new_class,
+                                                        new_i=len(old['x']))
+            self.data.push_new_points(self.plot_info.plot_source,
+                                      self.plot_info.uniq_values()[self.__class_select_button.active])
         else:
             self.data.replace_data(self.plot_info.plot_source)
         self._info("Updating data DONE")

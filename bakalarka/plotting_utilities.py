@@ -39,7 +39,10 @@ class PlotInfo:
         self.plot_source_trigger = f
 
     def replace_data(self, x, y, classification):
-        uniq_values = sorted(list(set(classification)))
+        uniq_values = self.uniq_values()
+        for cls in classification:
+            if cls not in uniq_values:
+                uniq_values.append(cls)
         self.color_mapper = CategoricalColorMapper(palette=self.palette, factors=uniq_values)
         self.color_dict = self.__uniq_vals2color_dict(uniq_values)
 
@@ -57,7 +60,6 @@ class PlotInfo:
         self.append_data(empty(shape=0), empty(shape=0), [])
 
     def append_data(self, x_new, y_new, classification_new):
-
         colors = [self.color_dict[cls] for cls in classification_new]
         new_data = {
             'x': x_new.tolist(),
@@ -65,7 +67,6 @@ class PlotInfo:
             'classification': classification_new,
             'color': colors
         }
-
         self.plot_source.stream(new_data)
 
     def uniq_values(self):
@@ -82,7 +83,6 @@ class PlotInfo:
         new_i is starting index of the new rows (where attribute 'color' is 'added')
         """
         self.plot_source.remove_on_change('data', self.plot_source_trigger)  # unsubscribe f, so there wont be an unwanted trigger
-
         source_len = len(self.plot_source.data['x'])
 
         patches = {

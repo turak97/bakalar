@@ -22,15 +22,14 @@ from in_n_out import read_df
 # TODO: pouzit patch pro update dat?
 
 # TODO: u Widgetu menit vlastnosti pres update a ne primo
-# TODO: zprovoznit vice moznosti generovani dat, moznost nahrat vlastni CVScko
 
 # TODO: pekneji rozclenit plotting_utilities.py
-# TODO: konstanty v extra souboru (nebo nejak standardizovane, jak se to v pytohnu dela)
 
 validation.silence(1002, True)  # silence bokeh plot warning
 
 
 PALETTE = bokeh.palettes.Category10[10]
+
 
 def parse_args():
 

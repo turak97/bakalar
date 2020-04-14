@@ -10,10 +10,11 @@ from random import randint
 import data_gen as dg
 from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLUSTERS_COUNT_DEF, MAX_CLUSTERS
 
+
+# TODO: at se to nedviji od uniqvalues
+
 # TODO: random moznost u vyberu trid
 # TODO: remove points s lasem?
-
-# TODO: error: po vygenerovani noveho datasetu nejde hybat s body
 
 # TODO: bug: unexpected chovani pri odstraneni vsech bodu
 # TODO: bug: points in dataset obcas zobrazuje o 1 mensi hodnotu, nez self.data.classification u BUGCHECKu
@@ -79,7 +80,7 @@ class DataSandbox(SubLayout):
 
         self.__lasso_point_density_input = TextInput(value=DENS_INPUT_DEF_VAL, width=50)
         self.__lasso_point_density_input.on_change('value', self.__lasso_density_input_trigger)
-        __lasso_options_info = Div(text="Lasso options: ", style={'font-size': '150%'})
+        __lasso_options_info = Div(text="Lasso utilities: ", style={'font-size': '150%'})
         __lasso_density_info = Div(text="Density:", style={'font-size': '120%'})
         __lasso_circa_info = Div(text="Circa: ")
         __lasso_exact_info = Div(text="or Precise: ")

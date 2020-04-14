@@ -90,10 +90,6 @@ class ClassifierSubLayout(SubLayout):
         expects attribute self.__img_data
         """
         self._info("Fitting data and updating figure, step: " + str(renderer_i))
-        print(self.data.cls_X)
-        print(type(self.data.cls_X[0]))
-        print(self.data.classification)
-        print(type(self.data.classification))
         self.classifier.fit(self.data.cls_X, self.data.classification)
 
         raw_d = self.classifier.predict(np.c_[self._img_data.xx.ravel(),

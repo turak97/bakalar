@@ -19,6 +19,12 @@ warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
 
 # TODO: define all default values as constants
 
+# TODO: u SVM pridat pod Fit button info "kernely: "
+# TODO: prindat vseobecne info
+
+# TODO: u knn zvazit moznosti algoritmu (vysledek stejny, mozna ponechat jen auto)
+
+# TODO: sigmoid, gradient descent standartni parametry
 
 class BayesClassifier(ClassifierSubLayout):
     def __init__(self, name, data, plot_info):

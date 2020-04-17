@@ -11,7 +11,7 @@ from constants import CLASS_SELECT_BUTTON_WIDTH, MAX_CLASS_NAME_LENGTH, EMPTY_VA
 from in_n_out import save_source
 
 
-# TODO: Data nahradit pandas dataframem..?
+# TODO: Data nahradit pandas dataframem...?
 # TODO: moznost prepnout mezi klasifikacni, regresni nebo obema verzema appky
 
 # TODO: pekneji osetrit picker (aby nenastal pripad dvou stejnych barev), reseni: zjistit, ktery picker triggnul funkci?
@@ -21,6 +21,9 @@ from in_n_out import save_source
 # TODO: pekneji preskladat menu (model, class selection init)
 
 # TODO: Layout bude tvorit PlotInfo v konstruktoru?
+
+# TODO: add model pod tridama picker
+# TODO: odstranit immidiate update
 
 
 def concat(x, y):

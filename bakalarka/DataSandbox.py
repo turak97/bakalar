@@ -19,6 +19,12 @@ from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLU
 # TODO: bug: unexpected chovani pri odstraneni vsech bodu
 # TODO: bug: points in dataset obcas zobrazuje o 1 mensi hodnotu, nez self.data.classification u BUGCHECKu
 
+# TODO: vyclenit to z nabidky samostatny toggle button
+
+# TODO: automaticky a manualni rezim pridavani/ preklikavat/ podle toho se zorazi dole tlacitka
+# TODO: u manualniho rezimu popridavat vysvetlivky
+
+# TODO: save as csv v DataSandobxu, pres Div dat vedet, co se deje, v text. poli moznost zvolit nazev
 
 class DataSandbox(SubLayout):
     def __init__(self, name, data, plot_info, class_select_button):

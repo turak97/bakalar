@@ -19,12 +19,19 @@ from in_n_out import read_df
 
 
 # TODO: @numba.njit()
-# TODO: pouzit patch pro update dat?
+# TODO: pouzit patch pro update dat? (!!!)
+# TODO: https://docs.bokeh.org/en/latest/docs/reference/core/templates.html?fbclid=IwAR1AzUzA2gmpmO3bGqtM7bpNrop-bzbHA3jjgP786VuJirgANO8m7Ia5qAk
 
 # TODO: prepinac s naxvem souboru, kam se ulozi vysledek + prepinac po ukonceni aplikace ulozit dataset
 # TODO: u Widgetu menit vlastnosti pres update a ne primo
 
 # TODO: pekneji rozclenit plotting_utilities.py
+
+# TODO: vizualne oddelit figury a tlacitka, vizualni vysvetlivka u tlacitek
+
+# TODO: configurak v JSONu
+
+# TODO: html stranky navic k proklikani a jako info
 
 validation.silence(1002, True)  # silence bokeh plot warning
 

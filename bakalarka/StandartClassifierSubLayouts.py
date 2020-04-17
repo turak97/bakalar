@@ -199,8 +199,7 @@ class NeuralClassifier(ClassifierSubLayout):
         self._info("Updating model and fitting data...")
 
         self._img_data = ImageData(self.data.x_data.min() - 1, self.data.x_data.max() + 1,
-                                   self.data.y_data.min() - 1, self.data.y_data.max() + 1,
-                                   self.plot_info.mesh_step_size)
+                                   self.data.y_data.min() - 1, self.data.y_data.max() + 1)
         for iterations, renderer_i in zip(range(self.iter_step, self.max_iter_steps + 1,
                                                 self.iter_step),
                                           range(1, self.slider_steps + 1)):  # first one is Circle

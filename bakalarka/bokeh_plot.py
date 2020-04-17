@@ -21,6 +21,7 @@ from in_n_out import read_df
 # TODO: @numba.njit()
 # TODO: pouzit patch pro update dat?
 
+# TODO: prepinac s naxvem souboru, kam se ulozi vysledek + prepinac po ukonceni aplikace ulozit dataset
 # TODO: u Widgetu menit vlastnosti pres update a ne primo
 
 # TODO: pekneji rozclenit plotting_utilities.py

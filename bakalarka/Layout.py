@@ -1,5 +1,8 @@
 
 import numpy as np
+
+import pandas as pd
+
 from bokeh.models import CheckboxButtonGroup, RadioButtonGroup, ColorPicker, Button
 from bokeh.models import LassoSelectTool, Div
 from bokeh.models.widgets import Dropdown
@@ -11,13 +14,11 @@ from constants import CLASS_SELECT_BUTTON_WIDTH, MAX_CLASS_NAME_LENGTH, EMPTY_VA
 from in_n_out import save_source
 
 
-# TODO: Data nahradit pandas dataframem...?
 # TODO: moznost prepnout mezi klasifikacni, regresni nebo obema verzema appky
 
 # TODO: pekneji osetrit picker (aby nenastal pripad dvou stejnych barev), reseni: zjistit, ktery picker triggnul funkci?
 # TODO: vsechny atributy, co nemusi byt verejne, at nejsou!
 # TODO: uniq values dat dokupy
-# TODO: u self.data se v Layoutu nemeni pocet trid
 # TODO: pekneji preskladat menu (model, class selection init)
 
 # TODO: Layout bude tvorit PlotInfo v konstruktoru?
@@ -26,47 +27,12 @@ from in_n_out import save_source
 # TODO: odstranit immidiate update
 
 
-def concat(x, y):
-    return np.array([[x[i], y[i]] for i in range(len(x))])
-
-
-class Data:
-    def __init__(self, x_data, y_data, classification, classes_count):
-        self.x_data = x_data
-        self.y_data = y_data
-        self.cls_X = concat(x_data, y_data)
-        self.classification = classification
-        self.classes_count = classes_count
-
-    def push_new_points(self, source, c):
-        new_from_i = len(source.data['x']) - 1
-        source_len = len(source.data['x'])
-
-        to_append_x = np.array(source.data['x'][new_from_i:])
-        to_append_y = np.array(source.data['y'][new_from_i:])
-        to_append_class = [c] * (source_len - new_from_i)
-
-        self.x_data = np.append(self.x_data, to_append_x)
-        self.y_data = np.append(self.y_data, to_append_y)
-        self.cls_X = concat(self.x_data, self.y_data)
-        self.classification = np.append(self.classification, to_append_class)
-        self.classes_count = len(set(self.classification))
-
-    def replace_data(self, source):
-        self.x_data = np.array(source.data['x'])
-        self.y_data = np.array(source.data['y'])
-        self.cls_X = concat(self.x_data, self.y_data)
-        self.classification = source.data['classification']
-        self.classes_count = len(set(self.classification))
-
-
 class Layout:
-    def __init__(self, data, plot_info, log=True):
+    def __init__(self, plot_info, log=True):
         self.__log = log  # TODO: dodelat
 
         self.plot_info = plot_info
         self.plot_info.set_plot_source_trigger(self.__data_change)
-        self.data = data
 
         self.__sub_layouts = []
 
@@ -122,13 +88,13 @@ class Layout:
         except AttributeError:
             old_active = 0
 
-        button_width = CLASS_SELECT_BUTTON_WIDTH * self.data.classes_count
+        button_width = CLASS_SELECT_BUTTON_WIDTH * classes_count
         picker_width = CLASS_SELECT_BUTTON_WIDTH - self.__normalise_picker_width(classes_count)
         self.__color_pickers = [ColorPicker(
             title="",
             width=picker_width, width_policy="fixed",
             color=self.plot_info.palette[i]
-        ) for i in range(self.data.classes_count)]
+        ) for i in range(classes_count)]
         for picker in self.__color_pickers:
             picker.on_change('color', self.__change_color)
         self.__class_select_button = RadioButtonGroup(
@@ -240,11 +206,11 @@ class Layout:
         self._info("Adding a new " + model_name + " plot...")
 
         if model_res == "sandbox":
-            sub_layout = pu.data_sandbox(name=model_name, data=self.data, plot_info=self.plot_info,
+            sub_layout = pu.data_sandbox(name=model_name, plot_info=self.plot_info,
                                          class_select_button=self.__class_select_button)
         else:
             sub_layout = pu.resolution(model=model_res, name=model_name,
-                                       data=self.data, plot_info=self.plot_info)
+                                       plot_info=self.plot_info)
         self.__sub_layouts.append(sub_layout)
 
         self.layout.children[self.__sl0].children[self.__sl1] = pu.list_to_row(self.__sub_layouts)
@@ -269,15 +235,14 @@ class Layout:
 
     def __data_change(self, attr, old, new):
         self._info("Updating data...")
+
         if len(old['x']) < len(new['x']):
+
             if new['color'][-1] == EMPTY_VALUE_COLOR:
                 new_class = self.plot_info.uniq_values()[self.__class_select_button.active]
                 self.plot_info.update_color_newly_added(new_class,
                                                         new_i=len(old['x']))
-            self.data.push_new_points(self.plot_info.plot_source,
-                                      self.plot_info.uniq_values()[self.__class_select_button.active])
-        else:
-            self.data.replace_data(self.plot_info.plot_source)
+
         self._info("Updating data DONE")
 
         if self.plot_info.immediate_update:
@@ -303,9 +268,8 @@ class Layout:
 
 
 class SubLayout:
-    def __init__(self, name, data, plot_info):
+    def __init__(self, name, plot_info):
         self.name = name
-        self.data = data
         self.plot_info = plot_info
         self.fig = figure(tools="pan,wheel_zoom,save,reset,box_zoom")
         self._lasso = LassoSelectTool()

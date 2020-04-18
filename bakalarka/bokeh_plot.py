@@ -73,9 +73,7 @@ if __name__ == '__main__':
                                 pol_max_degree=POL_TO_DGR, palette=PALETTE,
                                 x_extension=X_EXT, y_extension=Y_EXT)
 
-        data = lo.Data(df['x'], df['y'], df['classification'], len(set(df['classification'])))
-
-        lay = lo.Layout(data=data, plot_info=plot_info)
+        lay = lo.Layout(plot_info=plot_info)
 
         doc.add_root(row(lay.layout))
 

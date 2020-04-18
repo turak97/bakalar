@@ -11,7 +11,7 @@ import data_gen as dg
 from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLUSTERS_COUNT_DEF, MAX_CLUSTERS
 
 
-# TODO: at se to nedviji od uniqvalues
+# TODO: at se to neodviji od uniqvalues
 
 # TODO: random moznost u vyberu trid
 # TODO: remove points s lasem?
@@ -27,8 +27,8 @@ from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLU
 # TODO: save as csv v DataSandobxu, pres Div dat vedet, co se deje, v text. poli moznost zvolit nazev
 
 class DataSandbox(SubLayout):
-    def __init__(self, name, data, plot_info, class_select_button):
-        SubLayout.__init__(self, name, data, plot_info)
+    def __init__(self, name, plot_info, class_select_button):
+        SubLayout.__init__(self, name, plot_info)
 
         self.__class_select_button = class_select_button
 
@@ -57,14 +57,13 @@ class DataSandbox(SubLayout):
             cluster_size = self.__get_cluster_size()
             x_new, y_new = dg.polygon_data(vertices, cluster_size)
             classification_new = self.__generate_classes(len(x_new))
-
             self.plot_info.append_data(x_new, y_new, classification_new)
 
     def __plot_source_change(self, attr, old, new):
         self.__data_size_info.update(text="Points in dataset: " + str(len(new['x'])))
 
     def _init_button_layout(self):
-        self.__data_size_info = Div(text="Points in dataset: " + str(len(self.data.x_data)))
+        self.__data_size_info = Div(text="Points in dataset: " + str(len(self.plot_info.plot_source.data['x'])))
 
         cluster_generating_options = self.__init_cluster_generating_options()
         lasso_options = self.__init_lasso_options()

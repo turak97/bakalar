@@ -28,8 +28,14 @@ class PlotInfo:
         self.color_mapper = CategoricalColorMapper(palette=self.palette, factors=uniq_values)
         self.color_dict = self.__uniq_vals2color_dict(uniq_values)
 
-        self.plot_source = ColumnDataSource(df)
-        self.plot_source.remove('index')
+        self.plot_source = ColumnDataSource(
+            data={
+                'x': df['x'].tolist(),
+                'y': df['y'].tolist(),
+                'classification': df['classification'].tolist()
+            }
+        )
+        # self.plot_source.remove('index')
         self.plot_source.add([self.color_dict[val] for val in df['classification']], 'color')
 
         self.plot_source_trigger = None
@@ -49,8 +55,8 @@ class PlotInfo:
         self.plot_source.remove_on_change('data', self.plot_source_trigger)
         self.plot_source.update(
             data=dict(
-                x=x,
-                y=y,
+                x=x.tolist(),
+                y=y.tolist(),
                 classification=classification,
                 color=[self.color_dict[val] for val in classification]
             )
@@ -133,39 +139,39 @@ def list_to_row(lay_list):
     return row([lay.layout for lay in lay_list])
 
 
-def data_sandbox(name, data, plot_info, class_select_button):
-    return DataSandbox(name, data, plot_info, class_select_button)
+def data_sandbox(name, plot_info, class_select_button):
+    return DataSandbox(name, plot_info, class_select_button)
 
 
-def resolution(model, name, data, plot_info):
+def resolution(model, name, plot_info):
     if not isinstance(model, str):
         return ClassifierSubLayout(
-            name=name, classifier=model, data=data, plot_info=plot_info
+            name=name, classifier=model, plot_info=plot_info
         )
     type_, kind = model.split(".")
     if type_ == "cls":
         if kind == "neural":
             return StandartClassifierSubLayouts.NeuralClassifier(
-                name=name, data=data, plot_info=plot_info
+                name=name, plot_info=plot_info
             )
         elif kind == "svm":
             return StandartClassifierSubLayouts.SvmClassifier(
-                name=name, data=data, plot_info=plot_info
+                name=name, plot_info=plot_info
             )
         elif kind == "knn":
             return StandartClassifierSubLayouts.KnnClassifier(
-                name=name, data=data, plot_info=plot_info
+                name=name, plot_info=plot_info
             )
         elif kind == "bayes":
             return StandartClassifierSubLayouts.BayesClassifier(
-                name=name, data=data, plot_info=plot_info
+                name=name, plot_info=plot_info
             )
         else:
             return None
     elif type_ == "reg":
         return pr.polynomial_layout(
             name=name,
-            data=data, plot_info=plot_info
+            plot_info=plot_info
         )
     else:
         return None

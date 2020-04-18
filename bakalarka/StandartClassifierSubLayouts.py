@@ -27,10 +27,10 @@ warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
 # TODO: sigmoid, gradient descent standartni parametry
 
 class BayesClassifier(ClassifierSubLayout):
-    def __init__(self, name, data, plot_info):
+    def __init__(self, name, plot_info):
         classifier = GaussianNB()
 
-        ClassifierSubLayout.__init__(self, name, classifier, data, plot_info)
+        ClassifierSubLayout.__init__(self, name, classifier, plot_info)
 
 
 class KnnClassifier(ClassifierSubLayout):
@@ -41,10 +41,10 @@ class KnnClassifier(ClassifierSubLayout):
         BRUTE = "brute force"
         AUTO = "auto"
 
-    def __init__(self, name, data, plot_info):
+    def __init__(self, name, plot_info):
         classifier = KNeighborsClassifier(n_neighbors=3)
 
-        ClassifierSubLayout.__init__(self, name, classifier, data, plot_info)
+        ClassifierSubLayout.__init__(self, name, classifier, plot_info)
 
     # def refit(self):
     #     self._info("Updating model and fitting data...")
@@ -106,10 +106,10 @@ class SvmClassifier(ClassifierSubLayout):
         RBF = "radial"
         SIGMOID = "sigmoid"
 
-    def __init__(self, name, data, plot_info):
+    def __init__(self, name, plot_info):
         classifier = SVC(kernel='linear')
 
-        ClassifierSubLayout.__init__(self, name, classifier, data, plot_info)
+        ClassifierSubLayout.__init__(self, name, classifier, plot_info)
 
     # def refit(self):
     #     self._info("Updating model and fitting data...")
@@ -188,24 +188,25 @@ class NeuralClassifier(ClassifierSubLayout):
         GRADIENT = "gradient descent"
         ADAM = "adam"
 
-    def __init__(self, name, data, plot_info):
+    def __init__(self, name, plot_info):
         """
         creates attribute self.name, self.classifier, self.fig, self.layout
-        self.data, self.plot_info from super
+        self.plot_info from super
         """
         classifier = MLPClassifier(random_state=1, tol=0)  # other parameters are gained from buttons
         # initialise iteration parameters for slider and classifier fitting
         self.__update_iteration_params(NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_SLIDER_STEPS)
         self.__logarithmic_steps = False
 
-        ClassifierSubLayout.__init__(self, name, classifier, data, plot_info)
+        ClassifierSubLayout.__init__(self, name, classifier, plot_info)
         self.__set_visible_renderer(self.slider_steps)
 
     def _figure_update(self):
         self._info("Updating model and fitting data...")
 
-        self._img_data = ImageData(self.data.x_data.min() - 1, self.data.x_data.max() + 1,
-                                   self.data.y_data.min() - 1, self.data.y_data.max() + 1)
+        data = self.plot_info.plot_source.data
+        self._img_data = ImageData(min(data['x']) - 1, max(data['x']) + 1,
+                                   min(data['y']) - 1, max(data['y']) + 1)
         for iterations, renderer_i in zip(range(self.iter_step, self.max_iter_steps + 1,
                                                 self.iter_step),
                                           range(1, self.slider_steps + 1)):  # first one is Circle

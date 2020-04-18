@@ -27,7 +27,7 @@ class ImageData:
 
 
 class ClassifierSubLayout(SubLayout):
-    def __init__(self, name, classifier, data, plot_info):
+    def __init__(self, name, classifier, plot_info):
         """
         creates attribute self.classifier and self.layout
         plus self.name, self.data, self.plot_info and self.fig from super
@@ -35,7 +35,7 @@ class ClassifierSubLayout(SubLayout):
         data and plot_info references are necessary to store due to updating
         figure based on user input (e.g. different neural activation function)
         """
-        SubLayout.__init__(self, name, data, plot_info)
+        SubLayout.__init__(self, name, plot_info)
 
         self._info("Initialising sublayout and fitting data...")
 
@@ -65,16 +65,14 @@ class ClassifierSubLayout(SubLayout):
         for renderer, new_d in zip(self.fig.renderers[1:], self._img_data.d):
             renderer.data_source.data['image'] = [new_d]
 
-        # self.fig.renderers[1].data_source.data['image'] = [self.img_DEL.d]
-
     def _figure_update(self):
         """
         figure must have an 'image' renderer as SECOND (at index 1) renderer,
         where will be directly changed data
         """
-
-        self._img_data = ImageData(self.data.x_data.min() - 1, self.data.x_data.max() + 1,
-                                   self.data.y_data.min() - 1, self.data.y_data.max() + 1)
+        data = self.plot_info.plot_source.data
+        self._img_data = ImageData(min(data['x']) - 1, max(data['x']) + 1,
+                                   min(data['y']) - 1, max(data['y']) + 1)
 
         # print("BUGCHECK***")
         # print(len(self.data.cls_X[0]))
@@ -90,7 +88,11 @@ class ClassifierSubLayout(SubLayout):
         expects attribute self.__img_data
         """
         self._info("Fitting data and updating figure, step: " + str(renderer_i))
-        self.classifier.fit(self.data.cls_X, self.data.classification)
+
+        data = self.plot_info.plot_source.data
+        cls_X = np.array([[data['x'][i], data['y'][i]] for i in range(len(data['x']))])
+
+        self.classifier.fit(cls_X, self.plot_info.plot_source.data['classification'])
 
         raw_d = self.classifier.predict(np.c_[self._img_data.xx.ravel(),
                                               self._img_data.yy.ravel()])

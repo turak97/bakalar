@@ -13,8 +13,8 @@ NEURAL_DEF_ACTIVATION = 2  # 0: identity, 1: sigmoid, 2: tanh, 3: linear
 NEURAL_DEF_LAYERS = "20"  # more layers: "20, 10, 5, 20"
 
 CLUSTERS_COUNT_DEF = 3
-CLUSTER_SIZE_DEF = 6
-CLUSTER_VOL_DEF = 2  # cluster size plus minus
+CLUSTER_SIZE_DEF = 3
+CLUSTER_VOL_DEF = 1  # cluster size plus minus
 MAX_CLUSTERS = 10
 
 """Those constants are for experiments (interesting app behaviour, but possible (bigger) instability)"""

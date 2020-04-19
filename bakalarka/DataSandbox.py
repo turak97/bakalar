@@ -32,19 +32,19 @@ class DataSandbox(SubLayout):
 
         self.__class_select_button = class_select_button
 
-        move_circle = self.fig.circle('x', 'y', color='color', source=plot_info.plot_source, size=7)
+        move_circle = self._fig.circle('x', 'y', color='color', source=plot_info.plot_source, size=7)
         point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value='black', add=True)
-        self.fig.add_tools(point_draw_tool)
+        self._fig.add_tools(point_draw_tool)
 
         self.plot_info.plot_source.on_change('data', self.__plot_source_change)  # DataSandbox can update statistics
 
-        self.fig.on_event(events.SelectionGeometry, self.__lasso_update)
+        self._fig.on_event(events.SelectionGeometry, self.__lasso_update)
 
     def __del__(self):
         self.plot_info.plot_source.remove_on_change('data', self.__plot_source_change)  # removing trigger
 
     def _layout_init(self):
-        return row(self.fig, row())
+        return row(self._fig, row())
 
     def __lasso_update(self, event):
         if event.final and 0 in self.__lasso_button.active:

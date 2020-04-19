@@ -16,8 +16,9 @@ from in_n_out import save_source
 
 # TODO: moznost prepnout mezi klasifikacni, regresni nebo obema verzema appky
 
+# TODO: zkusit lip vyresit memeni children v layoutech (row, column)
+
 # TODO: pekneji osetrit picker (aby nenastal pripad dvou stejnych barev), reseni: zjistit, ktery picker triggnul funkci?
-# TODO: vsechny atributy, co nemusi byt verejne, at nejsou!
 # TODO: uniq values dat dokupy
 # TODO: pekneji preskladat menu (model, class selection init)
 
@@ -50,7 +51,7 @@ class Layout:
         self.__cs0, self.__cs1, self.__cs2 = 0, 1, 1  # __class_selection position
 
     def __model_selection_init(self):
-        """Creates __dropdown, __options and __fit_all attribute, updates immediate_update in plot_info
+        """Create __dropdown, __options and __fit_all attribute, updates immediate_update in plot_info
         returns column of options
         """
         menu = [("Polynomial regression", "reg.polynomial"), None,
@@ -220,7 +221,7 @@ class Layout:
 
     def __del_sub_layout(self, attr, old, new):
         self._info("Deleting layout...")
-        removed_i = new[0]  # list(set(old) - set(new))[0]
+        removed_i = new[0]
         del self.__sub_layouts[removed_i]
         self.layout.children[self.__sl0].children[self.__sl1] = pu.list_to_row(self.__sub_layouts)
         self.__update_checkbox_column()
@@ -271,16 +272,15 @@ class SubLayout:
     def __init__(self, name, plot_info):
         self.name = name
         self.plot_info = plot_info
-        self.fig = figure(tools="pan,wheel_zoom,save,reset,box_zoom")
+        self._fig = figure(tools="pan,wheel_zoom,save,reset,box_zoom")
         self._lasso = LassoSelectTool()
-        self.fig.add_tools(self._lasso)
-        # last one row() is for children needs changed in _init_button_layout
+        self._fig.add_tools(self._lasso)
         self.layout = self._layout_init()
-
         self._init_button_layout()
 
     def _layout_init(self):
-        return column(self.fig, row())
+        # last one row() is for children needs changed in _init_button_layout
+        return column(self._fig, row())
 
     def update_renderer_colors(self):
         pass
@@ -292,4 +292,4 @@ class SubLayout:
         pass
 
     def _info(self, message):
-        print(self.name + " " + self.fig.id + ": " + message)
+        print(self.name + " " + self._fig.id + ": " + message)

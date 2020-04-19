@@ -28,9 +28,8 @@ class ImageData:
 
 class ClassifierSubLayout(SubLayout):
     def __init__(self, name, classifier, plot_info):
-        """
-        creates attribute self.classifier and self.layout
-        plus self.name, self.data, self.plot_info and self.fig from super
+        """Create attribute self._classifier and self.layout
+        plus self.name, self.plot_info and self.fig from super
 
         data and plot_info references are necessary to store due to updating
         figure based on user input (e.g. different neural activation function)
@@ -41,11 +40,11 @@ class ClassifierSubLayout(SubLayout):
 
         # add original data to the figure and prepare PointDrawTool to make them interactive
         # this renderer MUST be the FIRST one
-        move_circle = self.fig.circle('x', 'y', color='color', source=plot_info.plot_source, size=7)
+        move_circle = self._fig.circle('x', 'y', color='color', source=plot_info.plot_source, size=7)
         point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
-        self.fig.add_tools(point_draw_tool)
+        self._fig.add_tools(point_draw_tool)
 
-        self.classifier = classifier
+        self._classifier = classifier
         self.refit()
         self._info("Initialising DONE")
 
@@ -62,29 +61,21 @@ class ClassifierSubLayout(SubLayout):
         """
         triggers update of data_source for the figure color update
         """
-        for renderer, new_d in zip(self.fig.renderers[1:], self._img_data.d):
+        for renderer, new_d in zip(self._fig.renderers[1:], self._img_data.d):
             renderer.data_source.data['image'] = [new_d]
 
     def _figure_update(self):
-        """
-        figure must have an 'image' renderer as SECOND (at index 1) renderer,
+        """Figure must have an 'image' renderer as SECOND (at index 1) renderer,
         where will be directly changed data
         """
         data = self.plot_info.plot_source.data
         self._img_data = ImageData(min(data['x']) - 1, max(data['x']) + 1,
                                    min(data['y']) - 1, max(data['y']) + 1)
 
-        # print("BUGCHECK***")
-        # print(len(self.data.cls_X[0]))
-        # print(len(self.data.cls_X[1]))
-        # print(len(self.data.classification))
-        # print("***")
-
         self._fit_and_render(1)  # renderer at index 1 contains classifier image
 
     def _fit_and_render(self, renderer_i):
-        """
-        fits the model, render image and add/update image to the figure
+        """Fits the model, render image and add/update image to the figure
         expects attribute self.__img_data
         """
         self._info("Fitting data and updating figure, step: " + str(renderer_i))
@@ -92,31 +83,37 @@ class ClassifierSubLayout(SubLayout):
         data = self.plot_info.plot_source.data
         cls_X = np.array([[data['x'][i], data['y'][i]] for i in range(len(data['x']))])
 
-        self.classifier.fit(cls_X, self.plot_info.plot_source.data['classification'])
+        self._classifier.fit(cls_X, self.plot_info.plot_source.data['classification'])
 
-        raw_d = self.classifier.predict(np.c_[self._img_data.xx.ravel(),
-                                              self._img_data.yy.ravel()])
+        raw_d = self._classifier.predict(np.c_[self._img_data.xx.ravel(),
+                                               self._img_data.yy.ravel()])
         self._img_data.add_d(raw_d.reshape(self._img_data.xx.shape))
 
-        if len(self.fig.renderers) - 1 < renderer_i:
+        if len(self._fig.renderers) - 1 < renderer_i:
             self._new_fig_renderer(renderer_i - 1)
         else:
             self._update_fig_renderer(renderer_i)
 
     def _new_fig_renderer(self, d_index):
         # create a new image renderer
-        self.fig.image(image=[self._img_data.d[d_index]], x=self._img_data.x_min, y=self._img_data.y_min,
-                       dw=self._img_data.dw, dh=self._img_data.dh,
-                       color_mapper=self.plot_info.color_mapper, global_alpha=0.5)
+        self._fig.image(image=[self._img_data.d[d_index]], x=self._img_data.x_min, y=self._img_data.y_min,
+                        dw=self._img_data.dw, dh=self._img_data.dh,
+                        color_mapper=self.plot_info.color_mapper, global_alpha=0.5)
 
     def _update_fig_renderer(self, i):
-        # updating image data by directly changing them in figure
-        self.fig.renderers[i].glyph.color_mapper = self.plot_info.color_mapper
-        self.fig.renderers[i].data_source.data['image'] = [self._img_data.d[i - 1]]
-        self.fig.renderers[i].glyph.x = self._img_data.x_min
-        self.fig.renderers[i].glyph.y = self._img_data.y_min
-        self.fig.renderers[i].glyph.dw = self._img_data.dw
-        self.fig.renderers[i].glyph.dh = self._img_data.dh
+        """Update image data by directly changing them in the figure renderers"""
+        img_patch = {
+            'image': [(0, self._img_data.d[i - 1])]
+        }
+        self._fig.renderers[i].data_source.patch(img_patch)
+
+        self._fig.renderers[i].glyph.update(
+            color_mapper=self.plot_info.color_mapper,
+            x=self._img_data.x_min,
+            y=self._img_data.y_min,
+            dw=self._img_data.dw,
+            dh=self._img_data.dh
+        )
 
     def _init_button_layout(self):
         self.fit_button = Button(label="Fit", button_type="success")

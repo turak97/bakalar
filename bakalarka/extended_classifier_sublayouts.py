@@ -9,7 +9,7 @@ from sklearn.naive_bayes import GaussianNB
 
 from math import ceil
 
-from ClassifierSubLayout import ClassifierSubLayout, ImageData
+from basic_sublayouts import ClassifierSubLayout
 from constants import NEURAL_DEF_ACTIVATION, NEURAL_DEF_LAYERS, NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_SLIDER_STEPS
 
 import warnings
@@ -198,8 +198,8 @@ class NeuralClassifier(ClassifierSubLayout):
         self._info("Updating model and fitting data...")
 
         data = self.plot_info.plot_source.data
-        self._img_data = ImageData(min(data['x']) - 1, max(data['x']) + 1,
-                                   min(data['y']) - 1, max(data['y']) + 1)
+        self._img_data = self.ImageData(min(data['x']) - 1, max(data['x']) + 1,
+                                        min(data['y']) - 1, max(data['y']) + 1)
         for iterations, renderer_i in zip(range(self.__iter_step, self.__max_iter_steps + 1,
                                                 self.__iter_step),
                                           range(1, self.__slider_steps + 1)):  # first one is Circle

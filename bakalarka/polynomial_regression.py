@@ -9,7 +9,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 
 import data_gen as dg
-import Layout
+from basic_sublayouts import SubLayout
 
 # TODO: pri polynomech vyssich radu jdou hodnoty moc dohaje, zoptimalizovat,
 #  aby lina nesla zbytecne moc nahoru, buguje se to pak pri polynomech 10 radu a vys
@@ -133,7 +133,7 @@ def polynomial_layout(name, data, plot_info):
     return pol_lay
 
 
-class PolynomialLayout(Layout.SubLayout):
+class PolynomialLayout(SubLayout):
     def __init__(self, name, fig, slider,
                  line_source_visible, line_sources_available,):
         self.name = name

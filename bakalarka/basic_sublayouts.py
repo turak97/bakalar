@@ -1,32 +1,62 @@
+
 import numpy as np
-from bokeh.models import PointDrawTool, Button
+
+from bokeh.layouts import row, column
+from bokeh.models import PointDrawTool, Button, LassoSelectTool, Div
+from bokeh.plotting import figure
 
 from constants import MESH_STEP_SIZE, EMPTY_VALUE_COLOR
 
 # import matplotlib.pyplot as plt
 
-from Layout import SubLayout
 
+class SubLayout:
+    """Abstract class for classifier sub layouts, regressive sub layouts and data sandbox"""
+    def __init__(self, name, plot_info):
+        self.name = name
+        self.plot_info = plot_info
+        self._fig = figure(tools="pan,wheel_zoom,save,reset,box_zoom")
+        self._lasso = LassoSelectTool()
+        self._fig.add_tools(self._lasso)
+        self.layout = self._layout_init()
+        self._init_button_layout()
 
-class ImageData:
-    def __init__(self, x_min, x_max, y_min, y_max):
-        self.x_min = x_min
-        self.x_max = x_max
-        self.y_min = y_min
-        self.y_max = y_max
-        self.dw = x_max - x_min
-        self.dh = y_max - y_min
+    def _layout_init(self):
+        # last one row() is for children needs changed in _init_button_layout
+        return column(self._fig, row())
 
-        self.xx, self.yy = np.meshgrid(np.arange(x_min, x_max, MESH_STEP_SIZE),
-                                       np.arange(y_min, y_max, MESH_STEP_SIZE))
+    def update_renderer_colors(self):
+        pass
 
-        self.d = []
+    def refit(self):
+        pass
 
-    def add_d(self, d):
-        self.d.append(d)
+    def _init_button_layout(self):
+        pass
+
+    def _info(self, message):
+        print(self.name + " " + self._fig.id + ": " + message)
 
 
 class ClassifierSubLayout(SubLayout):
+    class ImageData:
+        """Class for image representation of model results"""
+        def __init__(self, x_min, x_max, y_min, y_max):
+            self.x_min = x_min
+            self.x_max = x_max
+            self.y_min = y_min
+            self.y_max = y_max
+            self.dw = x_max - x_min
+            self.dh = y_max - y_min
+
+            self.xx, self.yy = np.meshgrid(np.arange(x_min, x_max, MESH_STEP_SIZE),
+                                           np.arange(y_min, y_max, MESH_STEP_SIZE))
+
+            self.d = []
+
+        def add_d(self, d):
+            self.d.append(d)
+
     def __init__(self, name, classifier, plot_info):
         """Create attribute self._classifier and self.layout
         plus self.name, self.plot_info and self.fig from super
@@ -69,8 +99,8 @@ class ClassifierSubLayout(SubLayout):
         where will be directly changed data
         """
         data = self.plot_info.plot_source.data
-        self._img_data = ImageData(min(data['x']) - 1, max(data['x']) + 1,
-                                   min(data['y']) - 1, max(data['y']) + 1)
+        self._img_data = self.ImageData(min(data['x']) - 1, max(data['x']) + 1,
+                                        min(data['y']) - 1, max(data['y']) + 1)
 
         self._fit_and_render(1)  # renderer at index 1 contains classifier image
 

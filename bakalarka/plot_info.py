@@ -1,16 +1,7 @@
 
-from bokeh.layouts import row, column
 from bokeh.models import CategoricalColorMapper, ColumnDataSource
 
-import StandartClassifierSubLayouts
-from DataSandbox import DataSandbox
-from ClassifierSubLayout import ClassifierSubLayout
-
 from numpy import empty
-
-import polynomial_regression as pr
-
-# TODO: pekneji reprezentovat plot_source_init_data
 
 
 class PlotInfo:
@@ -134,51 +125,3 @@ class PlotInfo:
             values_dict[uq] = self.palette[i]
         return values_dict
 
-
-def list_to_row(lay_list):
-    return row([lay.layout for lay in lay_list])
-
-
-def data_sandbox(name, plot_info, class_select_button):
-    return DataSandbox(name, plot_info, class_select_button)
-
-
-def resolution(model, name, plot_info):
-    if not isinstance(model, str):
-        return ClassifierSubLayout(
-            name=name, classifier=model, plot_info=plot_info
-        )
-    type_, kind = model.split(".")
-    if type_ == "cls":
-        if kind == "neural":
-            return StandartClassifierSubLayouts.NeuralClassifier(
-                name=name, plot_info=plot_info
-            )
-        elif kind == "svm":
-            return StandartClassifierSubLayouts.SvmClassifier(
-                name=name, plot_info=plot_info
-            )
-        elif kind == "knn":
-            return StandartClassifierSubLayouts.KnnClassifier(
-                name=name, plot_info=plot_info
-            )
-        elif kind == "bayes":
-            return StandartClassifierSubLayouts.BayesClassifier(
-                name=name, plot_info=plot_info
-            )
-        else:
-            return None
-    elif type_ == "reg":
-        return pr.polynomial_layout(
-            name=name,
-            plot_info=plot_info
-        )
-    else:
-        return None
-
-
-def find_first(tuple_list, second):
-    for t1, t2 in filter(lambda x: x is not None, tuple_list):
-        if t2 == second:
-            return t1
-    return None

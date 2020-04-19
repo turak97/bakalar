@@ -4,12 +4,10 @@ import numpy as np
 import pandas as pd
 
 from bokeh.models import CheckboxButtonGroup, RadioButtonGroup, ColorPicker, Button
-from bokeh.models import LassoSelectTool, Div
 from bokeh.models.widgets import Dropdown
 from bokeh.layouts import row, column
-from bokeh.plotting import figure
 
-import plotting_utilities as pu
+import sublayout_resolution as sr
 from constants import CLASS_SELECT_BUTTON_WIDTH, MAX_CLASS_NAME_LENGTH, EMPTY_VALUE_COLOR
 from in_n_out import save_source
 
@@ -28,7 +26,7 @@ from in_n_out import save_source
 # TODO: odstranit immidiate update
 
 
-class Layout:
+class GeneralLayout:
     def __init__(self, plot_info, log=True):
         self.__log = log  # TODO: dodelat
 
@@ -128,7 +126,8 @@ class Layout:
             )
         )
         self.__color_pickers[-1].on_change('color', self.__change_color)
-        self.layout.children[self.__cs0].children[self.__cs1].children[self.__cs2].children[0] = row(self.__color_pickers)
+        self.layout.children[self.__cs0].children[self.__cs1].children[self.__cs2].children[0] \
+            = row(self.__color_pickers)
 
         new_labels = self.__normalise_uniq_values(self.plot_info.uniq_values())
         self.__class_select_button.update(labels=new_labels,
@@ -203,27 +202,38 @@ class Layout:
     def __new_sub_layout(self, value):
         # model_res_str is for resolution to sci kit model
         # model_name is a fancy name for CheckBoxButtonGroup
-        model_res, model_name = value.item, pu.find_first(self.__dropdown.menu, value.item)
+        model_res, model_name = value.item, GeneralLayout.__find_first(self.__dropdown.menu, value.item)
         self._info("Adding a new " + model_name + " plot...")
 
         if model_res == "sandbox":
-            sub_layout = pu.data_sandbox(name=model_name, plot_info=self.plot_info,
+            sub_layout = sr.data_sandbox(name=model_name, plot_info=self.plot_info,
                                          class_select_button=self.__class_select_button)
         else:
-            sub_layout = pu.resolution(model=model_res, name=model_name,
+            sub_layout = sr.resolution(model=model_res, name=model_name,
                                        plot_info=self.plot_info)
         self.__sub_layouts.append(sub_layout)
 
-        self.layout.children[self.__sl0].children[self.__sl1] = pu.list_to_row(self.__sub_layouts)
+        new_children = row([lay.layout for lay in self.__sub_layouts])
+        self.layout.children[self.__sl0].children[self.__sl1] = new_children
         self.__update_checkbox_column()
 
         self._info("New plot DONE")
+
+    @staticmethod
+    def __find_first(tuple_list, second):
+        """find first occurrence of second in tuple_list and returns first element"""
+        for t1, t2 in filter(lambda x: x is not None, tuple_list):
+            if t2 == second:
+                return t1
+        return None
 
     def __del_sub_layout(self, attr, old, new):
         self._info("Deleting layout...")
         removed_i = new[0]
         del self.__sub_layouts[removed_i]
-        self.layout.children[self.__sl0].children[self.__sl1] = pu.list_to_row(self.__sub_layouts)
+
+        new_children = row([lay.layout for lay in self.__sub_layouts])
+        self.layout.children[self.__sl0].children[self.__sl1] = new_children
         self.__update_checkbox_column()
         self._info("Deleting DONE")
 
@@ -267,29 +277,3 @@ class Layout:
             return str(int(prev) + 1)
         return "extra " + str(len(self.plot_info.uniq_values()))
 
-
-class SubLayout:
-    def __init__(self, name, plot_info):
-        self.name = name
-        self.plot_info = plot_info
-        self._fig = figure(tools="pan,wheel_zoom,save,reset,box_zoom")
-        self._lasso = LassoSelectTool()
-        self._fig.add_tools(self._lasso)
-        self.layout = self._layout_init()
-        self._init_button_layout()
-
-    def _layout_init(self):
-        # last one row() is for children needs changed in _init_button_layout
-        return column(self._fig, row())
-
-    def update_renderer_colors(self):
-        pass
-
-    def refit(self):
-        pass
-
-    def _init_button_layout(self):
-        pass
-
-    def _info(self, message):
-        print(self.name + " " + self._fig.id + ": " + message)

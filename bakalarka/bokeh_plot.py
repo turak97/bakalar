@@ -3,16 +3,15 @@ import argparse, sys
 from pathlib import Path
 
 from bokeh.layouts import row, column
-from bokeh.io import curdoc
 
 
 import bokeh
-from bokeh.server.server import  Server
+from bokeh.server.server import Server
 from bokeh.core import validation
 
 import data_gen as dg
-import plotting_utilities as pu
-import Layout as lo
+from plot_info import PlotInfo
+from general_layout import GeneralLayout
 from constants import POL_FROM_DGR, POL_TO_DGR, X_EXT, Y_EXT
 from constants import CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLUSTERS_COUNT_DEF
 from in_n_out import read_df
@@ -21,9 +20,9 @@ from in_n_out import read_df
 # TODO: @numba.njit()
 # TODO: https://docs.bokeh.org/en/latest/docs/reference/core/templates.html?fbclid=IwAR1AzUzA2gmpmO3bGqtM7bpNrop-bzbHA3jjgP786VuJirgANO8m7Ia5qAk
 
-# TODO: prepinac s naxvem souboru, kam se ulozi vysledek + prepinac po ukonceni aplikace ulozit dataset
+# TODO: prepinac s nazvem souboru, kam se ulozi vysledek + prepinac po ukonceni aplikace ulozit dataset
 
-# TODO: pekneji rozclenit plotting_utilities.py
+# TODO: pekneji rozclenit sublayout_resolution.py
 
 # TODO: vizualne oddelit figury a tlacitka, vizualni vysvetlivka u tlacitek
 # TODO: configurak v JSONu
@@ -64,12 +63,12 @@ if __name__ == '__main__':
         # if classification is None:
         #     classification = dg.classify(len(x_data), [str(i) for i in range(INIT_CLASSES_COUNT)])
 
-        plot_info = pu.PlotInfo(df=df,
-                                pol_min_degree=POL_FROM_DGR,
-                                pol_max_degree=POL_TO_DGR, palette=PALETTE,
-                                x_extension=X_EXT, y_extension=Y_EXT)
+        plot_info = PlotInfo(df=df,
+                             pol_min_degree=POL_FROM_DGR,
+                             pol_max_degree=POL_TO_DGR, palette=PALETTE,
+                             x_extension=X_EXT, y_extension=Y_EXT)
 
-        lay = lo.Layout(plot_info=plot_info)
+        lay = GeneralLayout(plot_info=plot_info)
 
         doc.add_root(row(lay.layout))
 

@@ -1,5 +1,6 @@
 
-from Layout import SubLayout
+from basic_sublayouts import SubLayout
+
 from bokeh.models import PointDrawTool, CheckboxButtonGroup, \
     Div, RadioButtonGroup, TextInput, Button, Select
 from bokeh import events
@@ -114,9 +115,7 @@ class DataSandbox(SubLayout):
 
     @staticmethod
     def __get_int_set_error(text_input, lowest_val):
-        """
-        returns POSITIVE INTEGER from text_input, if the value is different, returns "default" instead
-        """
+        """Returns POSITIVE INTEGER from text_input, if the value is different, returns "default" instead"""
         try:
             val = int(text_input.value)
         except ValueError:

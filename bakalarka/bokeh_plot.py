@@ -16,15 +16,16 @@ from constants import POL_FROM_DGR, POL_TO_DGR, X_EXT, Y_EXT
 from constants import CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLUSTERS_COUNT_DEF
 from in_n_out import read_df
 
+# TODO: Datasourcy podle trid, nova trida pro data, ktera bude drzet slovnik[trida]: columndatasource
+# TODO: striknte oddelit frontend a backend
+
+# TODO: moznost volby libovolneho algoritmu od scikitu
 
 # TODO: @numba.njit()
 # TODO: https://docs.bokeh.org/en/latest/docs/reference/core/templates.html?fbclid=IwAR1AzUzA2gmpmO3bGqtM7bpNrop-bzbHA3jjgP786VuJirgANO8m7Ia5qAk
 
 # TODO: prepinac s nazvem souboru, kam se ulozi vysledek + prepinac po ukonceni aplikace ulozit dataset
 
-# TODO: pekneji rozclenit sublayout_resolution.py
-
-# TODO: vizualne oddelit figury a tlacitka, vizualni vysvetlivka u tlacitek
 # TODO: configurak v JSONu
 # TODO: html stranky navic k proklikani a jako info
 

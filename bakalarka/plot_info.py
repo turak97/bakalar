@@ -3,6 +3,9 @@ from bokeh.models import CategoricalColorMapper, ColumnDataSource
 
 from numpy import empty
 
+# TODO: udelat z tohoto backend?
+# TODO: pamatovat algoritmy podle id figury
+
 
 class PlotInfo:
     def __init__(self, df,
@@ -124,4 +127,3 @@ class PlotInfo:
         for uq, i in zip(uniq_values, range(len(uniq_values))):
             values_dict[uq] = self.palette[i]
         return values_dict
-

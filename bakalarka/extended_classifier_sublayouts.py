@@ -50,9 +50,9 @@ class KnnClassifier(ClassifierSubLayout):
         """Creates buttons bellow the figure, sets the trigger functions on them
         and add them to the subLayout"""
         total_width = 500
-
-        fit_button = Button(label="Fit", button_type="success", width=500)
-        fit_button.on_click(self.refit)
+        #
+        # fit_button = Button(label="Fit", button_type="success", width=500)
+        # fit_button.on_click(self.refit)
 
         self.__algo_button = RadioButtonGroup(
             labels=[self.ButtonStr.BALLTREE, self.ButtonStr.KDTREE, self.ButtonStr.BRUTE, self.ButtonStr.AUTO],
@@ -64,11 +64,11 @@ class KnnClassifier(ClassifierSubLayout):
             options=[str(i) for i in range(1, 20)], width=70)
         n_neighbors_text = Div(text="Number of neighbors to use: ")
 
-        self.layout.children[1] = column(fit_button,
-                                         self.__algo_button,
-                                         row(n_neighbors_text,
-                                             self.__n_neighbors_button)
-                                         )
+        return column(
+                      self.__algo_button,
+                      row(n_neighbors_text,
+                          self.__n_neighbors_button)
+                      )
 
     def _update_classifier_params(self):
         new_algo = self.__label2algo_str(
@@ -116,9 +116,9 @@ class SvmClassifier(ClassifierSubLayout):
         """Creates buttons bellow the figure, sets the trigger functions on them
         and add them to the subLayout"""
         total_width = 500
-
-        fit_button = Button(label="Fit", button_type="success", width=500)
-        fit_button.on_click(self.refit)
+        #
+        # fit_button = Button(label="Fit", button_type="success", width=500)
+        # fit_button.on_click(self.refit)
 
         self.__kernel_button = RadioButtonGroup(
             labels=[self.ButtonStr.LINEAR, self.ButtonStr.POLY, self.ButtonStr.RBF, self.ButtonStr.SIGMOID],
@@ -132,12 +132,12 @@ class SvmClassifier(ClassifierSubLayout):
         self.__regularization_parameter_input = TextInput(value="1.0", width=75)
         regularization_parameter_text = Div(text="Regularization parameter: ")
 
-        self.layout.children[1] = column(fit_button,
-                                         self.__kernel_button,
-                                         row(regularization_parameter_text,
-                                             self.__regularization_parameter_input),
-                                         row(degree_text, self.__degree_button)
-                                         )
+        return column(
+                      self.__kernel_button,
+                      row(regularization_parameter_text,
+                          self.__regularization_parameter_input),
+                      row(degree_text, self.__degree_button)
+                      )
 
     def _update_classifier_params(self):
         new_kernel = self.__label2kernel_str(
@@ -221,7 +221,6 @@ class NeuralClassifier(ClassifierSubLayout):
     def refit(self):
         """Update iteration (max, slider step, ...) and classifier parameters then update figure"""
         self._info("Updating model and fitting data...")
-        self.__fit_button.disabled = True  # disabling button so there are peaceful conditions for fitting model
         self.__logarithmic_steps = self.__logarithm_button.active
 
         self.__update_iteration_params(int(self.__max_iterations_input.value),
@@ -231,7 +230,6 @@ class NeuralClassifier(ClassifierSubLayout):
         self._figure_update()
         self.__set_visible_renderer(self.__slider_steps)
 
-        self.__fit_button.disabled = False
         self._info("Fitting and updating DONE")
 
     def _init_button_layout(self):
@@ -272,13 +270,13 @@ class NeuralClassifier(ClassifierSubLayout):
         )
         solver_text = Div(text="Weigh optimization solver:")
         solver_group = column(solver_text, self.__solver_button)
+        #
+        # self.__fit_button = Button(label="Fit", button_type="success")
+        # self.__fit_button.on_click(self.refit)
 
-        self.__fit_button = Button(label="Fit", button_type="success")
-        self.__fit_button.on_click(self.refit)
-
-        self.layout.children[1] = column(self.__fit_button, slider_group,
-                                         layers_input, activation_group,
-                                         solver_group)
+        return column(slider_group,
+                      layers_input, activation_group,
+                      solver_group)
 
     def __set_visible_renderer(self, visible):
         for renderer, i in zip(self._fig.renderers[1:], range(1, len(self._fig.renderers))):

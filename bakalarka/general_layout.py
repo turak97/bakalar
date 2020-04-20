@@ -19,6 +19,7 @@ from in_n_out import save_source
 # TODO: pekneji osetrit picker (aby nenastal pripad dvou stejnych barev), reseni: zjistit, ktery picker triggnul funkci?
 # TODO: uniq values dat dokupy
 # TODO: pekneji preskladat menu (model, class selection init)
+# TODO: vizualne oddelit figury a tlacitka, vizualni vysvetlivka u tlacitek
 
 # TODO: Layout bude tvorit PlotInfo v konstruktoru?
 
@@ -35,50 +36,57 @@ class GeneralLayout:
 
         self.__sub_layouts = []
 
-        options = self.__model_selection_init()
+        model_selection = self.__model_selection_init()
+        fit_all = self.__fit_all_init()
         class_selection = self.__class_selection_init()
+        data_sandbox_button = self.__sand_box_button_init()
 
-        self.layout = column(column(
-                                    self.__dropdown,
-                                    row(options, class_selection)
+        self.layout = column(column(row(class_selection),
+                                    row(data_sandbox_button, fit_all, model_selection)
                                     ),
-                             row(
-                                 row()))  # row() is a place for added SubLayouts
-        self.__sl0, self.__sl1 = 1, 0  # SubLayouts position
-        self.__dp0, self.__dp1 = 0, 0  # DropDown position
-        self.__cs0, self.__cs1, self.__cs2 = 0, 1, 1  # __class_selection position
+                             row(row(),  # this is a place for data sandbox
+                                 row()))  # this is a place for added SubLayouts
+        self.__sb1, self.__sb2 = 1, 0  # data sandbox position
+        self.__sl0, self.__sl1 = 1, 1  # SubLayouts position
+        self.__dp0, self.__dp1, self.__dp2 = 0, 1, 2  # DropDown (model_selection) position
+        self.__cs0, self.__cs1, self.__cs2 = 0, 0, 0  # __class_selection position
+
+    def __sand_box_button_init(self):
+        """Initialise button for data sandbox activation"""
+        self.__sandbox_button = CheckboxButtonGroup(labels=["Data Sandbox"], active=None)
+        self.__sandbox_button.on_change('active', self.__data_sandbox_trigger)
+
+        return self.__sandbox_button
+
+    def __fit_all_init(self):
+        """Initialise menu buttons and sets triggers on them
+        return column of buttons"""
+
+        # TODO: presunout do Sandboxu
+        # self.__save_csv = Button(label="Save as CSV",
+        #                          width_policy="fixed", width=150)
+        # self.__save_csv.on_click(self.__save_dataset)
+
+        self.__fit_all = Button(label="Fit all", button_type="success", width=150)
+        self.__fit_all.on_click(self.__update_all_sublayouts)
+
+        return self.__fit_all
 
     def __model_selection_init(self):
-        """Create __dropdown, __options and __fit_all attribute, updates immediate_update in plot_info
-        returns column of options
+        """Initialise dropdown button for choosing model
+        return __dropdown
         """
         menu = [("Polynomial regression", "reg.polynomial"), None,
                 ("SVM classification", "cls.svm"),
                 ("K nearest neighbours", "cls.knn"), ("Naive Bayes (Gaussian)", "cls.bayes"),
-                ("Neural classification", "cls.neural"), None,
-                ("Data Sandbox", "sandbox")]
+                ("Neural classification", "cls.neural")]
 
         self.__dropdown = Dropdown(label="+ add model", button_type="primary", menu=menu,
                                    width_policy="fixed", width=170
                                    )
         self.__dropdown.on_click(self.__new_sub_layout)
 
-        self.__save_csv = Button(label="Save as CSV",
-                                 width_policy="fixed", width=150)
-        self.__save_csv.on_click(self.__save_dataset)
-
-        self.__fit_all = Button(label="Fit all", button_type="success", width=150)
-        self.__fit_all.on_click(self.__update_sublayouts)
-
-        self.__options = CheckboxButtonGroup(labels=["Immediate update"], width=150,
-                                             active=[]  # affects immediate_update in plot_info
-                                             )
-        self.__options.on_change('active', self.__options_change)
-        self.plot_info.immediate_update = False
-
-        return column(self.__save_csv,
-                      row(self.__options, self.__fit_all)
-                      )
+        return self.__dropdown
 
     def __class_selection_init(self):
         classes_count = len(self.plot_info.uniq_values())
@@ -133,6 +141,14 @@ class GeneralLayout:
         self.__class_select_button.update(labels=new_labels,
                                           width=button_width)
 
+    def __data_sandbox_trigger(self, attr, old, new):
+        if 0 in new:  # sandbox button was activated
+            sandbox = sr.data_sandbox(name="Data Sandbox", plot_info=self.plot_info,
+                                                class_select_button=self.__class_select_button)
+            self.layout.children[self.__sb1].children[self.__sb2] = sandbox.layout
+        else:
+            self.layout.children[self.__sb1].children[self.__sb2] = row()
+
     def __save_dataset(self):
         self._info("Saving dataset...")
         abs_path = save_source(self.plot_info.plot_source)
@@ -170,8 +186,8 @@ class GeneralLayout:
         return normalised
 
     def __change_color(self, attr, old, new):
-        # two colors check
-        if new == "#000000":
+
+        if new == "#000000":  # two colors check
             for picker in self.__color_pickers:
                 if picker.color == "#000000":
                     picker.color = old
@@ -193,24 +209,15 @@ class GeneralLayout:
         # __class_selection = self.__class_selection_init()
         # self.layout.children[self.__cs0].children[self.__cs1].children[self.__cs2] = __class_selection
 
-    def __options_change(self, attr, old, new):
-        if 0 in new:  # immediate update active
-            self.plot_info.immediate_update = True
-        else:
-            self.plot_info.immediate_update = False
-
     def __new_sub_layout(self, value):
         # model_res_str is for resolution to sci kit model
         # model_name is a fancy name for CheckBoxButtonGroup
         model_res, model_name = value.item, GeneralLayout.__find_first(self.__dropdown.menu, value.item)
         self._info("Adding a new " + model_name + " plot...")
 
-        if model_res == "sandbox":
-            sub_layout = sr.data_sandbox(name=model_name, plot_info=self.plot_info,
-                                         class_select_button=self.__class_select_button)
-        else:
-            sub_layout = sr.resolution(model=model_res, name=model_name,
-                                       plot_info=self.plot_info)
+        sub_layout = sr.resolution(model=model_res, name=model_name,
+                                   plot_info=self.plot_info)
+
         self.__sub_layouts.append(sub_layout)
 
         new_children = row([lay.layout for lay in self.__sub_layouts])
@@ -242,7 +249,8 @@ class GeneralLayout:
         checkbox_button = CheckboxButtonGroup(labels=labels, default_size=200*len(self.__sub_layouts),
                                               active=[])
         checkbox_button.on_change('active', self.__del_sub_layout)
-        self.layout.children[self.__dp0].children[self.__dp1] = row(checkbox_button, self.__dropdown)
+        self.layout.children[self.__dp0].children[self.__dp1].children[self.__dp2] = \
+            row(checkbox_button, self.__dropdown)
 
     def __data_change(self, attr, old, new):
         self._info("Updating data...")
@@ -256,17 +264,29 @@ class GeneralLayout:
 
         self._info("Updating data DONE")
 
-        if self.plot_info.immediate_update:
-            self.__update_sublayouts()
+        self.__update_immediate_sublayouts()
 
-    def __update_sublayouts(self):
-        self._info("Updating sublayouts")
-        self.__fit_all.update(disabled=True)
+    def __update_immediate_sublayouts(self):
+        sub_layouts_to_update = [sub_lay for sub_lay in self.__sub_layouts if sub_lay.immediate_update()]
+        if len(sub_layouts_to_update) == 0:
+            return
+
+        self._info("Immediate update of sublayouts...")
+
+        for sub_lay in sub_layouts_to_update:
+            self._info("Updating figure " + sub_lay.name + "...")
+            sub_lay.refit()
+
+        self._info("Updating sublayouts DONE")
+
+    def __update_all_sublayouts(self):
+        self._info("Updating all sublayouts")
+
         for sub_lay in self.__sub_layouts:
             self._info("Updating figure " + sub_lay.name + "...")
             sub_lay.refit()
-        self.__fit_all.update(disabled=False)
-        self._info("Updating sublayouts DONE")
+
+        self._info("Updating DONE")
 
     @staticmethod
     def _info(message):

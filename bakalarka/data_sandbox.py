@@ -14,17 +14,14 @@ from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLU
 
 # TODO: at se to neodviji od uniqvalues
 
-# TODO: random moznost u vyberu trid
 # TODO: remove points s lasem?
 
 # TODO: bug: unexpected chovani pri odstraneni vsech bodu
 # TODO: bug: points in dataset obcas zobrazuje o 1 mensi hodnotu, nez self.data.classification u BUGCHECKu
 
-# TODO: vyclenit to z nabidky samostatny toggle button
-
+# TODO: vyclenit to z nabidky samostatny toggle button na sandbox
 # TODO: automaticky a manualni rezim pridavani/ preklikavat/ podle toho se zorazi dole tlacitka
 # TODO: u manualniho rezimu popridavat vysvetlivky
-
 # TODO: save as csv v DataSandobxu, pres Div dat vedet, co se deje, v text. poli moznost zvolit nazev
 
 class DataSandbox(SubLayout):
@@ -33,19 +30,13 @@ class DataSandbox(SubLayout):
 
         self.__class_select_button = class_select_button
 
-        move_circle = self._fig.circle('x', 'y', color='color', source=plot_info.plot_source, size=7)
-        point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value='black', add=True)
-        self._fig.add_tools(point_draw_tool)
-
         self.plot_info.plot_source.on_change('data', self.__plot_source_change)  # DataSandbox can update statistics
 
         self._fig.on_event(events.SelectionGeometry, self.__lasso_update)
 
     def __del__(self):
+        print("bla")
         self.plot_info.plot_source.remove_on_change('data', self.__plot_source_change)  # removing trigger
-
-    def _layout_init(self):
-        return row(self._fig, row())
 
     def __lasso_update(self, event):
         if event.final and 0 in self.__lasso_button.active:
@@ -63,15 +54,19 @@ class DataSandbox(SubLayout):
     def __plot_source_change(self, attr, old, new):
         self.__data_size_info.update(text="Points in dataset: " + str(len(new['x'])))
 
+    def _layout_init(self):
+        button_layout = self._init_button_layout()
+        return row(self._fig, button_layout)
+
     def _init_button_layout(self):
         self.__data_size_info = Div(text="Points in dataset: " + str(len(self.plot_info.plot_source.data['x'])))
 
         cluster_generating_options = self.__init_cluster_generating_options()
         lasso_options = self.__init_lasso_options()
-        self.layout.children[1] = column(self.__data_size_info,
-                                         cluster_generating_options,
-                                         lasso_options
-                                         )
+        return column(self.__data_size_info,
+                      cluster_generating_options,
+                      lasso_options
+                      )
 
     def __init_lasso_options(self):
         self.__lasso_button = CheckboxButtonGroup(

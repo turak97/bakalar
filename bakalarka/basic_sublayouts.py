@@ -2,7 +2,7 @@
 import numpy as np
 
 from bokeh.layouts import row, column
-from bokeh.models import PointDrawTool, Button, LassoSelectTool, Div
+from bokeh.models import PointDrawTool, Button, LassoSelectTool, Div, CheckboxButtonGroup
 from bokeh.plotting import figure
 
 from constants import MESH_STEP_SIZE, EMPTY_VALUE_COLOR
@@ -19,17 +19,36 @@ class SubLayout:
         self._lasso = LassoSelectTool()
         self._fig.add_tools(self._lasso)
         self.layout = self._layout_init()
-        self._init_button_layout()
+
+        # add original data to the figure and prepare PointDrawTool to make them interactive
+        # this renderer MUST be the FIRST one
+        move_circle = self._fig.circle('x', 'y', color='color', source=plot_info.plot_source, size=7)
+        point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
+        self._fig.add_tools(point_draw_tool)
 
     def _layout_init(self):
         # last one row() is for children needs changed in _init_button_layout
-        return column(self._fig, row())
+        fit_layout = self._init_fit_layout()
+        button_layout = self._init_button_layout()
+        return column(self._fig, fit_layout, button_layout)
 
     def update_renderer_colors(self):
         pass
 
     def refit(self):
         pass
+
+    def immediate_update(self):
+        return 0 in self._immediate_update.active  # immediate update option is at index 0
+
+    def _init_fit_layout(self):
+        self._fit_button = Button(label="Solo Fit", button_type="success")
+        self._fit_button.on_click(self.refit)
+
+        self._immediate_update = CheckboxButtonGroup(
+            labels=["Immediate update when new points added"], active=[0])
+
+        return row(self._immediate_update, self._fit_button)
 
     def _init_button_layout(self):
         pass
@@ -67,12 +86,6 @@ class ClassifierSubLayout(SubLayout):
         SubLayout.__init__(self, name, plot_info)
 
         self._info("Initialising sublayout and fitting data...")
-
-        # add original data to the figure and prepare PointDrawTool to make them interactive
-        # this renderer MUST be the FIRST one
-        move_circle = self._fig.circle('x', 'y', color='color', source=plot_info.plot_source, size=7)
-        point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
-        self._fig.add_tools(point_draw_tool)
 
         self._classifier = classifier
         self.refit()
@@ -144,12 +157,6 @@ class ClassifierSubLayout(SubLayout):
             dw=self._img_data.dw,
             dh=self._img_data.dh
         )
-
-    def _init_button_layout(self):
-        self.fit_button = Button(label="Fit", button_type="success")
-        self.fit_button.on_click(self.refit)
-
-        self.layout.children[1] = self.fit_button
 
     def _indie_plot(self):
         pass

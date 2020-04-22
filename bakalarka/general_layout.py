@@ -1,15 +1,10 @@
 
-import numpy as np
-
-import pandas as pd
-
 from bokeh.models import CheckboxButtonGroup, RadioButtonGroup, ColorPicker, Button, Div
 from bokeh.models.widgets import Dropdown
 from bokeh.layouts import row, column
 
 import sublayout_resolution as sr
 from constants import CLASS_SELECT_BUTTON_WIDTH, MAX_CLASS_NAME_LENGTH, EMPTY_VALUE_COLOR
-from in_n_out import save_source
 
 
 # TODO: moznost prepnout mezi klasifikacni, regresni nebo obema verzema appky
@@ -46,7 +41,7 @@ class GeneralLayout:
                  "Figure can be deleted by clicking on it in the button group. "
                  "You can add a new/move/delete points in the dataset by selecting \"Point Draw Tool\" "
                  "in the figure toolbar. Then choose a class and click anywhere into the figure. You can select "
-                 "more points by holding \"shift\" while selecting and delete them by with \"basckspace\". "
+                 "more points by holding \"shift\" while selecting and delete them by with \"backspace\". "
                  "For more manipulating options with dataset click on \"Data Sandbox\". You can deactivate it by "
                  "clicking on the option again. Every figure can be updated immediately after adding/moving/deleting"
                  " points by selecting \"Immediate update\" bellow the figure (this comes handy with fast algorithms "

@@ -46,7 +46,7 @@ class SubLayout:
         self._fit_button.on_click(self.refit)
 
         self._immediate_update = CheckboxButtonGroup(
-            labels=["Immediate update when new points added"], active=[0])
+            labels=["Immediate update when new points added"], active=[])
 
         return row(self._immediate_update, self._fit_button)
 

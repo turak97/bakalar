@@ -10,7 +10,8 @@ from sklearn.naive_bayes import GaussianNB
 from math import ceil
 
 from basic_sublayouts import ClassifierSubLayout
-from constants import NEURAL_DEF_ACTIVATION, NEURAL_DEF_LAYERS, NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_SLIDER_STEPS
+from constants import NEURAL_DEF_ACTIVATION, NEURAL_DEF_LAYERS, \
+    NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_SLIDER_STEPS, NEURAL_DEF_SOLVER
 
 import warnings
 from sklearn.exceptions import ConvergenceWarning
@@ -21,8 +22,6 @@ warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
 
 # TODO: u SVM pridat pod Fit button info "kernely: "
 # TODO: prindat vseobecne info
-
-# TODO: u knn zvazit moznosti algoritmu (vysledek stejny, mozna ponechat jen auto)
 
 # TODO: sigmoid, gradient descent standartni parametry
 
@@ -49,15 +48,6 @@ class KnnClassifier(ClassifierSubLayout):
     def _init_button_layout(self):
         """Creates buttons bellow the figure, sets the trigger functions on them
         and add them to the subLayout"""
-        total_width = 500
-        #
-        # fit_button = Button(label="Fit", button_type="success", width=500)
-        # fit_button.on_click(self.refit)
-
-        self.__algo_button = RadioButtonGroup(
-            labels=[self.ButtonStr.BALLTREE, self.ButtonStr.KDTREE, self.ButtonStr.BRUTE, self.ButtonStr.AUTO],
-            active=3, width=total_width
-        )
 
         self.__n_neighbors_button = Select(
             title="", value="3",
@@ -71,15 +61,7 @@ class KnnClassifier(ClassifierSubLayout):
                       )
 
     def _update_classifier_params(self):
-        new_algo = self.__label2algo_str(
-            self.__chosen_algo()
-        )
-        self._classifier.algorithm = new_algo
-
         self._classifier.n_neighbors = int(self.__n_neighbors_button.value)
-
-    def __chosen_algo(self):
-        return self.__algo_button.labels[self.__algo_button.active]
 
     @staticmethod
     def __label2algo_str(label):
@@ -265,7 +247,7 @@ class NeuralClassifier(ClassifierSubLayout):
 
         self.__solver_button = RadioButtonGroup(
             labels=[self.ButtonStr.LBFGS, self.ButtonStr.GRADIENT, self.ButtonStr.ADAM],
-            active=2,
+            active=NEURAL_DEF_SOLVER,
             width=total_width
         )
         solver_text = Div(text="Weigh optimization solver:")

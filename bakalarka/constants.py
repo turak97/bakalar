@@ -9,7 +9,8 @@ SAVED_DATASET_FILE_NAME = "my_dataset.csv"
 
 NEURAL_DEF_SLIDER_STEPS = 3
 NEURAL_DEF_MAX_ITER_STEPS = 100
-NEURAL_DEF_ACTIVATION = 2  # 0: identity, 1: sigmoid, 2: tanh, 3: linear
+NEURAL_DEF_ACTIVATION = 1  # 0: identity, 1: sigmoid, 2: tanh, 3: linear
+NEURAL_DEF_SOLVER = 1  # 0: lbfgs, 1: gradient descent, 2: adam
 NEURAL_DEF_LAYERS = "20"  # more layers: "20, 10, 5, 20"
 
 CLUSTERS_COUNT_DEF = 3

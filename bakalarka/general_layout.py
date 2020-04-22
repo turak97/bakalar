@@ -77,11 +77,6 @@ class GeneralLayout:
         """Initialise menu buttons and sets triggers on them
         return column of buttons"""
 
-        # TODO: presunout do Sandboxu
-        # self.__save_csv = Button(label="Save as CSV",
-        #                          width_policy="fixed", width=150)
-        # self.__save_csv.on_click(self.__save_dataset)
-
         self.__fit_all = Button(label="Fit all", button_type="success", width=150)
         self.__fit_all.on_click(self.__update_all_sublayouts)
 
@@ -163,12 +158,6 @@ class GeneralLayout:
             self.layout.children[self.__sb1].children[self.__sb2] = sandbox.layout
         else:
             self.layout.children[self.__sb1].children[self.__sb2] = row()
-
-    def __save_dataset(self):
-        self._info("Saving dataset...")
-        abs_path = save_source(self.plot_info.plot_source)
-        self._info("Saved in " + str(abs_path))
-        self._info("Saving DONE")
 
     @staticmethod
     def __normalise_picker_width(classes_count):

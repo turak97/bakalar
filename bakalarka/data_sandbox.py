@@ -8,8 +8,10 @@ from bokeh.layouts import row, column
 
 from random import randint
 
+from in_n_out import save_source
 import data_gen as dg
-from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLUSTERS_COUNT_DEF, MAX_CLUSTERS
+from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLUSTERS_COUNT_DEF, MAX_CLUSTERS, \
+    SAVED_DATASET_FILE_NAME
 
 
 # TODO: at se to neodviji od uniqvalues
@@ -19,8 +21,7 @@ from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLU
 # TODO: bug: unexpected chovani pri odstraneni vsech bodu
 # TODO: bug: points in dataset obcas zobrazuje o 1 mensi hodnotu, nez self.data.classification u BUGCHECKu
 
-# TODO: automaticky a manualni rezim pridavani/ preklikavat/ podle toho se zorazi dole tlacitka
-# TODO: u manualniho rezimu popridavat vysvetlivky
+
 # TODO: save as csv v DataSandobxu, pres Div dat vedet, co se deje, v text. poli moznost zvolit nazev
 
 class DataSandbox(SubLayout):
@@ -59,6 +60,12 @@ class DataSandbox(SubLayout):
     def _init_button_layout(self):
         self.__data_size_info = Div(text="Points in dataset: " + str(len(self.plot_info.plot_source.data['x'])))
 
+        self.__save_button = Button(label="Save dataset", button_type="primary")
+        self.__save_button.on_click(self.__save_dataset)
+
+        self.__save_path = TextInput(value=SAVED_DATASET_FILE_NAME, title="Name of the file:")
+        save_group = column(self.__save_path, self.__save_button)
+
         mode_button_labels = ["Lasso", "Automatic generation"]
         mode_button_width = 120 * (len(mode_button_labels) + 1)
         self.__points_generation_mode = RadioButtonGroup(
@@ -73,10 +80,18 @@ class DataSandbox(SubLayout):
 
         active_mode = self.__generation_modes[self.__points_generation_mode.active]
         return column(self.__data_size_info,
+                      save_group,
                       mode_text,
                       self.__points_generation_mode,
                       active_mode,
                       )
+
+    def __save_dataset(self):
+        self._info("Saving dataset...")
+        abs_path = save_source(self.plot_info.plot_source, self.__save_path.value)  # TODO: tohle by mel delat plot_info
+        self._info("Saved in " + str(abs_path))
+        self._info("Saving DONE")
+
 
     def __init_lasso_options(self):
         __lasso_general_info = Div(
@@ -141,9 +156,10 @@ class DataSandbox(SubLayout):
                       __generate_new_clusters_button
                       )
 
+
     def __points_generation_mode_trigger(self, attr, old, new):
         new_mode = self.__generation_modes[new]
-        self.layout.children[1].children[3] = new_mode
+        self.layout.children[1].children[4] = new_mode
 
     @staticmethod
     def __get_int_set_error(text_input, lowest_val):

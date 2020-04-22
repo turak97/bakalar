@@ -3,24 +3,27 @@ import os
 from pathlib import Path
 import pandas as pd
 
-from constants import SAVED_DATASETS_DIR_NAME, SAVED_DATASET_FILE_NAME
+from constants import SAVED_DATASETS_DIR_NAME
 
 # TODO: elegantni cislovani souboru
 # TODO: ukladat classy ve stringu
 
-def save_source(col_data_source):
-    """
-    save given ColumnDataSource as csv
+
+def save_source(col_data_source, name):
+    """Save given ColumnDataSource as csv
     throws away last column because colors are expected to be there
-    returns absolute path where the file was saved
+    returns absolute path where the file was saved.
     """
+    if name[-4:] != ".csv":
+        name += ".csv"
+
     pandas_df = col_data_source.to_df()
     pandas_df = pandas_df.drop(columns='color')
 
     if not os.path.exists(SAVED_DATASETS_DIR_NAME):
         os.makedirs(SAVED_DATASETS_DIR_NAME)
     path = Path(SAVED_DATASETS_DIR_NAME)
-    path = path / SAVED_DATASET_FILE_NAME
+    path = path / name
 
     pandas_df.to_csv(path, encoding='utf-8')
 

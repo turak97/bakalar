@@ -13,13 +13,8 @@ from constants import CLASS_SELECT_BUTTON_WIDTH, MAX_CLASS_NAME_LENGTH, EMPTY_VA
 
 # TODO: pekneji osetrit picker (aby nenastal pripad dvou stejnych barev), reseni: zjistit, ktery picker triggnul funkci?
 # TODO: uniq values dat dokupy
-# TODO: pekneji preskladat menu (model, class selection init)
-# TODO: vizualne oddelit figury a tlacitka, vizualni vysvetlivka u tlacitek
 
 # TODO: Layout bude tvorit PlotInfo v konstruktoru?
-
-# TODO: add model pod tridama picker
-# TODO: odstranit immidiate update
 
 
 class GeneralLayout:

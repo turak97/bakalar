@@ -65,7 +65,6 @@ class DataSandbox(SubLayout):
         self.__save_info = Div(text="", style={'font-size': '75%'}, width_policy="fixed")
         save_group = column(self.__save_path, self.__save_button, self.__save_info)
 
-
         mode_button_labels = ["Lasso", "Automatic generation"]
         mode_button_width = 120 * (len(mode_button_labels) + 1)
         self.__points_generation_mode = RadioButtonGroup(

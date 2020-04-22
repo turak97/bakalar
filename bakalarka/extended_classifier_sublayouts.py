@@ -20,10 +20,6 @@ warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
 
 # TODO: define all default values as constants
 
-# TODO: u SVM pridat pod Fit button info "kernely: "
-# TODO: prindat vseobecne info
-
-# TODO: sigmoid, gradient descent standartni parametry
 
 class BayesClassifier(ClassifierSubLayout):
     def __init__(self, name, plot_info):
@@ -102,10 +98,13 @@ class SvmClassifier(ClassifierSubLayout):
         # fit_button = Button(label="Fit", button_type="success", width=500)
         # fit_button.on_click(self.refit)
 
+        __kernel_text = Div(text="Algorithm kernel: ")
         self.__kernel_button = RadioButtonGroup(
             labels=[self.ButtonStr.LINEAR, self.ButtonStr.POLY, self.ButtonStr.RBF, self.ButtonStr.SIGMOID],
             active=0, width=total_width
         )
+        __kernel_group = column(__kernel_text, self.__kernel_button)
+
         self.__degree_button = Select(
             title="", value="3",
             options=[str(i) for i in range(20)], width=70)
@@ -115,7 +114,7 @@ class SvmClassifier(ClassifierSubLayout):
         regularization_parameter_text = Div(text="Regularization parameter: ")
 
         return column(
-                      self.__kernel_button,
+                      __kernel_group,
                       row(regularization_parameter_text,
                           self.__regularization_parameter_input),
                       row(degree_text, self.__degree_button)

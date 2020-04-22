@@ -22,8 +22,6 @@ from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLU
 # TODO: bug: points in dataset obcas zobrazuje o 1 mensi hodnotu, nez self.data.classification u BUGCHECKu
 
 
-# TODO: save as csv v DataSandobxu, pres Div dat vedet, co se deje, v text. poli moznost zvolit nazev
-
 class DataSandbox(SubLayout):
     def __init__(self, name, plot_info, class_select_button):
         SubLayout.__init__(self, name, plot_info)
@@ -64,7 +62,9 @@ class DataSandbox(SubLayout):
         self.__save_button.on_click(self.__save_dataset)
 
         self.__save_path = TextInput(value=SAVED_DATASET_FILE_NAME, title="Name of the file:")
-        save_group = column(self.__save_path, self.__save_button)
+        self.__save_info = Div(text="", style={'font-size': '75%'}, width_policy="fixed")
+        save_group = column(self.__save_path, self.__save_button, self.__save_info)
+
 
         mode_button_labels = ["Lasso", "Automatic generation"]
         mode_button_width = 120 * (len(mode_button_labels) + 1)
@@ -89,9 +89,9 @@ class DataSandbox(SubLayout):
     def __save_dataset(self):
         self._info("Saving dataset...")
         abs_path = save_source(self.plot_info.plot_source, self.__save_path.value)  # TODO: tohle by mel delat plot_info
+        self.__save_info.update(text="Saved in: " + abs_path)
         self._info("Saved in " + str(abs_path))
         self._info("Saving DONE")
-
 
     def __init_lasso_options(self):
         __lasso_general_info = Div(
@@ -155,7 +155,6 @@ class DataSandbox(SubLayout):
                       row(self.__cluster_count_input, self.__cluster_size_input, self.__cluster_plusminus_input),
                       __generate_new_clusters_button
                       )
-
 
     def __points_generation_mode_trigger(self, attr, old, new):
         new_mode = self.__generation_modes[new]

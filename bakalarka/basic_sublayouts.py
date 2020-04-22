@@ -51,7 +51,7 @@ class SubLayout:
         return row(self._immediate_update, self._fit_button)
 
     def _init_button_layout(self):
-        pass
+        return row()
 
     def _info(self, message):
         print(self.name + " " + self._fig.id + ": " + message)

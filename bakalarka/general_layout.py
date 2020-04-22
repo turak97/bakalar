@@ -3,7 +3,7 @@ import numpy as np
 
 import pandas as pd
 
-from bokeh.models import CheckboxButtonGroup, RadioButtonGroup, ColorPicker, Button
+from bokeh.models import CheckboxButtonGroup, RadioButtonGroup, ColorPicker, Button, Div
 from bokeh.models.widgets import Dropdown
 from bokeh.layouts import row, column
 
@@ -41,19 +41,34 @@ class GeneralLayout:
         class_selection = self.__class_selection_init()
         data_sandbox_button = self.__sand_box_button_init()
 
-        self.layout = column(column(row(class_selection),
+        general_info = Div(
+            text="Add a new figure by selecting one through clicking on \"+ add model\". "
+                 "Figure can be deleted by clicking on it in the button group. "
+                 "You can add a new/move/delete points in the dataset by selecting \"Point Draw Tool\" "
+                 "in the figure toolbar. Then choose a class and click anywhere into the figure. You can select "
+                 "more points by holding \"shift\" while selecting and delete them by with \"basckspace\". "
+                 "For more manipulating options with dataset click on \"Data Sandbox\". You can deactivate it by "
+                 "clicking on the option again. Every figure can be updated immediately after adding/moving/deleting"
+                 " points by selecting \"Immediate update\" bellow the figure (this comes handy with fast algorithms "
+                 "as SVM or Bayes).",
+            width=1000
+        )
+
+        self.layout = column(column(general_info,
+                                    row(class_selection),
                                     row(data_sandbox_button, fit_all, model_selection)
                                     ),
                              row(row(),  # this is a place for data sandbox
                                  row()))  # this is a place for added SubLayouts
         self.__sb1, self.__sb2 = 1, 0  # data sandbox position
         self.__sl0, self.__sl1 = 1, 1  # SubLayouts position
-        self.__dp0, self.__dp1, self.__dp2 = 0, 1, 2  # DropDown (model_selection) position
-        self.__cs0, self.__cs1, self.__cs2 = 0, 0, 0  # __class_selection position
+        self.__dp0, self.__dp1, self.__dp2 = 0, 2, 2  # DropDown (model_selection) position
+        self.__cs0, self.__cs1, self.__cs2 = 0, 1, 0  # __class_selection position
 
     def __sand_box_button_init(self):
         """Initialise button for data sandbox activation"""
-        self.__sandbox_button = CheckboxButtonGroup(labels=["Data Sandbox"], active=None)
+        self.__sandbox_button = CheckboxButtonGroup(labels=["Data Sandbox"], active=None,
+                                                    width=150, width_policy="fixed")
         self.__sandbox_button.on_change('active', self.__data_sandbox_trigger)
 
         return self.__sandbox_button
@@ -144,7 +159,7 @@ class GeneralLayout:
     def __data_sandbox_trigger(self, attr, old, new):
         if 0 in new:  # sandbox button was activated
             sandbox = sr.data_sandbox(name="Data Sandbox", plot_info=self.plot_info,
-                                                class_select_button=self.__class_select_button)
+                                      class_select_button=self.__class_select_button)
             self.layout.children[self.__sb1].children[self.__sb2] = sandbox.layout
         else:
             self.layout.children[self.__sb1].children[self.__sb2] = row()

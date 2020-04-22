@@ -19,7 +19,6 @@ from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLU
 # TODO: bug: unexpected chovani pri odstraneni vsech bodu
 # TODO: bug: points in dataset obcas zobrazuje o 1 mensi hodnotu, nez self.data.classification u BUGCHECKu
 
-# TODO: vyclenit to z nabidky samostatny toggle button na sandbox
 # TODO: automaticky a manualni rezim pridavani/ preklikavat/ podle toho se zorazi dole tlacitka
 # TODO: u manualniho rezimu popridavat vysvetlivky
 # TODO: save as csv v DataSandobxu, pres Div dat vedet, co se deje, v text. poli moznost zvolit nazev
@@ -35,11 +34,10 @@ class DataSandbox(SubLayout):
         self._fig.on_event(events.SelectionGeometry, self.__lasso_update)
 
     def __del__(self):
-        print("bla")
         self.plot_info.plot_source.remove_on_change('data', self.__plot_source_change)  # removing trigger
 
     def __lasso_update(self, event):
-        if event.final and 0 in self.__lasso_button.active:
+        if event.final and 0 == self.__points_generation_mode.active:
 
             keys = event.geometry['x'].keys()  # 'x' and 'y' have the same keys which is the number of vertex
             vertices = []
@@ -61,18 +59,40 @@ class DataSandbox(SubLayout):
     def _init_button_layout(self):
         self.__data_size_info = Div(text="Points in dataset: " + str(len(self.plot_info.plot_source.data['x'])))
 
-        cluster_generating_options = self.__init_cluster_generating_options()
-        lasso_options = self.__init_lasso_options()
+        mode_button_labels = ["Lasso", "Automatic generation"]
+        mode_button_width = 120 * (len(mode_button_labels) + 1)
+        self.__points_generation_mode = RadioButtonGroup(
+            labels=mode_button_labels, active=0, width=mode_button_width, width_policy="fixed")
+        self.__points_generation_mode.on_change('active', self.__points_generation_mode_trigger)
+        mode_text = Div(text="Data sandbox mode: ", style={'font-size': '150%'})
+
+        self.__generation_modes = {
+            0: self.__init_lasso_options(),
+            1: self.__init_cluster_generating_options()
+        }
+
+        active_mode = self.__generation_modes[self.__points_generation_mode.active]
         return column(self.__data_size_info,
-                      cluster_generating_options,
-                      lasso_options
+                      mode_text,
+                      self.__points_generation_mode,
+                      active_mode,
                       )
 
     def __init_lasso_options(self):
-        self.__lasso_button = CheckboxButtonGroup(
-            labels=["Generate points with lasso", "Random classes"],
-            active=[]
+        __lasso_general_info = Div(
+            text="Add a new cluster by selecting \"Lasso Select\" in the figure toolbar. "
+                 "You can choose whether the class of cluster will be chosen by upwards selection (\"Seleted\") or "
+                 "the classes of all points in the cluster will be chosen at random (\"All points at random\"). "
+                 "Size of the generated cluster can be set either roughly or precisely. "
+                 "If some points are not visible properly, click on \"Reset\" "
+                 "in the figure toolbar for resetting the view.")
+
+        self.__class_of_cluster_button = RadioButtonGroup(
+            labels=["Selected", "All points at random"], active=0,
+            width=220
         )
+        class_of_cluster_text = Div(text="Class of new cluster: ")
+
         self.__lasso_point_density_button = RadioButtonGroup(
             labels=["auto", "±5", "±10", "±20", "±50", "±100"],
             active=0, width=300, width_policy="fixed"
@@ -82,31 +102,48 @@ class DataSandbox(SubLayout):
         self.__lasso_point_density_input = TextInput(value=DENS_INPUT_DEF_VAL, width=50)
         self.__lasso_point_density_input.on_change('value', self.__lasso_density_input_trigger)
         __lasso_options_info = Div(text="Lasso utilities: ", style={'font-size': '150%'})
-        __lasso_density_info = Div(text="Density:", style={'font-size': '120%'})
+        __lasso_density_info = Div(text="Density options:", style={'font-size': '120%'})
         __lasso_circa_info = Div(text="Circa: ")
         __lasso_exact_info = Div(text="or Precise: ")
-        return column(__lasso_options_info,
-                      row(self.__lasso_button),
+        return column(__lasso_general_info,
+                      __lasso_options_info,
+                      row(class_of_cluster_text, self.__class_of_cluster_button),
                       __lasso_density_info,
                       column(row(__lasso_circa_info, self.__lasso_point_density_button),
                              row(__lasso_exact_info, self.__lasso_point_density_input))
                       )
 
     def __init_cluster_generating_options(self):
-        __generate_info = Div(text="Generate new dataset: ", style={'font-size': '150%'})
+        __generate_general_info = Div(
+            text="Automaticly generate a new clusters. "
+                 "You can choose whether the new cluster should replace data or replace them. "
+                 "\"Clusters count\" option determines the number of cluster (each has it onw class), "
+                 "\"size\" sets the size of clusters and \"±\" sets the volatility of size.")
+
+        __generate_info = Div(text="New clusters: ", style={'font-size': '150%'})
+
+        self.__new_clusters_mode_button = RadioButtonGroup(
+            labels=["Replace", "Append"], width=200, active=0, sizing_mode="fixed")
+        __new_clusters_mode_text = Div(text="Clusters adding mode: ")
 
         self.__cluster_count_input = Select(title="Clusters count ", value=str(CLUSTERS_COUNT_DEF),
                                             options=[str(i) for i in range(1, MAX_CLUSTERS + 1)], width=80)
         self.__cluster_size_input = TextInput(title="size ", value=str(CLUSTER_SIZE_DEF), width=50)
         self.__cluster_plusminus_input = TextInput(title="±", value=str(CLUSTER_VOL_DEF), width=50)
 
-        __generate_new_dataset_button = Button(label="Generate", button_type="primary")
-        __generate_new_dataset_button.on_click(self.__generate_new_dataset)
+        __generate_new_clusters_button = Button(label="Generate", button_type="primary")
+        __generate_new_clusters_button.on_click(self.__generate_new_clusters)
 
-        return column(__generate_info,
+        return column(__generate_general_info,
+                      __generate_info,
+                      row(__new_clusters_mode_text, self.__new_clusters_mode_button),
                       row(self.__cluster_count_input, self.__cluster_size_input, self.__cluster_plusminus_input),
-                      __generate_new_dataset_button
+                      __generate_new_clusters_button
                       )
+
+    def __points_generation_mode_trigger(self, attr, old, new):
+        new_mode = self.__generation_modes[new]
+        self.layout.children[1].children[3] = new_mode
 
     @staticmethod
     def __get_int_set_error(text_input, lowest_val):
@@ -131,7 +168,7 @@ class DataSandbox(SubLayout):
         )
         return clusters_count, clusters_size, clusters_vol
 
-    def __generate_new_dataset(self):
+    def __generate_new_clusters(self):
         self._info("Generating new dataset...")
 
         clusters_count, clusters_size, clusters_vol = self.__get_cluster_generating_params()
@@ -141,7 +178,11 @@ class DataSandbox(SubLayout):
                                                clusters=clusters_count,
                                                av_cluster_size=clusters_size,
                                                clust_size_vol=clusters_vol)
-        self.plot_info.replace_data(x=x, y=y, classification=classification)
+
+        if 0 == self.__new_clusters_mode_button.active:
+            self.plot_info.replace_data(x=x, y=y, classification=classification)
+        else:
+            self.plot_info.append_data(x_new=x, y_new=y, classification_new=classification)
 
         self._info("Generating new dataset DONE")
 
@@ -186,6 +227,6 @@ class DataSandbox(SubLayout):
         self.__lasso_point_density_input.on_change('value', self.__lasso_density_input_trigger)
 
     def __generate_classes(self, length):
-        if 1 in self.__lasso_button.active:  # if Random classes active
+        if self.__class_of_cluster_button.active == 1:  # if Random classes active
             return dg.classify(length, self.plot_info.uniq_values())
         return [self.plot_info.uniq_values()[self.__class_select_button.active] for _ in range(length)]

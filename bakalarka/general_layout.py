@@ -14,15 +14,13 @@ from constants import CLASS_SELECT_BUTTON_WIDTH, MAX_CLASS_NAME_LENGTH, EMPTY_VA
 # TODO: pekneji osetrit picker (aby nenastal pripad dvou stejnych barev), reseni: zjistit, ktery picker triggnul funkci?
 # TODO: uniq values dat dokupy
 
-# TODO: Layout bude tvorit PlotInfo v konstruktoru?
 
-
-class GeneralLayout:
-    def __init__(self, plot_info, log=True):
+class BasicGeneralLayout:
+    def __init__(self, source_data, log=True):
         self.__log = log  # TODO: dodelat
 
-        self.plot_info = plot_info
-        self.plot_info.set_plot_source_trigger(self.__data_change)
+        self.source_data = source_data
+        self.source_data.set_plot_source_trigger(self.__data_change)
 
         self.__sub_layouts = []
 
@@ -89,7 +87,7 @@ class GeneralLayout:
         return self.__dropdown
 
     def __class_selection_init(self):
-        classes_count = len(self.plot_info.uniq_values())
+        classes_count = len(self.source_data.uniq_values())
         try:
             old_active = self.__class_select_button.active
         except AttributeError:
@@ -100,12 +98,12 @@ class GeneralLayout:
         self.__color_pickers = [ColorPicker(
             title="",
             width=picker_width, width_policy="fixed",
-            color=self.plot_info.palette[i]
+            color=self.source_data.palette[i]
         ) for i in range(classes_count)]
         for picker in self.__color_pickers:
             picker.on_change('color', self.__change_color)
         self.__class_select_button = RadioButtonGroup(
-            labels=self.__normalise_uniq_values(self.plot_info.uniq_values()),
+            labels=self.__normalise_uniq_values(self.source_data.uniq_values()),
             active=old_active,
             width=button_width, width_policy="fixed"
         )
@@ -122,7 +120,7 @@ class GeneralLayout:
                       row(self.__class_select_button, self.__new_class_button))
 
     def __class_selection_update(self):
-        classes_count = len(self.plot_info.uniq_values())
+        classes_count = len(self.source_data.uniq_values())
         picker_width = CLASS_SELECT_BUTTON_WIDTH - self.__normalise_picker_width(classes_count)
         button_width = CLASS_SELECT_BUTTON_WIDTH * classes_count
 
@@ -130,20 +128,20 @@ class GeneralLayout:
             ColorPicker(
                 title="",
                 width=picker_width, width_policy="fixed",
-                color=self.plot_info.palette[classes_count - 1]
+                color=self.source_data.palette[classes_count - 1]
             )
         )
         self.__color_pickers[-1].on_change('color', self.__change_color)
         self.layout.children[self.__cs0].children[self.__cs1].children[self.__cs2].children[0] \
             = row(self.__color_pickers)
 
-        new_labels = self.__normalise_uniq_values(self.plot_info.uniq_values())
+        new_labels = self.__normalise_uniq_values(self.source_data.uniq_values())
         self.__class_select_button.update(labels=new_labels,
                                           width=button_width)
 
     def __data_sandbox_trigger(self, attr, old, new):
         if 0 in new:  # sandbox button was activated
-            sandbox = sr.data_sandbox(name="Data Sandbox", plot_info=self.plot_info,
+            sandbox = sr.data_sandbox(name="Data Sandbox", source_data=self.source_data,
                                       class_select_button=self.__class_select_button)
             self.layout.children[self.__sb1].children[self.__sb2] = sandbox.layout
         else:
@@ -187,7 +185,7 @@ class GeneralLayout:
                     picker.color = old
                     return
 
-        self.plot_info.replace_color(
+        self.source_data.replace_color(
             old_color=old, new_color=new
         )
 
@@ -195,8 +193,8 @@ class GeneralLayout:
             sub_lay.update_renderer_colors()
 
     def __new_class(self):
-        self.plot_info.add_new_color(
-            class_name=self.__new_name(prev=self.plot_info.uniq_values()[-1])
+        self.source_data.add_new_color(
+            class_name=self.__new_name(prev=self.source_data.uniq_values()[-1])
         )
 
         self.__class_selection_update()
@@ -210,7 +208,7 @@ class GeneralLayout:
         self._info("Adding a new " + model_name + " plot...")
 
         sub_layout = sr.resolution(model=model_res, name=model_name,
-                                   plot_info=self.plot_info)
+                                   source_data=self.source_data)
 
         self.__sub_layouts.append(sub_layout)
 
@@ -252,9 +250,9 @@ class GeneralLayout:
         if len(old['x']) < len(new['x']):
 
             if new['color'][-1] == EMPTY_VALUE_COLOR:
-                new_class = self.plot_info.uniq_values()[self.__class_select_button.active]
-                self.plot_info.update_color_newly_added(new_class,
-                                                        new_i=len(old['x']))
+                new_class = self.source_data.uniq_values()[self.__class_select_button.active]
+                self.source_data.update_color_newly_added(new_class,
+                                                          new_i=len(old['x']))
 
         self._info("Updating data DONE")
 
@@ -289,5 +287,5 @@ class GeneralLayout:
     def __new_name(self, prev):
         if prev.isdigit():
             return str(int(prev) + 1)
-        return "extra " + str(len(self.plot_info.uniq_values()))
+        return "extra " + str(len(self.source_data.uniq_values()))
 

@@ -1,59 +1,53 @@
-from bokeh.layouts import column
+from bokeh.layouts import row, column
 from bokeh.models import PointDrawTool, ColumnDataSource, Button, PanTool
 from bokeh.plotting import figure, curdoc
+from bokeh.models import CheckboxButtonGroup
+
+from random import uniform, randint
+
+SOURCES = 4
+
+y = [500] * 365
+x = [i for i in range(1, 365 + 1)]
+for i in range(1, len(x)):
+    y[i] = y[i - 1] + uniform(-20, 21)
+
+sources = []
+
+for i in range(SOURCES):
+    y = [randint(450, 750)] * 365
+    for j in range(1, len(y)):
+        y[j] = y[j - 1] + uniform(-20, 21)
+        if y[j] < 0:
+            y[j] = 0
+    source = ColumnDataSource(
+        data=dict(
+            x=[i for i in range(1, 365 + 1)],
+            y=y
+        )
+    )
+    sources.append(source)
+
+fig = figure()
+fig_static = figure(toolbar_location=None)
+
+names = ["ABX", "CBAA", "PLOOD", "LOPX"]
+
+for source, color, name in zip(sources, ["red", "purple", "green", "grey"], names):
+    fig.line(x='x', y='y', source=source, legend_label=name, color=color)
+    fig_static.line(x='x', y='y', source=source, legend_label=name, color=color)
 
 
-source_red = ColumnDataSource(data=dict(
-    x=[1, 2, 3, 4, 5],
-    y=[2, 5, 8, 2, 7]
-))
-
-source_blue = ColumnDataSource(data=dict(
-    x=[0, 6, 7, 2, 4],
-    y=[2, 5, 8, 2, 7]
-))
+def button_trigger(attr, old, new):
+    for i in range(SOURCES):
+        if i in new:
+            fig.renderers[i].visible = True
+        else:
+            fig.renderers[i].visible = False
 
 
-################################################
-data_store = {0: source_red, 1: source_blue}
-class_colors = {0: "red", 1: "blue"}
-#class_point_draw_icons = {0: "iconred.jpg", 1: "iconblue.jpg"}
+button = CheckboxButtonGroup(labels=names, active=[i for i in range(SOURCES)])
+button.on_change('active', button_trigger)
 
-fig = figure(x_range=(0, 100), y_range=(0, 100))
-
-class_renderers = {}
-class_point_draw_tools = {}
-
-move_circle = fig.circle('x', 'y', color="red", source=source_red, size=7)
-point_draw_tool = PointDrawTool(renderers=[move_circle])
-fig.add_tools(point_draw_tool)
-
-pan_tool = PanTool()
-fig.add_tools(pan_tool)
-
-def activate_first():
-    pass
-
-
-def activate_second():
-    fig.toolbar.active_scroll = None
-    fig.toolbar.active_drag = pan_tool
-
-
-first = Button(label="activate first class")
-first.on_click(activate_first)
-
-second = Button(label="activate second class")
-second.on_click(activate_second)
-
-def toolbar_print(attr, old ,new):
-    print(old)
-    print(new)
-    print("i am walking hereee")
-
-fig.toolbar.on_change('active_drag', toolbar_print)
-
-fig.toolbar.on_change('active_multi', toolbar_print)
-
-lay = column(first, second, fig)
+lay = row(column(fig, button), fig_static)
 curdoc().add_root(lay)

@@ -74,14 +74,6 @@ def polynom_data(polynom=np.array([1/100, 1/5, -1, 1]),
     return [x_arr, y_arr]
 
 
-def polynom_line(model_coef, x_from, x_to, steps=1000):
-    model_coef = model_coef[::-1]  # numpy poly1d expects coefficients in reversed order
-    f = np.poly1d(model_coef)
-    x_plot = np.linspace(x_from, x_to, steps)
-    y_plot = f(x_plot)
-    return x_plot, y_plot
-
-
 def cluster_data(x_interval=(-100, 100),
                  y_interval=(-100, 100),
                  clusters=3,

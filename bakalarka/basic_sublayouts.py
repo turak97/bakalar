@@ -2,35 +2,33 @@
 import numpy as np
 
 from bokeh.layouts import row, column
-from bokeh.models import PointDrawTool, Button, LassoSelectTool, Div, CheckboxButtonGroup
+from bokeh.models import PointDrawTool, Button, LassoSelectTool, Div, \
+    CheckboxButtonGroup
 from bokeh.plotting import figure
 
-from constants import MESH_STEP_SIZE, EMPTY_VALUE_COLOR
+from constants import MESH_STEP_SIZE, EMPTY_VALUE_COLOR, X_EXT, Y_EXT
 
 # import matplotlib.pyplot as plt
 
 
+# TODO: togglebutton misto radiobuttongroup
+
+
 class SubLayout:
     """Abstract class for classifier sub layouts, regressive sub layouts and data sandbox"""
-    def __init__(self, name, plot_info):
+    def __init__(self, name, source_data):
         self.name = name
-        self.plot_info = plot_info
-        self._fig = figure(tools="pan,wheel_zoom,save,reset,box_zoom")
-        self._lasso = LassoSelectTool()
-        self._fig.add_tools(self._lasso)
+        self.source_data = source_data
+        self._x_ext = X_EXT
+        self._y_ext = Y_EXT
+
         self.layout = self._layout_init()
 
-        # add original data to the figure and prepare PointDrawTool to make them interactive
-        # this renderer MUST be the FIRST one
-        move_circle = self._fig.circle('x', 'y', color='color', source=plot_info.plot_source, size=7)
-        point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
-        self._fig.add_tools(point_draw_tool)
-
     def _layout_init(self):
-        # last one row() is for children needs changed in _init_button_layout
+        fig_layout = self._init_figure()
         fit_layout = self._init_fit_layout()
         button_layout = self._init_button_layout()
-        return column(self._fig, fit_layout, button_layout)
+        return column(fig_layout, fit_layout, button_layout)
 
     def update_renderer_colors(self):
         pass
@@ -52,6 +50,12 @@ class SubLayout:
 
     def _init_button_layout(self):
         return row()
+
+    def _init_figure(self):
+        self._fig = figure(tools="pan,wheel_zoom,save,reset,box_zoom")
+        self._lasso = LassoSelectTool()
+        self._fig.add_tools(self._lasso)
+        return self._fig
 
     def _info(self, message):
         print(self.name + " " + self._fig.id + ": " + message)
@@ -76,14 +80,20 @@ class ClassifierSubLayout(SubLayout):
         def add_d(self, d):
             self.d.append(d)
 
-    def __init__(self, name, classifier, plot_info):
+    def __init__(self, name, classifier, source_data):
         """Create attribute self._classifier and self.layout
-        plus self.name, self.plot_info and self.fig from super
+        plus self.name, self.source_data and self.fig from super
 
-        data and plot_info references are necessary to store due to updating
+        data and source_data references are necessary to store due to updating
         figure based on user input (e.g. different neural activation function)
         """
-        SubLayout.__init__(self, name, plot_info)
+        SubLayout.__init__(self, name, source_data)
+
+        # add original data to the figure and prepare PointDrawTool to make them interactive
+        # this renderer MUST be the FIRST one
+        move_circle = self._fig.circle('x', 'y', color='color', source=source_data.plot_source, size=7)
+        point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
+        self._fig.add_tools(point_draw_tool)
 
         self._info("Initialising sublayout and fitting data...")
 
@@ -111,9 +121,9 @@ class ClassifierSubLayout(SubLayout):
         """Figure must have an 'image' renderer as SECOND (at index 1) renderer,
         where will be directly changed data
         """
-        data = self.plot_info.plot_source.data
-        self._img_data = self.ImageData(min(data['x']) - 1, max(data['x']) + 1,
-                                        min(data['y']) - 1, max(data['y']) + 1)
+        (min_x, max_x), (min_y, max_y) = self.source_data.get_min_max_x(), self.source_data.get_min_max_y()
+        self._img_data = self.ImageData(min_x, max_x,
+                                        min_y, max_y)
 
         self._fit_and_render(1)  # renderer at index 1 contains classifier image
 
@@ -123,10 +133,8 @@ class ClassifierSubLayout(SubLayout):
         """
         self._info("Fitting data and updating figure, step: " + str(renderer_i))
 
-        data = self.plot_info.plot_source.data
-        cls_X = np.array([[data['x'][i], data['y'][i]] for i in range(len(data['x']))])
-
-        self._classifier.fit(cls_X, self.plot_info.plot_source.data['classification'])
+        cls_X, classification = self.source_data.data_to_classifier_fit()
+        self._classifier.fit(cls_X, classification)
 
         raw_d = self._classifier.predict(np.c_[self._img_data.xx.ravel(),
                                                self._img_data.yy.ravel()])
@@ -141,7 +149,7 @@ class ClassifierSubLayout(SubLayout):
         # create a new image renderer
         self._fig.image(image=[self._img_data.d[d_index]], x=self._img_data.x_min, y=self._img_data.y_min,
                         dw=self._img_data.dw, dh=self._img_data.dh,
-                        color_mapper=self.plot_info.color_mapper, global_alpha=0.5)
+                        color_mapper=self.source_data.color_mapper, global_alpha=0.5)
 
     def _update_fig_renderer(self, i):
         """Update image data by directly changing them in the figure renderers"""
@@ -151,7 +159,7 @@ class ClassifierSubLayout(SubLayout):
         self._fig.renderers[i].data_source.patch(img_patch)
 
         self._fig.renderers[i].glyph.update(
-            color_mapper=self.plot_info.color_mapper,
+            color_mapper=self.source_data.color_mapper,
             x=self._img_data.x_min,
             y=self._img_data.y_min,
             dw=self._img_data.dw,
@@ -165,3 +173,28 @@ class ClassifierSubLayout(SubLayout):
         # plt.contourf(xx, yy, d, cmap=plt.cm.coolwarm, alpha=0.8)
         # plt.scatter(data.x_data, data.y_data, c=classification, cmap=plt.cm.coolwarm)
         # plt.show()
+
+
+class RegressionSubLayout(SubLayout):
+    def __init__(self, name, model, source_data):
+
+        SubLayout.__init__(self, name, source_data)
+
+        # add original data to the figure and prepare PointDrawTool to make them interactive
+        # this renderer MUST be the FIRST one
+        move_circle = self._fig.circle('x', 'y', source=source_data.plot_source, size=7)
+        point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
+        self._fig.add_tools(point_draw_tool)
+
+        self._model = model
+        self.refit()
+        self._info("Initialising DONE")
+
+    def _init_figure(self):
+        x_min, x_max = self.source_data.get_min_max_x()
+        x_range_extension = (x_max - x_min) * self._x_ext
+        x_range = (x_min - x_range_extension, x_max + x_range_extension,)
+        y_range = x_range  # figure scope should be square
+        self._fig = figure(x_range=x_range, y_range=y_range)
+        return self._fig
+

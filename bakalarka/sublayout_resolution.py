@@ -3,43 +3,44 @@ from extended_classifier_sublayouts import \
     NeuralClassifier, SvmClassifier, BayesClassifier, KnnClassifier
 from data_sandbox import DataSandbox
 from basic_sublayouts import ClassifierSubLayout
+from extended_regression_sublayouts import PolynomialRegression
 
 import polynomial_regression as pr
 
 
-def data_sandbox(name, plot_info, class_select_button):
-    return DataSandbox(name, plot_info, class_select_button)
+def data_sandbox(name, source_data, class_select_button):
+    return DataSandbox(name, source_data, class_select_button)
 
 
-def resolution(model, name, plot_info):
+def resolution(model, name, source_data):
     if not isinstance(model, str):
         return ClassifierSubLayout(
-            name=name, classifier=model, plot_info=plot_info
+            name=name, classifier=model, source_data=source_data
         )
     type_, kind = model.split(".")
     if type_ == "cls":
         if kind == "neural":
             return NeuralClassifier(
-                name=name, plot_info=plot_info
+                name=name, source_data=source_data
             )
         elif kind == "svm":
             return SvmClassifier(
-                name=name, plot_info=plot_info
+                name=name, source_data=source_data
             )
         elif kind == "knn":
             return KnnClassifier(
-                name=name, plot_info=plot_info
+                name=name, source_data=source_data
             )
         elif kind == "bayes":
             return BayesClassifier(
-                name=name, plot_info=plot_info
+                name=name, source_data=source_data
             )
         else:
             return None
     elif type_ == "reg":
-        return pr.polynomial_layout(
+        return PolynomialRegression(
             name=name,
-            plot_info=plot_info
+            source_data=source_data
         )
     else:
         return None

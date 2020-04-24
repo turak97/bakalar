@@ -23,17 +23,17 @@ from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLU
 
 
 class DataSandbox(SubLayout):
-    def __init__(self, name, plot_info, class_select_button):
-        SubLayout.__init__(self, name, plot_info)
+    def __init__(self, name, source_data, class_select_button):
+        SubLayout.__init__(self, name, source_data)
 
         self.__class_select_button = class_select_button
 
-        self.plot_info.plot_source.on_change('data', self.__plot_source_change)  # DataSandbox can update statistics
+        self.source_data.plot_source.on_change('data', self.__plot_source_change)  # DataSandbox can update statistics
 
         self._fig.on_event(events.SelectionGeometry, self.__lasso_update)
 
     def __del__(self):
-        self.plot_info.plot_source.remove_on_change('data', self.__plot_source_change)  # removing trigger
+        self.source_data.plot_source.remove_on_change('data', self.__plot_source_change)  # removing trigger
 
     def __lasso_update(self, event):
         if event.final and 0 == self.__points_generation_mode.active:
@@ -46,17 +46,18 @@ class DataSandbox(SubLayout):
             cluster_size = self.__get_cluster_size()
             x_new, y_new = dg.polygon_data(vertices, cluster_size)
             classification_new = self.__generate_classes(len(x_new))
-            self.plot_info.append_data(x_new, y_new, classification_new)
+            self.source_data.append_data(x_new, y_new, classification_new)
 
     def __plot_source_change(self, attr, old, new):
         self.__data_size_info.update(text="Points in dataset: " + str(len(new['x'])))
 
     def _layout_init(self):
+        fig_layout = self._init_figure()
         button_layout = self._init_button_layout()
-        return row(self._fig, button_layout)
+        return row(fig_layout, button_layout)
 
     def _init_button_layout(self):
-        self.__data_size_info = Div(text="Points in dataset: " + str(len(self.plot_info.plot_source.data['x'])))
+        self.__data_size_info = Div(text="Points in dataset: " + str(len(self.source_data.plot_source.data['x'])))
 
         self.__save_button = Button(label="Save dataset", button_type="primary")
         self.__save_button.on_click(self.__save_dataset)
@@ -87,7 +88,7 @@ class DataSandbox(SubLayout):
 
     def __save_dataset(self):
         self._info("Saving dataset...")
-        abs_path = save_source(self.plot_info.plot_source, self.__save_path.value)  # TODO: tohle by mel delat plot_info
+        abs_path = self.source_data.save_source(self.__save_path.value)
         self.__save_info.update(text="Saved in: " + abs_path)
         self._info("Saved in " + str(abs_path))
         self._info("Saving DONE")
@@ -194,9 +195,9 @@ class DataSandbox(SubLayout):
                                                clust_size_vol=clusters_vol)
 
         if 0 == self.__new_clusters_mode_button.active:
-            self.plot_info.replace_data(x=x, y=y, classification=classification)
+            self.source_data.replace_data(x=x, y=y, classification=classification)
         else:
-            self.plot_info.append_data(x_new=x, y_new=y, classification_new=classification)
+            self.source_data.append_data(x_new=x, y_new=y, classification_new=classification)
 
         self._info("Generating new dataset DONE")
 
@@ -242,5 +243,5 @@ class DataSandbox(SubLayout):
 
     def __generate_classes(self, length):
         if self.__class_of_cluster_button.active == 1:  # if Random classes active
-            return dg.classify(length, self.plot_info.uniq_values())
-        return [self.plot_info.uniq_values()[self.__class_select_button.active] for _ in range(length)]
+            return dg.classify(length, self.source_data.uniq_values())
+        return [self.source_data.uniq_values()[self.__class_select_button.active] for _ in range(length)]

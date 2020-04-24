@@ -1,21 +1,18 @@
 
 from bokeh.models import CategoricalColorMapper, ColumnDataSource
 
-from numpy import empty
+import numpy as np
+
+from in_n_out import save_source
 
 # TODO: udelat z tohoto backend?
 # TODO: pamatovat algoritmy podle id figury
 
 
-class PlotInfo:
+class SourceData:
     def __init__(self, df,
-                 pol_min_degree, pol_max_degree,
-                 palette, x_extension, y_extension):
-        self.pol_min_degree = pol_min_degree
-        self.pol_max_degree = pol_max_degree
+                 palette):
         self.palette = palette
-        self.x_extension = x_extension
-        self.y_extension = y_extension
         self.immediate_update = False
 
         uniq_values = sorted(list(set(df['classification'])))
@@ -38,6 +35,23 @@ class PlotInfo:
         self.plot_source.on_change('data', f)
         self.plot_source_trigger = f
 
+    def data_to_classifier_fit(self):
+        data = self.plot_source.data
+        cls_X = np.array([[data['x'][i], data['y'][i]] for i in range(len(data['x']))])
+        return cls_X, self.plot_source.data['classification']
+
+    def data_to_regression_fit(self):
+        x_np = np.asarray(self.plot_source.data['x'])
+        x_np = x_np[:, np.newaxis]
+        y_np = np.asarray(self.plot_source.data['y'])
+        return x_np, y_np
+
+    def get_min_max_x(self):
+        return min(self.plot_source.data['x']), max(self.plot_source.data['x'])
+
+    def get_min_max_y(self):
+        return min(self.plot_source.data['y']), max(self.plot_source.data['y'])
+
     def replace_data(self, x, y, classification):
         uniq_values = self.uniq_values()
         for cls in classification:
@@ -57,7 +71,7 @@ class PlotInfo:
         )
         self.plot_source.on_change('data', self.plot_source_trigger)
 
-        self.append_data(empty(shape=0), empty(shape=0), [])
+        self.append_data(np.empty(shape=0), np.empty(shape=0), [])
 
     def append_data(self, x_new, y_new, classification_new):
         colors = [self.color_dict[cls] for cls in classification_new]
@@ -94,6 +108,7 @@ class PlotInfo:
         self.plot_source.on_change('data', self.plot_source_trigger)  # subscribe again
 
     def replace_color(self, old_color, new_color):
+        """Replace old color with new color in source"""
         self.plot_source.remove_on_change('data', self.plot_source_trigger)
         patch = []
         for i, color in zip(range(len(self.plot_source.data['color'])), self.plot_source.data['color']):
@@ -127,3 +142,7 @@ class PlotInfo:
         for uq, i in zip(uniq_values, range(len(uniq_values))):
             values_dict[uq] = self.palette[i]
         return values_dict
+
+    def save_source(self, file_name):
+        abs_path = save_source(self.plot_source, file_name)
+        return abs_path

@@ -51,7 +51,6 @@ class KnnClassifier(ClassifierSubLayout):
         n_neighbors_text = Div(text="Number of neighbors to use: ")
 
         return column(
-                      self.__algo_button,
                       row(n_neighbors_text,
                           self.__n_neighbors_button)
                       )
@@ -251,9 +250,6 @@ class NeuralClassifier(ClassifierSubLayout):
         )
         solver_text = Div(text="Weigh optimization solver:")
         solver_group = column(solver_text, self.__solver_button)
-        #
-        # self.__fit_button = Button(label="Fit", button_type="success")
-        # self.__fit_button.on_click(self.refit)
 
         return column(slider_group,
                       layers_input, activation_group,

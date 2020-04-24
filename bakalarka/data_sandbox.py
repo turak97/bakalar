@@ -11,7 +11,7 @@ from random import randint
 from in_n_out import save_source
 import data_gen as dg
 from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLUSTERS_COUNT_DEF, MAX_CLUSTERS, \
-    SAVED_DATASET_FILE_NAME
+    SAVED_DATASET_FILE_NAME, EMPTY_VALUE_COLOR
 
 
 # TODO: at se to neodviji od uniqvalues
@@ -22,9 +22,13 @@ from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLU
 # TODO: bug: points in dataset obcas zobrazuje o 1 mensi hodnotu, nez self.data.classification u BUGCHECKu
 
 
-class DataSandbox(SubLayout):
+class ClassifierDataSandbox(SubLayout):
     def __init__(self, name, source_data, class_select_button):
         SubLayout.__init__(self, name, source_data)
+
+        move_circle = self._fig.circle('x', 'y', color='color', source=source_data.plot_source, size=7)
+        point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
+        self._fig.add_tools(point_draw_tool)
 
         self.__class_select_button = class_select_button
 

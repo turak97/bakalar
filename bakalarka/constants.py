@@ -19,7 +19,7 @@ MAX_CLUSTERS = 10
 """Those constants are for experiments (interesting app behaviour, but possible (bigger) instability)"""
 # used in basic_sublayouts.py Sets the detail of classifier image
 MESH_STEP_SIZE = 0.05  # default: 0.05
-X_EXT = 2
+X_EXT = 1
 Y_EXT = X_EXT
 
 POL_FROM_DGR = 1

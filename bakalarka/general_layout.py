@@ -214,7 +214,7 @@ class ClassifierGeneralLayout(BasicGeneralLayout):
 
     @staticmethod
     def _menu_init():
-        return [("SVM classification", "cls.svm"),
+        return [("SVM classification", "cls.svm"), ("Stochastic gradiend descent", "cls.sgd"),
                 ("K nearest neighbours", "cls.knn"), ("Naive Bayes (Gaussian)", "cls.bayes"),
                 ("Neural classification", "cls.neural")]
 

@@ -1,25 +1,22 @@
 
 
-class A:
-    def __init__(self):
-        pass
+from bokeh.plotting import figure, show
+from bokeh.models import Title, Toolbar, Button
+from bokeh.layouts import row
 
-    def p(self):
-        self._a()
-
-    def _a(self):
-        print("a")
+fig = figure()
 
 
-class B(A):
-    def __init__(self):
-        A.__init__(self)
-
-    def _a(self):
-        print("b")
+# fig.toolbar = Toolbar(location=None)
 
 
-w = A()
-q = B()
+def change():
+    button.label = "ccc"
 
 
+button = Button(label="bla")
+button.on_click(change)
+
+lay = row(button, fig)
+
+show(lay)

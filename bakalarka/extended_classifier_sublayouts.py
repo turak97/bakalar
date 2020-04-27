@@ -6,6 +6,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import SGDClassifier
 
 from math import ceil
 
@@ -19,6 +20,13 @@ warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
 
 
 # TODO: define all default values as constants
+
+
+class StochasticGDClassifier(ClassifierSubLayout):
+    def __init__(self, name, source_data):
+        classifier = SGDClassifier()
+
+        ClassifierSubLayout.__init__(self, name, classifier, source_data)
 
 
 class BayesClassifier(ClassifierSubLayout):
@@ -55,7 +63,7 @@ class KnnClassifier(ClassifierSubLayout):
                           self.__n_neighbors_button)
                       )
 
-    def _update_classifier_params(self):
+    def _update_model_params(self):
         self._classifier.n_neighbors = int(self.__n_neighbors_button.value)
 
     @staticmethod
@@ -119,7 +127,7 @@ class SvmClassifier(ClassifierSubLayout):
                       row(degree_text, self.__degree_button)
                       )
 
-    def _update_classifier_params(self):
+    def _update_model_params(self):
         new_kernel = self.__label2kernel_str(
             self.__chosen_kernel()
         )
@@ -179,7 +187,8 @@ class NeuralClassifier(ClassifierSubLayout):
 
         (min_x, max_x), (min_y, max_y) = self.source_data.get_min_max_x(), self.source_data.get_min_max_y()
         self._img_data = self.ImageData(min_x, max_x,
-                                        min_y, max_y)
+                                        min_y, max_y,
+                                        self._x_ext, self._y_ext)
         for iterations, renderer_i in zip(range(self.__iter_step, self.__max_iter_steps + 1,
                                                 self.__iter_step),
                                           range(1, self.__slider_steps + 1)):  # first one is Circle
@@ -205,7 +214,7 @@ class NeuralClassifier(ClassifierSubLayout):
 
         self.__update_iteration_params(int(self.__max_iterations_input.value),
                                        int(self.__slider_steps_input.value))
-        self._update_classifier_params()
+        self._update_model_params()
 
         self._figure_update()
         self.__set_visible_renderer(self.__slider_steps)
@@ -292,7 +301,7 @@ class NeuralClassifier(ClassifierSubLayout):
         except AttributeError:
             pass
 
-    def _update_classifier_params(self):
+    def _update_model_params(self):
         new_activation = self.__label2activation_str(
             self.__activation_button.labels[self.__activation_button.active]
         )

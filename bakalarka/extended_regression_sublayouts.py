@@ -12,15 +12,34 @@ from basic_sublayouts import RegressionSubLayout
 
 from constants import POL_FROM_DGR, POL_TO_DGR
 
-# TODO: pekneji rozclenit refit
-
 
 class PolynomialRegression(RegressionSubLayout):
     def __init__(self, name, source_data):
-        model = None
+
         self._pol_from_degree, self._pol_to_degree = POL_FROM_DGR, POL_TO_DGR
+        model = Pipeline([('poly', PolynomialFeatures(degree=self._pol_from_degree)),
+                          ('linear', LinearRegression(fit_intercept=False))])
 
         RegressionSubLayout.__init__(self, name, model, source_data)
+
+    def refit(self):
+        self._update_model_params()
+        self._figure_update()
+        self.__set_visible_renderer(self.__slider.value)
+
+    def _figure_update(self):
+
+        self._info("Updating model and fitting data...")
+
+        (x_min, x_max) = self.source_data.get_min_max_x()
+        self._line_data = self.LineData(x_min, x_max, self._x_ext)
+
+        for degree, i in zip(range(self._pol_from_degree, self._pol_to_degree + 1), range(1, self._pol_to_degree)):
+            self._model.set_params(poly__degree=degree)
+
+            self._fit_and_render(i)
+
+        self._info("Done")
 
     def _init_button_layout(self):
         self.__slider = Slider(
@@ -40,44 +59,3 @@ class PolynomialRegression(RegressionSubLayout):
                 renderer.visible = True
             else:
                 renderer.visible = False
-
-    def refit(self):
-        x_min, x_max = self.source_data.get_min_max_x()
-        x_range_extension = (x_max - x_min) * self._x_ext
-
-        sources = []
-        i = 0
-        for degree in range(self._pol_from_degree, self._pol_to_degree + 1):
-            model = Pipeline([('poly', PolynomialFeatures(degree=degree)),
-                              ('linear', LinearRegression(fit_intercept=False))])
-
-            x_to_fit, y_to_fit = self.source_data.data_to_regression_fit()
-            model_fit = model.fit(x_to_fit, y_to_fit)
-            model_coeff = model_fit.named_steps['linear'].coef_
-
-            x_plot, y_plot = self.__polynom_line(model_coeff,
-                                                 x_min - x_range_extension,
-                                                 x_max + x_range_extension)
-
-            source = ColumnDataSource(
-                data=dict(
-                    x=x_plot,
-                    y=y_plot
-                )
-            )
-            if len(self._fig.renderers) - 1 < i:
-                self._fig.line(x='x', y='y', source=source)
-            else:
-                pass
-
-            i += 1
-
-        self.__set_visible_renderer(1)
-
-    def __polynom_line(self, model_coef, x_from, x_to, steps=1000):
-        model_coef = model_coef[::-1]  # numpy poly1d expects coefficients in reversed order
-        f = np.poly1d(model_coef)
-        x_plot = np.linspace(x_from, x_to, steps)
-        y_plot = f(x_plot)
-        return x_plot, y_plot
-

@@ -1,6 +1,6 @@
 
 from extended_classifier_sublayouts import \
-    NeuralClassifier, SvmClassifier, BayesClassifier, KnnClassifier
+    NeuralClassifier, SvmClassifier, BayesClassifier, KnnClassifier, StochasticGDClassifier
 from data_sandbox import ClassifierDataSandbox
 from basic_sublayouts import ClassifierSubLayout
 from extended_regression_sublayouts import PolynomialRegression
@@ -37,6 +37,10 @@ def resolution(model, name, source_data):
             )
         elif kind == "bayes":
             return BayesClassifier(
+                name=name, source_data=source_data
+            )
+        elif kind == "sgd":
+            return StochasticGDClassifier(
                 name=name, source_data=source_data
             )
         else:

@@ -13,7 +13,6 @@ from bokeh.core import validation
 import data_gen as dg
 from source_data import SourceData
 from general_layout import ClassifierGeneralLayout, BasicGeneralLayout
-from constants import POL_FROM_DGR, POL_TO_DGR, X_EXT, Y_EXT
 from constants import CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLUSTERS_COUNT_DEF
 from in_n_out import read_df
 
@@ -67,7 +66,7 @@ if __name__ == '__main__':
 
         source_data = SourceData(df=df, palette=PALETTE)
 
-        lay = BasicGeneralLayout(source_data=source_data)
+        lay = ClassifierGeneralLayout(source_data=source_data)
 
         doc.add_root(row(lay.layout))
 

@@ -36,6 +36,9 @@ class SubLayout:
     def refit(self):
         pass
 
+    def _update_model_params(self):
+        pass
+
     def immediate_update(self):
         return 0 in self._immediate_update.active  # immediate update option is at index 0
 
@@ -64,21 +67,23 @@ class SubLayout:
 class ClassifierSubLayout(SubLayout):
     class ImageData:
         """Class for image representation of model results"""
-        def __init__(self, x_min, x_max, y_min, y_max):
-            self.x_min = x_min
-            self.x_max = x_max
-            self.y_min = y_min
-            self.y_max = y_max
-            self.dw = x_max - x_min
-            self.dh = y_max - y_min
+        def __init__(self, x_min, x_max, y_min, y_max, x_ext, y_ext):
+            x_extension = (x_max - x_min) * x_ext
+            y_extension = (y_max - y_min) * y_ext
+            self.x_min = x_min - x_extension
+            self.x_max = x_max + x_extension
+            self.y_min = y_min - y_extension
+            self.y_max = y_max + y_extension
 
-            self.xx, self.yy = np.meshgrid(np.arange(x_min, x_max, MESH_STEP_SIZE),
-                                           np.arange(y_min, y_max, MESH_STEP_SIZE))
+            self.dw = self.x_max - self.x_min
+            self.dh = self.y_max - self.y_min
+            self.xx, self.yy = np.meshgrid(np.arange(self.x_min, self.x_max, MESH_STEP_SIZE),
+                                           np.arange(self.y_min, self.y_max, MESH_STEP_SIZE))
 
-            self.d = []
+            self.images = []
 
-        def add_d(self, d):
-            self.d.append(d)
+        def add_image(self, d):
+            self.images.append(d)
 
     def __init__(self, name, classifier, source_data):
         """Create attribute self._classifier and self.layout
@@ -103,18 +108,15 @@ class ClassifierSubLayout(SubLayout):
 
     def refit(self):
         self._info("Updating model and fitting data...")
-        self._update_classifier_params()
+        self._update_model_params()
         self._figure_update()
         self._info("Fitting and updating DONE")
-
-    def _update_classifier_params(self):
-        pass
 
     def update_renderer_colors(self):
         """
         triggers update of data_source for the figure color update
         """
-        for renderer, new_d in zip(self._fig.renderers[1:], self._img_data.d):
+        for renderer, new_d in zip(self._fig.renderers[1:], self._img_data.images):
             renderer.data_source.data['image'] = [new_d]
 
     def _figure_update(self):
@@ -123,9 +125,10 @@ class ClassifierSubLayout(SubLayout):
         """
         (min_x, max_x), (min_y, max_y) = self.source_data.get_min_max_x(), self.source_data.get_min_max_y()
         self._img_data = self.ImageData(min_x, max_x,
-                                        min_y, max_y)
+                                        min_y, max_y,
+                                        self._x_ext, self._y_ext)
 
-        self._fit_and_render(1)  # renderer at index 1 contains classifier image
+        self._fit_and_render(1)
 
     def _fit_and_render(self, renderer_i):
         """Fits the model, render image and add/update image to the figure
@@ -136,9 +139,9 @@ class ClassifierSubLayout(SubLayout):
         cls_X, classification = self.source_data.data_to_classifier_fit()
         self._classifier.fit(cls_X, classification)
 
-        raw_d = self._classifier.predict(np.c_[self._img_data.xx.ravel(),
-                                               self._img_data.yy.ravel()])
-        self._img_data.add_d(raw_d.reshape(self._img_data.xx.shape))
+        raw_image = self._classifier.predict(np.c_[self._img_data.xx.ravel(),
+                                                   self._img_data.yy.ravel()])
+        self._img_data.add_image(raw_image.reshape(self._img_data.xx.shape))
 
         if len(self._fig.renderers) - 1 < renderer_i:
             self._new_fig_renderer(renderer_i - 1)
@@ -147,14 +150,14 @@ class ClassifierSubLayout(SubLayout):
 
     def _new_fig_renderer(self, d_index):
         # create a new image renderer
-        self._fig.image(image=[self._img_data.d[d_index]], x=self._img_data.x_min, y=self._img_data.y_min,
+        self._fig.image(image=[self._img_data.images[d_index]], x=self._img_data.x_min, y=self._img_data.y_min,
                         dw=self._img_data.dw, dh=self._img_data.dh,
                         color_mapper=self.source_data.color_mapper, global_alpha=0.5)
 
     def _update_fig_renderer(self, i):
         """Update image data by directly changing them in the figure renderers"""
         img_patch = {
-            'image': [(0, self._img_data.d[i - 1])]
+            'image': [(0, self._img_data.images[i - 1])]
         }
         self._fig.renderers[i].data_source.patch(img_patch)
 
@@ -176,6 +179,18 @@ class ClassifierSubLayout(SubLayout):
 
 
 class RegressionSubLayout(SubLayout):
+    class LineData:
+        """Class for line representation of model results"""
+        def __init__(self, x_min, x_max, x_ext):
+            x_extension = (x_max - x_min) * x_ext
+            self.x_min = x_min - x_extension
+            self.x_max = x_max + x_extension
+            self.xx = np.linspace(self.x_min, self.x_max, 1000)
+            self.lines = []
+
+        def add_line(self, y_data):
+            self.lines.append((self.xx, y_data))
+
     def __init__(self, name, model, source_data):
 
         SubLayout.__init__(self, name, source_data)
@@ -198,3 +213,47 @@ class RegressionSubLayout(SubLayout):
         self._fig = figure(x_range=x_range, y_range=y_range)
         return self._fig
 
+    def refit(self):
+        self._update_model_params()
+        self._figure_update()
+
+    def _figure_update(self):
+        """Figure must have an 'image' renderer as SECOND (at index 1) renderer,
+        where will be directly changed data
+        """
+        self._info("Updating model and fitting data...")
+
+        (x_min, x_max) = self.source_data.get_min_max_x()
+        self._line_data = self.LineData(x_min, x_max, self._x_ext)
+
+        self._fit_and_render(1)
+
+        self._info("Done")
+
+    def _fit_and_render(self, renderer_i):
+        """Fits the model, render image and add/update image to the figure
+        expects attribute self.__img_data
+        """
+        self._info("Fitting data and updating figure, step: " + str(renderer_i))
+
+        x_data, y_data = self.source_data.data_to_regression_fit()
+        self._model.fit(x_data, y_data)
+
+        y_line = self._model.predict(np.c_[self._line_data.xx.ravel()])
+
+        self._line_data.add_line(y_line.reshape(self._line_data.xx.shape))
+
+        if len(self._fig.renderers) - 1 < renderer_i:
+            self._new_fig_renderer(renderer_i - 1)
+        else:
+            self._update_fig_renderer(renderer_i)
+
+    def _new_fig_renderer(self, line_i):
+        """Creates a new line renderer from data at line_i in self._line_data.lines"""
+        x_data, y_data = self._line_data.lines[line_i]
+        self._fig.line(x_data, y_data)
+
+    def _update_fig_renderer(self, i):
+        """Update image data by directly changing them in the figure renderers"""
+        _, y_data = self._line_data.lines[i - 1]
+        self._fig.renderers[i].data_source.data['y'] = y_data

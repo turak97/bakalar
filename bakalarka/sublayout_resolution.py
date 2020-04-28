@@ -3,9 +3,7 @@ from extended_classifier_sublayouts import \
     NeuralClassifier, SvmClassifier, BayesClassifier, KnnClassifier, StochasticGDClassifier
 from data_sandbox import ClassifierDataSandbox
 from basic_sublayouts import ClassifierSubLayout
-from extended_regression_sublayouts import PolynomialRegression
-
-import polynomial_regression as pr
+from extended_regression_sublayouts import PolynomialRegression, KnnRegression
 
 
 def classifier_data_sandbox(name, source_data, class_select_button):
@@ -46,9 +44,16 @@ def resolution(model, name, source_data):
         else:
             return None
     elif type_ == "reg":
-        return PolynomialRegression(
-            name=name,
-            source_data=source_data
-        )
+        if kind == "poly":
+            return PolynomialRegression(
+                name=name,
+                source_data=source_data
+            )
+        elif kind == "knn":
+            return KnnRegression(
+                name=name, source_data=source_data
+            )
+        else:
+            return None
     else:
         return None

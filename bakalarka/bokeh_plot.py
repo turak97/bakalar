@@ -39,12 +39,13 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description="bokeh plot")
     parser.add_argument('--dataset', default='', nargs=1)
-    parser.add_argument('--cols', default=['x', 'y', 'classification'], nargs=3, help='x y classification')
-    # parser.add_argument('--rcols', default='0 1', nargs=2)
+    parser.add_argument('--cols', default=['x', 'y', 'classification'], nargs='+', help='x y classification')
+    parser.add_argument('--ver', choices=['cls', 'reg'], required=True,
+                        help='cls for classification, reg for regression')
 
     parsed = parser.parse_args(sys.argv[1:])
 
-    return parsed.dataset, parsed.cols
+    return parsed.dataset, parsed.cols, parsed.ver
 
 
 if __name__ == '__main__':
@@ -56,17 +57,21 @@ if __name__ == '__main__':
                                     clust_size_vol=CLUSTER_VOL_DEF)  # TODO: hezceji
     else:
         path, column_names = args[0][0], args[1]
+
         df = read_df(path, column_names)
 
+    version = args[2]
 
     def bkapp(doc):
 
-        # if classification is None:
-        #     classification = dg.classify(len(x_data), [str(i) for i in range(INIT_CLASSES_COUNT)])
-
         source_data = SourceData(df=df, palette=PALETTE)
 
-        lay = ClassifierGeneralLayout(source_data=source_data)
+        if version == 'reg':
+            lay = BasicGeneralLayout(source_data=source_data)
+        elif version == 'cls':
+            lay = ClassifierGeneralLayout(source_data=source_data)
+        else:
+            lay = row()
 
         doc.add_root(row(lay.layout))
 

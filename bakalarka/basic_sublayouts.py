@@ -55,7 +55,7 @@ class SubLayout:
         return row()
 
     def _init_figure(self):
-        self._fig = figure(tools="pan,wheel_zoom,save,reset,box_zoom")
+        self._fig = figure(match_aspect=True, tools="pan,wheel_zoom,save,reset,box_zoom")
         self._lasso = LassoSelectTool()
         self._fig.add_tools(self._lasso)
         return self._fig
@@ -182,14 +182,27 @@ class RegressionSubLayout(SubLayout):
     class LineData:
         """Class for line representation of model results"""
         def __init__(self, x_min, x_max, x_ext):
-            x_extension = (x_max - x_min) * x_ext
-            self.x_min = x_min - x_extension
-            self.x_max = x_max + x_extension
+            self.x_extension = (x_max - x_min) * x_ext
+            self.x_min = x_min - self.x_extension
+            self.x_max = x_max + self.x_extension
             self.xx = np.linspace(self.x_min, self.x_max, 1000)
             self.lines = []
 
         def add_line(self, y_data):
-            self.lines.append((self.xx, y_data))
+            x_data, y_data = self.cut_y_extreme(self.xx, y_data)
+
+            self.lines.append((x_data, y_data))
+
+        def cut_y_extreme(self, x_data, y_data):
+            """returns new numpy array without extreme values"""
+            new_y_data = []
+            new_x_data = []
+            extreme_out = self.x_extension * 10
+            for x, y in zip(x_data, y_data):
+                if self.x_max + extreme_out > y > self.x_min - extreme_out:
+                    new_x_data.append(x)
+                    new_y_data.append(y)
+            return np.asarray(new_x_data), np.asarray(new_y_data)
 
     def __init__(self, name, model, source_data):
 
@@ -204,14 +217,6 @@ class RegressionSubLayout(SubLayout):
         self._model = model
         self.refit()
         self._info("Initialising DONE")
-
-    def _init_figure(self):
-        x_min, x_max = self.source_data.get_min_max_x()
-        x_range_extension = (x_max - x_min) * self._x_ext
-        x_range = (x_min - x_range_extension, x_max + x_range_extension,)
-        y_range = x_range  # figure scope should be square
-        self._fig = figure(x_range=x_range, y_range=y_range)
-        return self._fig
 
     def refit(self):
         self._update_model_params()
@@ -240,8 +245,7 @@ class RegressionSubLayout(SubLayout):
         self._model.fit(x_data, y_data)
 
         y_line = self._model.predict(np.c_[self._line_data.xx.ravel()])
-
-        self._line_data.add_line(y_line.reshape(self._line_data.xx.shape))
+        self._line_data.add_line(y_line)
 
         if len(self._fig.renderers) - 1 < renderer_i:
             self._new_fig_renderer(renderer_i - 1)
@@ -255,5 +259,10 @@ class RegressionSubLayout(SubLayout):
 
     def _update_fig_renderer(self, i):
         """Update image data by directly changing them in the figure renderers"""
-        _, y_data = self._line_data.lines[i - 1]
-        self._fig.renderers[i].data_source.data['y'] = y_data
+        x_data, y_data = self._line_data.lines[i - 1]
+        self._fig.renderers[i].data_source.update(
+            data=dict(
+                x=x_data,
+                y=y_data
+            )
+        )

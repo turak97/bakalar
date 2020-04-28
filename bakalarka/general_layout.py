@@ -73,7 +73,8 @@ class BasicGeneralLayout:
     @staticmethod
     def _menu_init():
         """Create options for model selection menu"""
-        return [("Polynomial regression", "reg.polynomial")]
+        return [("Polynomial regression", "reg.poly"),
+                ("K nearest neighbours", "reg.knn")]
 
     def _model_selection_init(self):
         """Initialise dropdown button for choosing model
@@ -245,8 +246,8 @@ class ClassifierGeneralLayout(BasicGeneralLayout):
                           row(self._class_select_button))
 
         self._new_class_button = Button(label="+ new class", button_type="primary",
-                                         width=CLASS_SELECT_BUTTON_WIDTH, width_policy="fixed"
-                                         )
+                                        width=CLASS_SELECT_BUTTON_WIDTH, width_policy="fixed"
+                                        )
         self._new_class_button.on_click(self._new_class)
         return column(row(self._color_pickers),
                       row(self._class_select_button, self._new_class_button))

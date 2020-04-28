@@ -5,6 +5,7 @@ from bokeh.models import Slider, ColumnDataSource
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
+from sklearn.neighbors import KNeighborsRegressor
 
 import numpy as np
 
@@ -23,9 +24,11 @@ class PolynomialRegression(RegressionSubLayout):
         RegressionSubLayout.__init__(self, name, model, source_data)
 
     def refit(self):
+        self._info("Updating model and fitting data...")
         self._update_model_params()
         self._figure_update()
         self.__set_visible_renderer(self.__slider.value)
+        self._info("Fitting and updating DONE")
 
     def _figure_update(self):
 
@@ -59,3 +62,10 @@ class PolynomialRegression(RegressionSubLayout):
                 renderer.visible = True
             else:
                 renderer.visible = False
+
+
+class KnnRegression(RegressionSubLayout):
+    def __init__(self, name, source_data):
+        model = KNeighborsRegressor()
+
+        RegressionSubLayout.__init__(self, name, model, source_data)

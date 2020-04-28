@@ -85,8 +85,8 @@ class ClassifierSubLayout(SubLayout):
         def add_image(self, d):
             self.images.append(d)
 
-    def __init__(self, name, classifier, source_data):
-        """Create attribute self._classifier and self.layout
+    def __init__(self, name, model, source_data):
+        """Create attribute self._model and self.layout
         plus self.name, self.source_data and self.fig from super
 
         data and source_data references are necessary to store due to updating
@@ -102,7 +102,7 @@ class ClassifierSubLayout(SubLayout):
 
         self._info("Initialising sublayout and fitting data...")
 
-        self._classifier = classifier
+        self._model = model
         self.refit()
         self._info("Initialising DONE")
 
@@ -137,10 +137,10 @@ class ClassifierSubLayout(SubLayout):
         self._info("Fitting data and updating figure, step: " + str(renderer_i))
 
         cls_X, classification = self.source_data.data_to_classifier_fit()
-        self._classifier.fit(cls_X, classification)
+        self._model.fit(cls_X, classification)
 
-        raw_image = self._classifier.predict(np.c_[self._img_data.xx.ravel(),
-                                                   self._img_data.yy.ravel()])
+        raw_image = self._model.predict(np.c_[self._img_data.xx.ravel(),
+                                              self._img_data.yy.ravel()])
         self._img_data.add_image(raw_image.reshape(self._img_data.xx.shape))
 
         if len(self._fig.renderers) - 1 < renderer_i:

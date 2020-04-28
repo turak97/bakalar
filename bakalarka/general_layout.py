@@ -1,10 +1,11 @@
 
 from bokeh.models import CheckboxButtonGroup, RadioButtonGroup, ColorPicker, Button, Div
-from bokeh.models.widgets import Dropdown
+from bokeh.models.widgets import Dropdown, Select
 from bokeh.layouts import row, column
 
 import sublayout_resolution as sr
 from constants import CLASS_SELECT_BUTTON_WIDTH, MAX_CLASS_NAME_LENGTH, EMPTY_VALUE_COLOR
+from models import REG_MODELS, CLS_MODELS
 
 
 # TODO: moznost prepnout mezi klasifikacni, regresni nebo obema verzema appky
@@ -73,8 +74,7 @@ class BasicGeneralLayout:
     @staticmethod
     def _menu_init():
         """Create options for model selection menu"""
-        return [("Polynomial regression", "reg.poly"),
-                ("K nearest neighbours", "reg.knn")]
+        return list(zip(REG_MODELS.keys(), REG_MODELS.keys()))
 
     def _model_selection_init(self):
         """Initialise dropdown button for choosing model
@@ -109,11 +109,10 @@ class BasicGeneralLayout:
     def _new_sub_layout(self, value):
         # model_res_str is for resolution to sci kit model
         # model_name is a fancy name for CheckBoxButtonGroup
-        model_res, model_name = value.item, BasicGeneralLayout._find_first(self._dropdown.menu, value.item)
+        model_name = value.item
         self._info("Adding a new " + model_name + " plot...")
 
-        sub_layout = sr.resolution(model=model_res, name=model_name,
-                                   source_data=self.source_data)
+        sub_layout = self._create_new_sub_layout(model_name)
 
         self._sub_layouts.append(sub_layout)
 
@@ -122,6 +121,10 @@ class BasicGeneralLayout:
         self._update_checkbox_column()
 
         self._info("New plot DONE")
+
+    def _create_new_sub_layout(self, model_name):
+        return sr.reg_resolution(model_name=model_name,
+                                 source_data=self.source_data)
 
     @staticmethod
     def _find_first(tuple_list, second):
@@ -215,9 +218,12 @@ class ClassifierGeneralLayout(BasicGeneralLayout):
 
     @staticmethod
     def _menu_init():
-        return [("SVM classification", "cls.svm"), ("Stochastic gradiend descent", "cls.sgd"),
-                ("K nearest neighbours", "cls.knn"), ("Naive Bayes (Gaussian)", "cls.bayes"),
-                ("Neural classification", "cls.neural")]
+        """Create options for model selection menu"""
+        return list(zip(CLS_MODELS.keys(), CLS_MODELS.keys()))
+
+    def _create_new_sub_layout(self, model_name):
+        return sr.cls_resolution(model_name=model_name,
+                                 source_data=self.source_data)
 
     def _class_selection_init(self):
         classes_count = len(self.source_data.uniq_values())
@@ -270,7 +276,7 @@ class ClassifierGeneralLayout(BasicGeneralLayout):
 
         new_labels = self._normalise_uniq_values(self.source_data.uniq_values())
         self._class_select_button.update(labels=new_labels,
-                                          width=button_width)
+                                         width=button_width)
 
     def _new_class(self):
         self.source_data.add_new_color(

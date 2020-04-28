@@ -2,10 +2,8 @@
 from bokeh.layouts import row, column
 from bokeh.models import Slider, ColumnDataSource
 
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.linear_model import LinearRegression
-from sklearn.pipeline import Pipeline
 from sklearn.neighbors import KNeighborsRegressor
+import sklearn
 
 import numpy as np
 
@@ -15,11 +13,9 @@ from constants import POL_FROM_DGR, POL_TO_DGR
 
 
 class PolynomialRegression(RegressionSubLayout):
-    def __init__(self, name, source_data):
+    def __init__(self, name, model, source_data):
 
         self._pol_from_degree, self._pol_to_degree = POL_FROM_DGR, POL_TO_DGR
-        model = Pipeline([('poly', PolynomialFeatures(degree=self._pol_from_degree)),
-                          ('linear', LinearRegression(fit_intercept=False))])
 
         RegressionSubLayout.__init__(self, name, model, source_data)
 
@@ -65,7 +61,6 @@ class PolynomialRegression(RegressionSubLayout):
 
 
 class KnnRegression(RegressionSubLayout):
-    def __init__(self, name, source_data):
-        model = KNeighborsRegressor()
+    def __init__(self, name, model, source_data):
 
         RegressionSubLayout.__init__(self, name, model, source_data)

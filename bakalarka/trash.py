@@ -1,22 +1,18 @@
 
 
-from bokeh.plotting import figure, show
-from bokeh.models import Title, Toolbar, Button
-from bokeh.layouts import row
+from bokeh.io import output_file, show
+from bokeh.models import Dropdown
+from bokeh.io import curdoc
 
-fig = figure()
+output_file("dropdown.html")
 
+menu = [("Item 1", "item_1"), ("Item 2", "item_2"), None, ("Item 3", "item_3")]
+dropdown = Dropdown(label="Dropdown button", button_type="warning", menu=menu)
 
-# fig.toolbar = Toolbar(location=None)
+def bla(value):
+    print(value.item)
 
+dropdown.on_click(bla)
 
-def change():
-    button.label = "ccc"
+curdoc().add_root(dropdown)
 
-
-button = Button(label="bla")
-button.on_click(change)
-
-lay = row(button, fig)
-
-show(lay)

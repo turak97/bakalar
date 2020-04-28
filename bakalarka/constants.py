@@ -3,6 +3,7 @@
 SAVED_DATASETS_DIR_NAME = "saved_datasets"
 SAVED_DATASET_FILE_NAME = "my_dataset.csv"
 
+
 """Those constants are for playing around"""
 
 NEURAL_DEF_SLIDER_STEPS = 3

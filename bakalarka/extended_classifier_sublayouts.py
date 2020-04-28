@@ -2,12 +2,6 @@
 from bokeh.models import RadioButtonGroup, TextInput, Button, Div, Slider, Toggle, Select
 from bokeh.layouts import row, column
 
-from sklearn.neural_network import MLPClassifier
-from sklearn.svm import SVC
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.linear_model import SGDClassifier
-
 from math import ceil
 
 from basic_sublayouts import ClassifierSubLayout
@@ -23,17 +17,15 @@ warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
 
 
 class StochasticGDClassifier(ClassifierSubLayout):
-    def __init__(self, name, source_data):
-        classifier = SGDClassifier()
+    def __init__(self, name, model, source_data):
 
-        ClassifierSubLayout.__init__(self, name, classifier, source_data)
+        ClassifierSubLayout.__init__(self, name, model, source_data)
 
 
 class BayesClassifier(ClassifierSubLayout):
-    def __init__(self, name, source_data):
-        classifier = GaussianNB()
+    def __init__(self, name, model, source_data):
 
-        ClassifierSubLayout.__init__(self, name, classifier, source_data)
+        ClassifierSubLayout.__init__(self, name, model, source_data)
 
 
 class KnnClassifier(ClassifierSubLayout):
@@ -44,10 +36,9 @@ class KnnClassifier(ClassifierSubLayout):
         BRUTE = "brute force"
         AUTO = "auto"
 
-    def __init__(self, name, source_data):
-        classifier = KNeighborsClassifier(n_neighbors=3)
+    def __init__(self, name, model, source_data):
 
-        ClassifierSubLayout.__init__(self, name, classifier, source_data)
+        ClassifierSubLayout.__init__(self, name, model, source_data)
 
     def _init_button_layout(self):
         """Creates buttons bellow the figure, sets the trigger functions on them
@@ -64,7 +55,7 @@ class KnnClassifier(ClassifierSubLayout):
                       )
 
     def _update_model_params(self):
-        self._classifier.n_neighbors = int(self.__n_neighbors_button.value)
+        self._model.n_neighbors = int(self.__n_neighbors_button.value)
 
     @staticmethod
     def __label2algo_str(label):
@@ -86,14 +77,13 @@ class SvmClassifier(ClassifierSubLayout):
         RBF = "radial"
         SIGMOID = "sigmoid"
 
-    def __init__(self, name, source_data):
-        classifier = SVC(kernel='linear')
+    def __init__(self, name, model, source_data):
 
-        ClassifierSubLayout.__init__(self, name, classifier, source_data)
+        ClassifierSubLayout.__init__(self, name, model, source_data)
 
     # def refit(self):
     #     self._info("Updating model and fitting data...")
-    #     self.__update_classifier_params()
+    #     self.__update_model_params()
     #     self._figure_update()
     #     self._info("Fitting and updating DONE")
 
@@ -131,11 +121,11 @@ class SvmClassifier(ClassifierSubLayout):
         new_kernel = self.__label2kernel_str(
             self.__chosen_kernel()
         )
-        self._classifier.kernel = new_kernel
+        self._model.kernel = new_kernel
 
-        self._classifier.degree = int(self.__degree_button.value)  # __degree_button has predefined values
+        self._model.degree = int(self.__degree_button.value)  # __degree_button has predefined values
 
-        self._classifier.C = self.__get_regularization()
+        self._model.C = self.__get_regularization()
 
     def __chosen_kernel(self):
         return self.__kernel_button.labels[self.__kernel_button.active]
@@ -172,14 +162,13 @@ class NeuralClassifier(ClassifierSubLayout):
         GRADIENT = "gradient descent"
         ADAM = "adam"
 
-    def __init__(self, name, source_data):
+    def __init__(self, name, model, source_data):
         """Creates attribute self.name, self.classifier, self.fig, self.layout self.source_data from super"""
-        classifier = MLPClassifier(random_state=1, tol=0)  # other parameters are gained from buttons
         # initialise iteration parameters for slider and classifier fitting
         self.__update_iteration_params(NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_SLIDER_STEPS)
         self.__logarithmic_steps = False
 
-        ClassifierSubLayout.__init__(self, name, classifier, source_data)
+        ClassifierSubLayout.__init__(self, name, model, source_data)
         self.__set_visible_renderer(self.__slider_steps)
 
     def _figure_update(self):
@@ -200,9 +189,9 @@ class NeuralClassifier(ClassifierSubLayout):
                 For  5000 iterations max and 10 steps it will be:
                 50, 111, 187, 285, 416, 600, 875, 1333, 2250, 5000
                 """
-                self._classifier.max_iter = int(iterations / (self.__slider_steps - renderer_i + 1))
+                self._model.max_iter = int(iterations / (self.__slider_steps - renderer_i + 1))
             else:
-                self._classifier.max_iter = iterations
+                self._model.max_iter = iterations
             self._fit_and_render(renderer_i)
 
         self._info("Done")
@@ -305,14 +294,14 @@ class NeuralClassifier(ClassifierSubLayout):
         new_activation = self.__label2activation_str(
             self.__activation_button.labels[self.__activation_button.active]
         )
-        self._classifier.activation = new_activation
+        self._model.activation = new_activation
 
         new_solver = self.__label2solver_str(
             self.__solver_button.labels[self.__solver_button.active]
         )
-        self._classifier.solver = new_solver
+        self._model.solver = new_solver
 
-        self._classifier.hidden_layer_sizes = self.__text2layers(self.__layers_input.value)
+        self._model.hidden_layer_sizes = self.__text2layers(self.__layers_input.value)
 
     @staticmethod
     def __text2layers(layers_str):

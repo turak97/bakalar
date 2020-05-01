@@ -16,52 +16,36 @@ from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLU
 
 # TODO: at se to neodviji od uniqvalues
 
-# TODO: remove points s lasem?
 
 # TODO: bug: unexpected chovani pri odstraneni vsech bodu
 # TODO: bug: points in dataset obcas zobrazuje o 1 mensi hodnotu, nez self.data.classification u BUGCHECKu
+# TODO: bug: pocet trid nahore 3, pridavani clusteru s clusres count 6 spadne
 
-
-class ClassifierDataSandbox(SubLayout):
-    def __init__(self, name, source_data, class_select_button):
+class DataSandbox(SubLayout):
+    def __init__(self, name, source_data):
         SubLayout.__init__(self, name, source_data)
 
         move_circle = self._fig.circle('x', 'y', color='color', source=source_data.plot_source, size=7)
         point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
         self._fig.add_tools(point_draw_tool)
 
-        self.__class_select_button = class_select_button
+        self.source_data.plot_source.on_change('data', self._plot_source_change)  # DataSandbox can update statistics
 
-        self.source_data.plot_source.on_change('data', self.__plot_source_change)  # DataSandbox can update statistics
+        self._fig.on_event(events.SelectionGeometry, self._lasso_update)
 
-        self._fig.on_event(events.SelectionGeometry, self.__lasso_update)
-
-    def __del__(self):
-        self.source_data.plot_source.remove_on_change('data', self.__plot_source_change)  # removing trigger
-
-    def __lasso_update(self, event):
-        if event.final and 0 == self.__points_generation_mode.active:
-
-            keys = event.geometry['x'].keys()  # 'x' and 'y' have the same keys which is the number of vertex
-            vertices = []
-            for key in keys:
-                vertices.append((event.geometry['x'][key], event.geometry['y'][key]))
-
-            cluster_size = self.__get_cluster_size()
-            x_new, y_new = dg.polygon_data(vertices, cluster_size)
-            classification_new = self.__generate_classes(len(x_new))
-            self.source_data.append_data(x_new, y_new, classification_new)
-
-    def __plot_source_change(self, attr, old, new):
-        self.__data_size_info.update(text="Points in dataset: " + str(len(new['x'])))
+    """Methods for sublayout initialisation"""
 
     def _layout_init(self):
         fig_layout = self._init_figure()
         button_layout = self._init_button_layout()
         return row(fig_layout, button_layout)
-
+    
     def _init_button_layout(self):
-        self.__data_size_info = Div(text="Points in dataset: " + str(len(self.source_data.plot_source.data['x'])))
+        basic_buttons = self._init_basic_buttons()
+        return basic_buttons
+
+    def _init_basic_buttons(self):
+        self._data_size_info = Div(text="Points in dataset: " + str(len(self.source_data.plot_source.data['x'])))
 
         self.__save_button = Button(label="Save dataset", button_type="primary")
         self.__save_button.on_click(self.__save_dataset)
@@ -69,6 +53,39 @@ class ClassifierDataSandbox(SubLayout):
         self.__save_path = TextInput(value=SAVED_DATASET_FILE_NAME, title="Name of the file:")
         self.__save_info = Div(text="", style={'font-size': '75%'}, width_policy="fixed")
         save_group = column(self.__save_path, self.__save_button, self.__save_info)
+
+        return column(self._data_size_info,
+                      save_group)
+
+    """Methods for interactive calling (called by on_change or on_click triggers)"""
+    
+    def _plot_source_change(self, attr, old, new):
+        self._data_size_info.update(text="Points in dataset: " + str(len(new['x'])))
+
+    def _lasso_update(self, event):
+        pass
+
+    def __save_dataset(self):
+        self._info("Saving dataset...")
+        abs_path = self.source_data.save_source(self.__save_path.value)
+        self.__save_info.update(text="Saved in: " + abs_path)
+        self._info("Saved in " + str(abs_path))
+        self._info("Saving DONE")
+
+
+class ClassifierDataSandbox(DataSandbox):
+    def __init__(self, name, source_data, class_select_button):
+        DataSandbox.__init__(self, name, source_data)
+
+        self.__class_select_button = class_select_button
+
+    def __del__(self):
+        self.source_data.plot_source.remove_on_change('data', self._plot_source_change)  # removing trigger
+
+    """Methods for sublayout initialisation"""
+
+    def _init_button_layout(self):
+        basic_buttons = self._init_basic_buttons()
 
         mode_button_labels = ["Lasso", "Automatic generation"]
         mode_button_width = 120 * (len(mode_button_labels) + 1)
@@ -83,19 +100,13 @@ class ClassifierDataSandbox(SubLayout):
         }
 
         active_mode = self.__generation_modes[self.__points_generation_mode.active]
-        return column(self.__data_size_info,
-                      save_group,
+
+        self.__am1, self.__am2 = 1, 3  # active mode position
+        return column(basic_buttons,
                       mode_text,
                       self.__points_generation_mode,
                       active_mode,
                       )
-
-    def __save_dataset(self):
-        self._info("Saving dataset...")
-        abs_path = self.source_data.save_source(self.__save_path.value)
-        self.__save_info.update(text="Saved in: " + abs_path)
-        self._info("Saved in " + str(abs_path))
-        self._info("Saving DONE")
 
     def __init_lasso_options(self):
         __lasso_general_info = Div(
@@ -160,9 +171,69 @@ class ClassifierDataSandbox(SubLayout):
                       __generate_new_clusters_button
                       )
 
+    """Methods for interactive calling (called by on_change or on_click triggers)"""
+
+    def _lasso_update(self, event):
+        if event.final and 0 == self.__points_generation_mode.active:
+
+            keys = event.geometry['x'].keys()  # 'x' and 'y' have the same keys which is the number of vertex
+            vertices = []
+            for key in keys:
+                vertices.append((event.geometry['x'][key], event.geometry['y'][key]))
+
+            cluster_size = self.__get_cluster_size()
+            x_new, y_new = dg.polygon_data(vertices, cluster_size)
+            classification_new = self.__generate_classes(len(x_new))
+            self.source_data.append_data(x_new, y_new, classification_new)
+
     def __points_generation_mode_trigger(self, attr, old, new):
         new_mode = self.__generation_modes[new]
-        self.layout.children[1].children[4] = new_mode
+        self.layout.children[self.__am1].children[self.__am2] = new_mode
+
+    def __lasso_density_button_trigger(self, attr, old, new):
+        if self.__lasso_point_density_input.value != DENS_INPUT_DEF_VAL:
+            # make sure density input is not providing any value
+            self.__lasso_point_density_input.remove_on_change('value', self.__lasso_density_input_trigger)
+            self.__lasso_point_density_input.update(value=DENS_INPUT_DEF_VAL)
+            self.__lasso_point_density_input.on_change('value', self.__lasso_density_input_trigger)
+
+    def __lasso_density_input_trigger(self, attr, old, new):
+        """This method provides that density_input widget value is ALWAYS either set to default value
+        or provides positive integer.
+        """
+        if self.__lasso_point_density_button.active is not None:  # make sure density button is not providing any value
+            self.__lasso_point_density_button.remove_on_change('active', self.__lasso_density_button_trigger)
+            self.__lasso_point_density_button.update(active=None)
+            self.__lasso_point_density_button.on_change('active', self.__lasso_density_button_trigger)
+
+        self.__lasso_point_density_input.remove_on_change('value', self.__lasso_density_input_trigger)
+        potential_cluster_size = 0
+        try:
+            potential_cluster_size = int(self.__lasso_point_density_input.value)
+        except ValueError:
+            self.__lasso_point_density_input.update(value=DENS_INPUT_DEF_VAL)
+        if potential_cluster_size < 1:
+            self.__lasso_point_density_input.update(value=DENS_INPUT_DEF_VAL)
+        self.__lasso_point_density_input.on_change('value', self.__lasso_density_input_trigger)
+
+    def __generate_new_clusters(self):
+        self._info("Generating new dataset...")
+
+        clusters_count, clusters_size, clusters_vol = self.__get_cluster_generating_params()
+
+        x, y, classification = dg.cluster_data(x_interval=(0, 30), y_interval=(-10, 10),
+                                               clusters=clusters_count,
+                                               av_cluster_size=clusters_size,
+                                               clust_size_vol=clusters_vol)
+
+        if 0 == self.__new_clusters_mode_button.active:
+            self.source_data.replace_data(x=x, y=y, classification=classification)
+        else:
+            self.source_data.append_data(x_new=x, y_new=y, classification_new=classification)
+
+        self._info("Generating new dataset DONE")
+
+    """Other methods"""
 
     @staticmethod
     def __get_int_set_error(text_input, lowest_val):
@@ -187,24 +258,6 @@ class ClassifierDataSandbox(SubLayout):
         )
         return clusters_count, clusters_size, clusters_vol
 
-    def __generate_new_clusters(self):
-        self._info("Generating new dataset...")
-
-        clusters_count, clusters_size, clusters_vol = self.__get_cluster_generating_params()
-        print(self.__get_cluster_generating_params())
-
-        x, y, classification = dg.cluster_data(x_interval=(0, 30), y_interval=(-10, 10),
-                                               clusters=clusters_count,
-                                               av_cluster_size=clusters_size,
-                                               clust_size_vol=clusters_vol)
-
-        if 0 == self.__new_clusters_mode_button.active:
-            self.source_data.replace_data(x=x, y=y, classification=classification)
-        else:
-            self.source_data.append_data(x_new=x, y_new=y, classification_new=classification)
-
-        self._info("Generating new dataset DONE")
-
     def __get_cluster_size(self):
         if self.__lasso_point_density_input.value != DENS_INPUT_DEF_VAL:
             # density input provides positive integer
@@ -217,33 +270,6 @@ class ClassifierDataSandbox(SubLayout):
         precise_cluster_size = int(raw_cluster_size)
         volatility = int(precise_cluster_size/2)
         return precise_cluster_size + randint(-volatility, volatility)
-
-    def __lasso_density_button_trigger(self, attr, old, new):
-        if self.__lasso_point_density_input.value != DENS_INPUT_DEF_VAL:
-            # make sure density input is not providing any value
-            self.__lasso_point_density_input.remove_on_change('value', self.__lasso_density_input_trigger)
-            self.__lasso_point_density_input.update(value=DENS_INPUT_DEF_VAL)
-            self.__lasso_point_density_input.on_change('value', self.__lasso_density_input_trigger)
-
-    def __lasso_density_input_trigger(self, attr, old, new):
-        """
-        this method provides that density_input widget value is ALWAYS either set to default value
-        or provides positive integer
-        """
-        if self.__lasso_point_density_button.active is not None:  # make sure density button is not providing any value
-            self.__lasso_point_density_button.remove_on_change('active', self.__lasso_density_button_trigger)
-            self.__lasso_point_density_button.update(active=None)
-            self.__lasso_point_density_button.on_change('active', self.__lasso_density_button_trigger)
-
-        self.__lasso_point_density_input.remove_on_change('value', self.__lasso_density_input_trigger)
-        potential_cluster_size = 0
-        try:
-            potential_cluster_size = int(self.__lasso_point_density_input.value)
-        except ValueError:
-            self.__lasso_point_density_input.update(value=DENS_INPUT_DEF_VAL)
-        if potential_cluster_size < 1:
-            self.__lasso_point_density_input.update(value=DENS_INPUT_DEF_VAL)
-        self.__lasso_point_density_input.on_change('value', self.__lasso_density_input_trigger)
 
     def __generate_classes(self, length):
         if self.__class_of_cluster_button.active == 1:  # if Random classes active

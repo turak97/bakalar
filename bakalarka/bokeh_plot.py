@@ -12,7 +12,7 @@ from bokeh.core import validation
 
 import data_gen as dg
 from source_data import SourceData
-from general_layout import ClassifierGeneralLayout, BasicGeneralLayout
+from general_layout import ClassifierGeneralLayout, RegressionGeneralLayout
 from constants import CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLUSTERS_COUNT_DEF
 from in_n_out import read_df
 
@@ -67,13 +67,13 @@ if __name__ == '__main__':
         source_data = SourceData(df=df, palette=PALETTE)
 
         if version == 'reg':
-            lay = BasicGeneralLayout(source_data=source_data)
+            lay = RegressionGeneralLayout(source_data=source_data)
         elif version == 'cls':
             lay = ClassifierGeneralLayout(source_data=source_data)
         else:
             lay = row()
 
-        doc.add_root(row(lay.layout))
+        doc.add_root(lay.layout)
 
     server = Server({'/': bkapp}, num_procs=1)
     server.start()

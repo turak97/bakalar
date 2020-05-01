@@ -15,44 +15,15 @@ from constants import MESH_STEP_SIZE, EMPTY_VALUE_COLOR, X_EXT, Y_EXT
 
 
 class SubLayout:
-    """Abstract class for classifier sub layouts, regressive sub layouts and data sandbox"""
+    """Base class for ModelSubLayout and DataSandbox"""
     def __init__(self, name, source_data):
         self.name = name
         self.source_data = source_data
-        self._x_ext = X_EXT
-        self._y_ext = Y_EXT
 
         self.layout = self._layout_init()
 
     def _layout_init(self):
-        fig_layout = self._init_figure()
-        fit_layout = self._init_fit_layout()
-        button_layout = self._init_button_layout()
-        return column(fig_layout, fit_layout, button_layout)
-
-    def update_renderer_colors(self):
-        pass
-
-    def refit(self):
-        pass
-
-    def _update_model_params(self):
-        pass
-
-    def immediate_update(self):
-        return 0 in self._immediate_update.active  # immediate update option is at index 0
-
-    def _init_fit_layout(self):
-        self._fit_button = Button(label="Solo Fit", button_type="success")
-        self._fit_button.on_click(self.refit)
-
-        self._immediate_update = CheckboxButtonGroup(
-            labels=["Immediate update when new points added"], active=[])
-
-        return row(self._immediate_update, self._fit_button)
-
-    def _init_button_layout(self):
-        return row()
+        return row(self._init_figure())
 
     def _init_figure(self):
         self._fig = figure(match_aspect=True, tools="pan,wheel_zoom,save,reset,box_zoom")
@@ -64,7 +35,55 @@ class SubLayout:
         print(self.name + " " + self._fig.id + ": " + message)
 
 
-class ClassifierSubLayout(SubLayout):
+class ModelSubLayout(SubLayout):
+    """Base class for classifier sub layouts, regressive sublayouts"""
+    def __init__(self, name, source_data):
+        SubLayout.__init__(self, name, source_data)
+        self._x_ext = X_EXT
+        self._y_ext = Y_EXT
+
+    """Methods used by GeneralLayout"""
+
+    def refit(self):
+        self._info("Updating model and fitting data...")
+        self._update_model_params()
+        self._figure_update()
+        self._info("Fitting and updating DONE")
+
+    def immediate_update(self):
+        """Returns whether figure should be immediately updated (after dataset change)"""
+        return 0 in self._immediate_update.active  # immediate update option is at index 0
+
+    """Methods for initialising layout"""
+
+    def _layout_init(self):
+        fig_layout = self._init_figure()
+        fit_layout = self._init_fit_layout()
+        button_layout = self._init_button_layout()
+        return column(fig_layout, fit_layout, button_layout)
+
+    def _update_model_params(self):
+        pass
+
+    def _init_button_layout(self):
+        return row()
+
+    def _init_fit_layout(self):
+        self._fit_button = Button(label="Solo Fit", button_type="success")
+        self._fit_button.on_click(self.refit)
+
+        self._immediate_update = CheckboxButtonGroup(
+            labels=["Immediate update when new points added"], active=[])
+
+        return row(self._immediate_update, self._fit_button)
+
+    """Other methods"""
+
+    def _figure_update(self):
+        pass
+
+
+class ClassifierSubLayout(ModelSubLayout):
     class ImageData:
         """Class for image representation of model results"""
         def __init__(self, x_min, x_max, y_min, y_max, x_ext, y_ext):
@@ -83,6 +102,7 @@ class ClassifierSubLayout(SubLayout):
             self.images = []
 
         def add_image(self, d):
+            # TODO: reshape tady, ne ve _fit_and_render
             self.images.append(d)
 
     def __init__(self, name, model, source_data):
@@ -92,7 +112,7 @@ class ClassifierSubLayout(SubLayout):
         data and source_data references are necessary to store due to updating
         figure based on user input (e.g. different neural activation function)
         """
-        SubLayout.__init__(self, name, source_data)
+        ModelSubLayout.__init__(self, name, source_data)
 
         # add original data to the figure and prepare PointDrawTool to make them interactive
         # this renderer MUST be the FIRST one
@@ -100,17 +120,11 @@ class ClassifierSubLayout(SubLayout):
         point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
         self._fig.add_tools(point_draw_tool)
 
-        self._info("Initialising sublayout and fitting data...")
+        self._info("Initialising ModelSubLayout and fitting data...")
 
         self._model = model
         self.refit()
         self._info("Initialising DONE")
-
-    def refit(self):
-        self._info("Updating model and fitting data...")
-        self._update_model_params()
-        self._figure_update()
-        self._info("Fitting and updating DONE")
 
     def update_renderer_colors(self):
         """
@@ -178,7 +192,7 @@ class ClassifierSubLayout(SubLayout):
         # plt.show()
 
 
-class RegressionSubLayout(SubLayout):
+class RegressionSubLayout(ModelSubLayout):
     class LineData:
         """Class for line representation of model results"""
         def __init__(self, x_min, x_max, x_ext):
@@ -206,7 +220,7 @@ class RegressionSubLayout(SubLayout):
 
     def __init__(self, name, model, source_data):
 
-        SubLayout.__init__(self, name, source_data)
+        ModelSubLayout.__init__(self, name, source_data)
 
         # add original data to the figure and prepare PointDrawTool to make them interactive
         # this renderer MUST be the FIRST one
@@ -217,10 +231,6 @@ class RegressionSubLayout(SubLayout):
         self._model = model
         self.refit()
         self._info("Initialising DONE")
-
-    def refit(self):
-        self._update_model_params()
-        self._figure_update()
 
     def _figure_update(self):
         """Figure must have an 'image' renderer as SECOND (at index 1) renderer,

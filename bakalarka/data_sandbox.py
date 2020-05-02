@@ -2,7 +2,7 @@
 from basic_sublayouts import SubLayout
 
 from bokeh.models import PointDrawTool, CheckboxButtonGroup, \
-    Div, RadioButtonGroup, TextInput, Button, Select
+    Div, RadioButtonGroup, TextInput, Button, Select, Slider
 from bokeh import events
 from bokeh.layouts import row, column
 
@@ -15,7 +15,7 @@ from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLU
 
 
 # TODO: at se to neodviji od uniqvalues
-
+# TODO: APPROX
 
 # TODO: bug: unexpected chovani pri odstraneni vsech bodu
 # TODO: bug: points in dataset obcas zobrazuje o 1 mensi hodnotu, nez self.data.classification u BUGCHECKu
@@ -24,11 +24,6 @@ from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLU
 class DataSandbox(SubLayout):
     def __init__(self, name, source_data):
         SubLayout.__init__(self, name, source_data)
-
-        move_circle = self._fig.circle('x', 'y', color='color', source=source_data.plot_source, size=7)
-        point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
-        self._fig.add_tools(point_draw_tool)
-
         self.source_data.plot_source.on_change('data', self._plot_source_change)  # DataSandbox can update statistics
 
         self._fig.on_event(events.SelectionGeometry, self._lasso_update)
@@ -73,9 +68,142 @@ class DataSandbox(SubLayout):
         self._info("Saving DONE")
 
 
+class RegressionDataSandbox(DataSandbox):
+    def __init__(self, name, source_data):
+        DataSandbox.__init__(self, name, source_data)
+
+        move_circle = self._fig.circle('x', 'y', source=source_data.plot_source, size=7)
+        point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
+        self._fig.add_tools(point_draw_tool)
+
+    """Methods for sublayout initialisation"""
+
+    def _init_button_layout(self):
+        basic_buttons = self._init_basic_buttons()
+
+        mode_button_labels = ["Lasso", "Approx poly"]
+        mode_button_width = 120 * (len(mode_button_labels) + 1)
+        self.__points_generation_mode = RadioButtonGroup(
+            labels=mode_button_labels, active=0, width=mode_button_width, width_policy="fixed")
+        self.__points_generation_mode.on_change('active', self.__points_generation_mode_trigger)
+        mode_text = Div(text="Data sandbox mode: ", style={'font-size': '150%'})
+
+        self.__generation_modes = {
+            0: self.__init_lasso_options(),
+            1: self.__aprox_poly_options()
+        }
+
+        active_mode = self.__generation_modes[self.__points_generation_mode.active]
+
+        self.__am1, self.__am2 = 1, 3  # active mode position
+        return column(basic_buttons,
+                      mode_text,
+                      self.__points_generation_mode,
+                      active_mode,
+                      )
+
+    def __init_lasso_options(self):
+        __lasso_general_info = Div(
+            text="Add new points by selecting \"Lasso Select\" in the figure toolbar. "
+                 "The count of new points can be set either roughly or precisely. "
+                 "If some points are not visible properly, click on \"Reset\" "
+                 "in the figure toolbar for resetting the view.")
+
+        self.__lasso_point_density_button = RadioButtonGroup(
+            labels=["auto", "±5", "±10", "±20", "±50", "±100"],
+            active=0, width=300, width_policy="fixed"
+        )
+        self.__lasso_point_density_button.on_change('active', self.__lasso_density_button_trigger)
+
+        self.__lasso_point_density_input = TextInput(value=DENS_INPUT_DEF_VAL, width=50)
+        self.__lasso_point_density_input.on_change('value', self.__lasso_density_input_trigger)
+        __lasso_options_info = Div(text="Lasso utilities: ", style={'font-size': '150%'})
+        __lasso_density_info = Div(text="Density options:", style={'font-size': '120%'})
+        __lasso_circa_info = Div(text="Circa: ")
+        __lasso_exact_info = Div(text="or Precise: ")
+        return column(__lasso_general_info,
+                      __lasso_options_info,
+                      __lasso_density_info,
+                      column(row(__lasso_circa_info, self.__lasso_point_density_button),
+                             row(__lasso_exact_info, self.__lasso_point_density_input))
+                      )
+
+    def __lasso_density_button_trigger(self, attr, old, new):
+        if self.__lasso_point_density_input.value != DENS_INPUT_DEF_VAL:
+            # make sure density input is not providing any value
+            self.__lasso_point_density_input.remove_on_change('value', self.__lasso_density_input_trigger)
+            self.__lasso_point_density_input.update(value=DENS_INPUT_DEF_VAL)
+            self.__lasso_point_density_input.on_change('value', self.__lasso_density_input_trigger)
+
+    def __lasso_density_input_trigger(self, attr, old, new):
+        """This method ensure that density_input widget value is ALWAYS either set to default value
+        or provides positive integer.
+        """
+        if self.__lasso_point_density_button.active is not None:  # make sure density button is not providing any value
+            self.__lasso_point_density_button.remove_on_change('active', self.__lasso_density_button_trigger)
+            self.__lasso_point_density_button.update(active=None)
+            self.__lasso_point_density_button.on_change('active', self.__lasso_density_button_trigger)
+
+        self.__lasso_point_density_input.remove_on_change('value', self.__lasso_density_input_trigger)
+        potential_cluster_size = 0
+        try:
+            potential_cluster_size = int(self.__lasso_point_density_input.value)
+        except ValueError:
+            self.__lasso_point_density_input.update(value=DENS_INPUT_DEF_VAL)
+        if potential_cluster_size < 1:
+            self.__lasso_point_density_input.update(value=DENS_INPUT_DEF_VAL)
+        self.__lasso_point_density_input.on_change('value', self.__lasso_density_input_trigger)
+
+    def __points_generation_mode_trigger(self, attr, old, new):
+        new_mode = self.__generation_modes[new]
+        self.layout.children[self.__am1].children[self.__am2] = new_mode
+
+    def _lasso_update(self, event):
+        if event.final and 0 == self.__points_generation_mode.active:
+
+            keys = event.geometry['x'].keys()  # 'x' and 'y' have the same keys which is the number of vertex
+            vertices = []
+            for key in keys:
+                vertices.append((event.geometry['x'][key], event.geometry['y'][key]))
+
+            cluster_size = self.__get_cluster_size()
+            x_new, y_new = dg.polygon_data(vertices, cluster_size)
+            self.source_data.append_data(x_new, y_new)
+
+    def __get_cluster_size(self):
+        if self.__lasso_point_density_input.value != DENS_INPUT_DEF_VAL:
+            # density input provides positive integer
+            return int(self.__lasso_point_density_input.value)
+
+        # TODO: exception self.__lasso_point_density_button.active is None
+        raw_cluster_size = self.__lasso_point_density_button.labels[self.__lasso_point_density_button.active][1:]
+        if raw_cluster_size == "uto":
+            return -1
+        precise_cluster_size = int(raw_cluster_size)
+        volatility = int(precise_cluster_size/2)
+        return precise_cluster_size + randint(-volatility, volatility)
+
+    def __aprox_poly_options(self):
+        __aprox_general_info = Div(
+            text="TODO")
+
+        self.__aprox_density_slider = Slider(start=5, end=100, value=20, step=5)
+
+        __aprox_options_info = Div(text="Aprox poly utilities: ", style={'font-size': '150%'})
+
+        return column(__aprox_general_info,
+                      __aprox_options_info,
+                      self.__aprox_density_slider
+                      )
+
+
 class ClassifierDataSandbox(DataSandbox):
     def __init__(self, name, source_data, class_select_button):
         DataSandbox.__init__(self, name, source_data)
+
+        move_circle = self._fig.circle('x', 'y', color='color', source=source_data.plot_source, size=7)
+        point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
+        self._fig.add_tools(point_draw_tool)
 
         self.__class_select_button = class_select_button
 

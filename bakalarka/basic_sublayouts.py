@@ -77,7 +77,7 @@ class ModelSubLayout(SubLayout):
 
         return row(self._immediate_update, self._fit_button)
 
-    """Other methods"""
+    """Methods for updating figure"""
 
     def _figure_update(self):
         pass
@@ -102,7 +102,6 @@ class ClassifierSubLayout(ModelSubLayout):
             self.images = []
 
         def add_image(self, d):
-            # TODO: reshape tady, ne ve _fit_and_render
             self.images.append(d)
 
     def __init__(self, name, model, source_data):
@@ -126,12 +125,15 @@ class ClassifierSubLayout(ModelSubLayout):
         self.refit()
         self._info("Initialising DONE")
 
+    """Methods used by ClassifierGeneralLayout"""
+
     def update_renderer_colors(self):
+        """Triggers update of data_source for the figure color update.
         """
-        triggers update of data_source for the figure color update
-        """
-        for renderer, new_d in zip(self._fig.renderers[1:], self._img_data.images):
-            renderer.data_source.data['image'] = [new_d]
+        for renderer, new_image in zip(self._fig.renderers[1:], self._img_data.images):
+            renderer.data_source.data['image'] = [new_image]
+
+    """Methods for updating figure"""
 
     def _figure_update(self):
         """Figure must have an 'image' renderer as SECOND (at index 1) renderer,
@@ -158,7 +160,7 @@ class ClassifierSubLayout(ModelSubLayout):
         self._img_data.add_image(raw_image.reshape(self._img_data.xx.shape))
 
         if len(self._fig.renderers) - 1 < renderer_i:
-            self._new_fig_renderer(renderer_i - 1)
+            self._new_fig_renderer(renderer_i - 1)  # images are indexed from 0, image renderers from 1
         else:
             self._update_fig_renderer(renderer_i)
 
@@ -171,7 +173,7 @@ class ClassifierSubLayout(ModelSubLayout):
     def _update_fig_renderer(self, i):
         """Update image data by directly changing them in the figure renderers"""
         img_patch = {
-            'image': [(0, self._img_data.images[i - 1])]
+            'image': [(0, self._img_data.images[i - 1])]  # images are indexed from 0, image renderers from 1
         }
         self._fig.renderers[i].data_source.patch(img_patch)
 
@@ -182,14 +184,6 @@ class ClassifierSubLayout(ModelSubLayout):
             dw=self._img_data.dw,
             dh=self._img_data.dh
         )
-
-    def _indie_plot(self):
-        pass
-        # TODO: method for independent check of image
-        # plt.plot()
-        # plt.contourf(xx, yy, d, cmap=plt.cm.coolwarm, alpha=0.8)
-        # plt.scatter(data.x_data, data.y_data, c=classification, cmap=plt.cm.coolwarm)
-        # plt.show()
 
 
 class RegressionSubLayout(ModelSubLayout):
@@ -232,18 +226,16 @@ class RegressionSubLayout(ModelSubLayout):
         self.refit()
         self._info("Initialising DONE")
 
+    """Methods for updating figure"""
+
     def _figure_update(self):
         """Figure must have an 'image' renderer as SECOND (at index 1) renderer,
-        where will be directly changed data
+        where will be directly changed data..
         """
-        self._info("Updating model and fitting data...")
-
         (x_min, x_max) = self.source_data.get_min_max_x()
         self._line_data = self.LineData(x_min, x_max, self._x_ext)
 
         self._fit_and_render(1)
-
-        self._info("Done")
 
     def _fit_and_render(self, renderer_i):
         """Fits the model, render image and add/update image to the figure

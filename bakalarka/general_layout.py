@@ -129,14 +129,12 @@ class GeneralLayout:
         self.layout.children[self._dp0].children[self._dp1].children[self._dp2] = \
             row(checkbox_button, self._dropdown)
 
-    def _create_new_sub_layout(self, model_name):
-        """Returns new sublayout with regression figure"""
-        return sr.reg_resolution(model_name=model_name,
-                                 source_data=self.source_data)
-
     @staticmethod
     def _info(message):
         print("Top layout: " + message)
+
+    def _create_new_sub_layout(self, model_name):
+        return None
 
 
 class RegressionGeneralLayout(GeneralLayout):
@@ -190,6 +188,11 @@ class RegressionGeneralLayout(GeneralLayout):
     def _menu_init():
         """Create options for model selection menu"""
         return list(zip(REG_MODELS.keys(), REG_MODELS.keys()))
+
+    def _create_new_sub_layout(self, model_name):
+        """Returns new sublayout with regression figure"""
+        return sr.reg_resolution(model_name=model_name,
+                                 source_data=self.source_data)
 
 
 class ClassifierGeneralLayout(GeneralLayout):
@@ -279,20 +282,6 @@ class ClassifierGeneralLayout(GeneralLayout):
 
         self._class_selection_update()
 
-    def _data_change(self, attr, old, new):
-        self._info("Updating data...")
-
-        if len(old['x']) < len(new['x']):
-
-            if new['color'][-1] == EMPTY_VALUE_COLOR:
-                new_class = self.source_data.uniq_values()[self._class_select_button.active]
-                self.source_data.update_color_newly_added(new_class,
-                                                          new_i=len(old['x']))
-
-        self._info("Updating data DONE")
-
-        self._update_immediate_sublayouts()
-
     def _data_sandbox_trigger(self, attr, old, new):
         if 0 in new:  # sandbox button was activated
             sandbox = sr.classifier_data_sandbox(name="Data Sandbox", source_data=self.source_data,
@@ -315,6 +304,20 @@ class ClassifierGeneralLayout(GeneralLayout):
 
         for sub_lay in self._sub_layouts:
             sub_lay.update_renderer_colors()
+
+    def _data_change(self, attr, old, new):
+        self._info("Updating data...")
+
+        if len(old['x']) < len(new['x']):
+
+            if new['color'][-1] == EMPTY_VALUE_COLOR:
+                new_class = self.source_data.uniq_values()[self._class_select_button.active]
+                self.source_data.update_color_newly_added(new_class,
+                                                          new_i=len(old['x']))
+
+        self._info("Updating data DONE")
+
+        self._update_immediate_sublayouts()
 
     """Other methods"""
 

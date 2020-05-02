@@ -11,15 +11,11 @@ from bokeh.server.server import Server
 from bokeh.core import validation
 
 import data_gen as dg
-from source_data import SourceData
+from source_data import RegressionSourceData, ClassificationSourceData
 from general_layout import ClassifierGeneralLayout, RegressionGeneralLayout
-from constants import CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLUSTERS_COUNT_DEF
+from constants import CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLUSTERS_COUNT_DEF, PALETTE
 from in_n_out import read_df
 
-# TODO: Datasourcy podle trid, nova trida pro data, ktera bude drzet slovnik[trida]: columndatasource
-# TODO: striknte oddelit frontend a backend
-
-# TODO: moznost volby libovolneho algoritmu od scikitu
 
 # TODO: @numba.njit()
 # TODO: https://docs.bokeh.org/en/latest/docs/reference/core/templates.html?fbclid=IwAR1AzUzA2gmpmO3bGqtM7bpNrop-bzbHA3jjgP786VuJirgANO8m7Ia5qAk
@@ -31,8 +27,6 @@ from in_n_out import read_df
 
 validation.silence(1002, True)  # silence bokeh plot warning
 
-
-PALETTE = bokeh.palettes.Category10[10]
 
 
 def parse_args():
@@ -64,11 +58,11 @@ if __name__ == '__main__':
 
     def bkapp(doc):
 
-        source_data = SourceData(df=df, palette=PALETTE)
-
         if version == 'reg':
+            source_data = RegressionSourceData(df=df)
             lay = RegressionGeneralLayout(source_data=source_data)
         elif version == 'cls':
+            source_data = ClassificationSourceData(df=df, palette=PALETTE)
             lay = ClassifierGeneralLayout(source_data=source_data)
         else:
             lay = row()

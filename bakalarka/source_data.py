@@ -5,29 +5,21 @@ import numpy as np
 
 from in_n_out import save_source
 
-# TODO: udelat z tohoto backend?
+
 # TODO: pamatovat algoritmy podle id figury
 
 
 class SourceData:
-    def __init__(self, df,
-                 palette):
-        self.palette = palette
+    def __init__(self, df):
         self.immediate_update = False
-
-        uniq_values = sorted(list(set(df['classification'])))
-        self.color_mapper = CategoricalColorMapper(palette=self.palette, factors=uniq_values)
-        self.color_dict = self.__uniq_vals2color_dict(uniq_values)
 
         self.plot_source = ColumnDataSource(
             data={
                 'x': df['x'].tolist(),
-                'y': df['y'].tolist(),
-                'classification': df['classification'].tolist()
+                'y': df['y'].tolist()
             }
         )
         # self.plot_source.remove('index')
-        self.plot_source.add([self.color_dict[val] for val in df['classification']], 'color')
 
         self.plot_source_trigger = None
 
@@ -35,10 +27,20 @@ class SourceData:
         self.plot_source.on_change('data', f)
         self.plot_source_trigger = f
 
-    def data_to_classifier_fit(self):
-        data = self.plot_source.data
-        cls_X = np.array([[data['x'][i], data['y'][i]] for i in range(len(data['x']))])
-        return cls_X, self.plot_source.data['classification']
+    def get_min_max_x(self):
+        return min(self.plot_source.data['x']), max(self.plot_source.data['x'])
+
+    def get_min_max_y(self):
+        return min(self.plot_source.data['y']), max(self.plot_source.data['y'])
+
+    def save_source(self, file_name):
+        abs_path = save_source(self.plot_source, file_name)
+        return abs_path
+
+
+class RegressionSourceData(SourceData):
+    def __init__(self, df):
+        SourceData.__init__(self, df)
 
     def data_to_regression_fit(self):
         x_np = np.asarray(self.plot_source.data['x'])
@@ -46,11 +48,43 @@ class SourceData:
         y_np = np.asarray(self.plot_source.data['y'])
         return x_np, y_np
 
-    def get_min_max_x(self):
-        return min(self.plot_source.data['x']), max(self.plot_source.data['x'])
+    def replace_data(self, x, y):
+        self.plot_source.remove_on_change('data', self.plot_source_trigger)
+        self.plot_source.update(
+            data=dict(
+                x=x.tolist(),
+                y=y.tolist()
+            )
+        )
+        self.plot_source.on_change('data', self.plot_source_trigger)
 
-    def get_min_max_y(self):
-        return min(self.plot_source.data['y']), max(self.plot_source.data['y'])
+        self.append_data(np.empty(shape=0), np.empty(shape=0))
+
+    def append_data(self, x_new, y_new):
+        new_data = {
+            'x': x_new.tolist(),
+            'y': y_new.tolist()
+        }
+        self.plot_source.stream(new_data)
+
+
+class ClassificationSourceData(SourceData):
+    def __init__(self, df,
+                 palette):
+        SourceData.__init__(self, df)
+        self.palette = palette
+
+        uniq_values = sorted(list(set(df['classification'])))
+        self.color_mapper = CategoricalColorMapper(palette=self.palette, factors=uniq_values)
+        self.color_dict = self.__uniq_vals2color_dict(uniq_values)
+
+        self.plot_source.add(df['classification'].tolist(), 'classification')
+        self.plot_source.add([self.color_dict[val] for val in df['classification']], 'color')
+
+    def data_to_classifier_fit(self):
+        data = self.plot_source.data
+        cls_X = np.array([[data['x'][i], data['y'][i]] for i in range(len(data['x']))])
+        return cls_X, self.plot_source.data['classification']
 
     def replace_data(self, x, y, classification):
         uniq_values = self.uniq_values()
@@ -74,6 +108,7 @@ class SourceData:
         self.append_data(np.empty(shape=0), np.empty(shape=0), [])
 
     def append_data(self, x_new, y_new, classification_new):
+
         colors = [self.color_dict[cls] for cls in classification_new]
         new_data = {
             'x': x_new.tolist(),
@@ -142,7 +177,3 @@ class SourceData:
         for uq, i in zip(uniq_values, range(len(uniq_values))):
             values_dict[uq] = self.palette[i]
         return values_dict
-
-    def save_source(self, file_name):
-        abs_path = save_source(self.plot_source, file_name)
-        return abs_path

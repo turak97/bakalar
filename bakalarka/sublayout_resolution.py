@@ -1,7 +1,7 @@
 
 from extended_classifier_sublayouts import \
     NeuralClassifier, SvmClassifier, BayesClassifier, KnnClassifier, StochasticGDClassifier
-from data_sandbox import ClassifierDataSandbox
+from data_sandbox import ClassifierDataSandbox, RegressionDataSandbox
 from basic_sublayouts import ClassifierSubLayout, RegressionSubLayout
 from extended_regression_sublayouts import PolynomialRegression, KnnRegression
 
@@ -17,7 +17,7 @@ def classifier_data_sandbox(name, source_data, class_select_button):
 
 
 def regression_data_sandbox(name, source_data):
-    return DataSandbox(name, source_data)
+    return RegressionDataSandbox(name, source_data)
 
 
 def cls_resolution(model_name, source_data):

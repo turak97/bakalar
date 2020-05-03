@@ -20,13 +20,10 @@ from in_n_out import read_df
 # TODO: @numba.njit()
 # TODO: https://docs.bokeh.org/en/latest/docs/reference/core/templates.html?fbclid=IwAR1AzUzA2gmpmO3bGqtM7bpNrop-bzbHA3jjgP786VuJirgANO8m7Ia5qAk
 
-# TODO: prepinac s nazvem souboru, kam se ulozi vysledek + prepinac po ukonceni aplikace ulozit dataset
-
 # TODO: configurak v JSONu
 # TODO: html stranky navic k proklikani a jako info
 
 validation.silence(1002, True)  # silence bokeh plot warning
-
 
 
 def parse_args():

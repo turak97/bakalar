@@ -14,11 +14,18 @@ LASSO_SLIDER_END = 100
 LASSO_SLIDER_STEP = 1
 LASSO_SLIDER_STARTING_VAL = 10
 
+POLY_DEF_DGR = 3
+
+KNN_DEF_NEIGHBOUR_N = 3
+
 NEURAL_DEF_SLIDER_STEPS = 3
 NEURAL_DEF_MAX_ITER_STEPS = 100
 NEURAL_DEF_ACTIVATION = 1  # 0: identity, 1: sigmoid, 2: tanh, 3: linear
 NEURAL_DEF_SOLVER = 1  # 0: lbfgs, 1: gradient descent, 2: adam
 NEURAL_DEF_LAYERS = "20"  # more layers: "20, 10, 5, 20"
+
+POL_FROM_DGR = 1
+POL_TO_DGR = 5
 
 CLUSTERS_COUNT_DEF = 3
 CLUSTER_SIZE_DEF = 3
@@ -31,9 +38,6 @@ MAX_CLUSTERS = 10
 MESH_STEP_SIZE = 0.05  # default: 0.05
 X_EXT = 1
 Y_EXT = X_EXT
-
-POL_FROM_DGR = 1
-POL_TO_DGR = 10
 
 """Those constants should NOT be changed"""
 

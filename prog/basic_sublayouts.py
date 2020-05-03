@@ -11,9 +11,6 @@ from constants import MESH_STEP_SIZE, EMPTY_VALUE_COLOR, X_EXT, Y_EXT
 # import matplotlib.pyplot as plt
 
 
-# TODO: togglebutton misto radiobuttongroup
-
-
 class SubLayout:
     """Base class for ModelSubLayout and DataSandbox"""
     def __init__(self, name, source_data):

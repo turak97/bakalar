@@ -7,9 +7,6 @@ from in_n_out import save_source
 import data_gen as dg
 
 
-# TODO: pamatovat algoritmy podle id figury
-
-
 class SourceData:
     def __init__(self, df):
         self.immediate_update = False

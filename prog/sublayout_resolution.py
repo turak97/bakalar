@@ -1,11 +1,11 @@
 
-from extended_classifier_sublayouts import \
-    NeuralClassifier, SvmClassifier, BayesClassifier, KnnClassifier, StochasticGDClassifier
 from data_sandbox import ClassifierDataSandbox, RegressionDataSandbox
 from basic_sublayouts import ClassifierSubLayout, RegressionSubLayout
-from extended_regression_sublayouts import PolynomialRegression, KnnRegression
+from extended_regression_sublayouts import PolynomialRegression, SliderRegressionSubLayout
+from extended_classifier_sublayouts import \
+    NeuralClassifier, SvmClassifier, SliderClassifierSubLayout
 
-from models import REG_MODELS, CLS_MODELS
+from models import REG_MODELS, CLS_MODELS, CLS_SLIDERS
 
 from copy import deepcopy
 
@@ -22,32 +22,31 @@ def regression_data_sandbox(name, source_data):
 
 def cls_resolution(model_name, source_data):
     model = deepcopy(CLS_MODELS[model_name])
+    """Special models."""
     if model_name == "Neural classification":
         return NeuralClassifier(model_name, model, source_data)
     elif model_name == "SVM classification":
         return SvmClassifier(model_name, model, source_data)
-    elif model_name == "K nearest neighbours":
-        return KnnClassifier(model_name, model, source_data)
-    elif model_name == "Naive Bayes (Gaussian)":
-        return BayesClassifier(model_name, model, source_data)
-    elif model_name == "Stochastic gradiend descent":
-        return StochasticGDClassifier(model_name, model, source_data)
-    else:
-        return None
+
+    """Generic model with sliders attached"""
+    if model_name in CLS_SLIDERS:
+        slider_params = CLS_SLIDERS[model_name]
+        return SliderClassifierSubLayout(model_name, model, source_data, slider_params)
+
+    """Total generic model"""
+    return ClassifierSubLayout(model_name, model, source_data)
 
 
 def reg_resolution(model_name, source_data):
     model = deepcopy(REG_MODELS[model_name])
+    """Special models"""
     if model_name == "Polynomial regression":
         return PolynomialRegression(model_name, model, source_data)
-    elif model_name == "K nearest neighbours":
-        return KnnRegression(model_name, model, source_data)
-    else:
-        return RegressionSubLayout(model_name, model, source_data)
 
+    """Generic model with sliders attached"""
+    if model_name in CLS_SLIDERS:
+        slider_params = CLS_SLIDERS[model_name]
+        return SliderRegressionSubLayout(model_name, model, source_data, slider_params)
 
-# def str2model_class(model_name):
-#     module_name, model_name = model_name.rsplit('.')
-#     module = getattr(sklearn, module_name)
-#     model_class = getattr(module, model_name)
-#     return model_class
+    """Total generic model"""
+    return RegressionSubLayout(model_name, model, source_data)

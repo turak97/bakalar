@@ -5,68 +5,62 @@ from bokeh.layouts import row, column
 from math import ceil
 
 from basic_sublayouts import ClassifierSubLayout
-from constants import NEURAL_DEF_ACTIVATION, NEURAL_DEF_LAYERS, \
-    NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_SLIDER_STEPS, NEURAL_DEF_SOLVER
+from constants import NEURAL_DEF_ACTIVATION, NEURAL_DEF_LAYERS, KNN_DEF_NEIGHBOUR_N, \
+    NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_SLIDER_STEPS, NEURAL_DEF_SOLVER, POLY_DEF_DGR
 
 import warnings
 from sklearn.exceptions import ConvergenceWarning
 warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
 
 
-# TODO: define all default values as constants
-
-
-class StochasticGDClassifier(ClassifierSubLayout):
-    def __init__(self, name, model, source_data):
-
-        ClassifierSubLayout.__init__(self, name, model, source_data)
-
-
-class BayesClassifier(ClassifierSubLayout):
-    def __init__(self, name, model, source_data):
+class SliderClassifierSubLayout(ClassifierSubLayout):
+    def __init__(self, name, model, source_data, slider_params):
+        self._model_attr, slider_attr = slider_params
+        self._start, self._end, self._step, self._value = slider_attr
 
         ClassifierSubLayout.__init__(self, name, model, source_data)
 
+    def refit(self):
+        self._info("Updating model and fitting data...")
+        self._update_model_params()
+        self._figure_update()
+        self._set_visible_renderer(self._slider.value)
+        self._info("Fitting and updating DONE")
 
-class KnnClassifier(ClassifierSubLayout):
-    class ButtonStr:
-        # algorithm button
-        BALLTREE = "ball tree"
-        KDTREE = "kd tree"
-        BRUTE = "brute force"
-        AUTO = "auto"
+    def _figure_update(self):
+        self._info("Updating model and fitting data...")
 
-    def __init__(self, name, model, source_data):
+        (min_x, max_x), (min_y, max_y) = self.source_data.get_min_max_x(), self.source_data.get_min_max_y()
+        self._img_data = self.ImageData(min_x, max_x,
+                                        min_y, max_y,
+                                        self._x_ext, self._y_ext)
 
-        ClassifierSubLayout.__init__(self, name, model, source_data)
+        for value, i in zip(range(self._start, self._end + 1, self._step),
+                            range(1, self._end + 1, self._step)):
+            setattr(self._model, self._model_attr, value)
+
+            self._fit_and_render(i)
+
+        self._info("Done")
 
     def _init_button_layout(self):
-        """Creates buttons bellow the figure, sets the trigger functions on them
-        and add them to the subLayout"""
+        self._slider = Slider(
+            title=self._model_attr,
+            start=self._start, end=self._end, step=self._step, value=self._value
+        )
+        self._slider.on_change("value", self._slider_change)
+        return self._slider
 
-        self.__n_neighbors_button = Select(
-            title="", value="3",
-            options=[str(i) for i in range(1, 20)], width=70)
-        n_neighbors_text = Div(text="Number of neighbors to use: ")
+    def _slider_change(self, attr, old, new):
+        visible = new
+        self._set_visible_renderer(visible)
 
-        return column(
-                      row(n_neighbors_text,
-                          self.__n_neighbors_button)
-                      )
-
-    def _update_model_params(self):
-        self._model.n_neighbors = int(self.__n_neighbors_button.value)
-
-    @staticmethod
-    def __label2algo_str(label):
-        if label == KnnClassifier.ButtonStr.BALLTREE:
-            return "ball_tree"
-        elif label == KnnClassifier.ButtonStr.KDTREE:
-            return "kd_tree"
-        elif label == KnnClassifier.ButtonStr.BRUTE:
-            return "brute"
-        else:
-            return "auto"
+    def _set_visible_renderer(self, visible):
+        for renderer, i in zip(self._fig.renderers[1:], range(1, len(self._fig.renderers))):
+            if i == visible:
+                renderer.visible = True
+            else:
+                renderer.visible = False
 
 
 class SvmClassifier(ClassifierSubLayout):
@@ -80,12 +74,6 @@ class SvmClassifier(ClassifierSubLayout):
     def __init__(self, name, model, source_data):
 
         ClassifierSubLayout.__init__(self, name, model, source_data)
-
-    # def refit(self):
-    #     self._info("Updating model and fitting data...")
-    #     self.__update_model_params()
-    #     self._figure_update()
-    #     self._info("Fitting and updating DONE")
 
     def _init_button_layout(self):
         """Creates buttons bellow the figure, sets the trigger functions on them
@@ -103,7 +91,7 @@ class SvmClassifier(ClassifierSubLayout):
         __kernel_group = column(__kernel_text, self.__kernel_button)
 
         self.__degree_button = Select(
-            title="", value="3",
+            title="", value=str(POLY_DEF_DGR),
             options=[str(i) for i in range(20)], width=70)
         degree_text = Div(text="Degree (" + self.ButtonStr.POLY + "): ")
 
@@ -171,6 +159,20 @@ class NeuralClassifier(ClassifierSubLayout):
         ClassifierSubLayout.__init__(self, name, model, source_data)
         self.__set_visible_renderer(self.__slider_steps)
 
+    def refit(self):
+        """Update iteration (max, slider step, ...) and classifier parameters then update figure"""
+        self._info("Updating model and fitting data...")
+        self.__logarithmic_steps = self.__logarithm_button.active
+
+        self.__update_iteration_params(int(self.__max_iterations_input.value),
+                                       int(self.__slider_steps_input.value))
+        self._update_model_params()
+
+        self._figure_update()
+        self.__set_visible_renderer(self.__slider_steps)
+
+        self._info("Fitting and updating DONE")
+
     def _figure_update(self):
         self._info("Updating model and fitting data...")
 
@@ -195,20 +197,6 @@ class NeuralClassifier(ClassifierSubLayout):
             self._fit_and_render(renderer_i)
 
         self._info("Done")
-
-    def refit(self):
-        """Update iteration (max, slider step, ...) and classifier parameters then update figure"""
-        self._info("Updating model and fitting data...")
-        self.__logarithmic_steps = self.__logarithm_button.active
-
-        self.__update_iteration_params(int(self.__max_iterations_input.value),
-                                       int(self.__slider_steps_input.value))
-        self._update_model_params()
-
-        self._figure_update()
-        self.__set_visible_renderer(self.__slider_steps)
-
-        self._info("Fitting and updating DONE")
 
     def _init_button_layout(self):
         """Creates buttons bellow the figure, sets the trigger functions on them

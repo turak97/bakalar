@@ -5,7 +5,7 @@ import pandas as pd
 
 from constants import SAVED_DATASETS_DIR_NAME
 
-# TODO: elegantni cislovani souboru
+
 # TODO: ukladat classy ve stringu
 
 

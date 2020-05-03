@@ -20,7 +20,6 @@ LASSO_APPEND = "Append with Lasso"
 
 # TODO: at se to neodviji od uniqvalues
 # TODO: APPROX
-# TODO: pridat mod "standart"
 
 # TODO: bug: unexpected chovani pri odstraneni vsech bodu
 # TODO: bug: points in dataset obcas zobrazuje o 1 mensi hodnotu, nez self.data.classification u BUGCHECKu

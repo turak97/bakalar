@@ -1,4 +1,4 @@
-How to install:
+# How to install:
 
 Go to a directory, where you whish this a new home
 
@@ -12,7 +12,7 @@ source env/bin/activate
 
 pip install -r requirements.txt 
 
-How to run:
+# How to run:
 
 source evn/bin/activate
 
@@ -20,4 +20,4 @@ python3 bokeh_plot.py
 or
 python3 bokeh_plot.py -h for options
 
-Have a fun
+### Have a fun!

@@ -10,12 +10,17 @@ from random import randint
 
 from in_n_out import save_source
 import data_gen as dg
+
 from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLUSTERS_COUNT_DEF, MAX_CLUSTERS, \
-    SAVED_DATASET_FILE_NAME, EMPTY_VALUE_COLOR
+    SAVED_DATASET_FILE_NAME, EMPTY_VALUE_COLOR, LASSO_SLIDER_END, LASSO_SLIDER_START, LASSO_SLIDER_STARTING_VAL, \
+    LASSO_SLIDER_STEP
+STANDARD_MODE = "Standard mode"
+LASSO_APPEND = "Append with Lasso"
 
 
 # TODO: at se to neodviji od uniqvalues
 # TODO: APPROX
+# TODO: pridat mod "standart"
 
 # TODO: bug: unexpected chovani pri odstraneni vsech bodu
 # TODO: bug: points in dataset obcas zobrazuje o 1 mensi hodnotu, nez self.data.classification u BUGCHECKu
@@ -26,7 +31,7 @@ class DataSandbox(SubLayout):
         SubLayout.__init__(self, name, source_data)
         self.source_data.plot_source.on_change('data', self._plot_source_change)  # DataSandbox can update statistics
 
-        self._fig.on_event(events.SelectionGeometry, self._lasso_update)
+        self._fig.on_event(events.SelectionGeometry, self._lasso_add)
 
     """Methods for sublayout initialisation"""
 
@@ -37,35 +42,108 @@ class DataSandbox(SubLayout):
     
     def _init_button_layout(self):
         basic_buttons = self._init_basic_buttons()
-        return basic_buttons
+
+        self._generation_modes = {
+            STANDARD_MODE: self._init_standard_option(),
+            LASSO_APPEND: self._init_lasso_option()
+        }
+        self._add_special_modes()
+
+        mode_button_labels = list(self._generation_modes.keys())
+        mode_button_width = 120 * (len(mode_button_labels) + 1)
+        self._points_generation_mode_button = RadioButtonGroup(
+            labels=mode_button_labels, active=0, width=mode_button_width, width_policy="fixed")
+        self._points_generation_mode_button.on_change('active', self._points_generation_mode_trigger)
+        mode_text = Div(text="Data sandbox mode: ", style={'font-size': '150%'})
+
+        active_mode = self._generation_modes[STANDARD_MODE]
+
+        self._am1, self._am2 = 1, 3  # active mode position
+        return column(basic_buttons,
+                      mode_text,
+                      self._points_generation_mode_button,
+                      active_mode,
+                      )
+
+    def _add_special_modes(self):
+        pass
 
     def _init_basic_buttons(self):
         self._data_size_info = Div(text="Points in dataset: " + str(len(self.source_data.plot_source.data['x'])))
 
-        self.__save_button = Button(label="Save dataset", button_type="primary")
-        self.__save_button.on_click(self.__save_dataset)
+        self._save_button = Button(label="Save dataset", button_type="primary")
+        self._save_button.on_click(self._save_dataset)
 
-        self.__save_path = TextInput(value=SAVED_DATASET_FILE_NAME, title="Name of the file:")
-        self.__save_info = Div(text="", style={'font-size': '75%'}, width_policy="fixed")
-        save_group = column(self.__save_path, self.__save_button, self.__save_info)
+        self._save_path = TextInput(value=SAVED_DATASET_FILE_NAME, title="Name of the file:")
+        self._save_info = Div(text="", style={'font-size': '75%'}, width_policy="fixed")
+        save_group = column(self._save_path, self._save_button, self._save_info)
 
         return column(self._data_size_info,
                       save_group)
 
+    def _init_lasso_option(self):
+        lasso_general_info = self._lasso_general_info()
+
+        self._lasso_density_slider = Slider(start=LASSO_SLIDER_START, end=LASSO_SLIDER_END,
+                                            step=LASSO_SLIDER_STEP, value=LASSO_SLIDER_STARTING_VAL)
+
+        return column(lasso_general_info,
+                      self._lasso_density_slider
+                      )
+
+    @staticmethod
+    def _lasso_general_info():
+        return Div(
+            text="Add new points by selecting \"Lasso Select\" in the figure toolbar. "
+                 "Then draw a polygon in the figure. "
+                 "If some points are not visible properly, click on \"Reset\" "
+                 "in the figure toolbar for resetting the view.")
+
+    @staticmethod
+    def _init_standard_option():
+        return Div(
+            text="You can move with points or delete the with Point Draw Tool or Lasso."
+                 "For adding points with Lasso click on \"append with Lasso\"")
+
     """Methods for interactive calling (called by on_change or on_click triggers)"""
-    
+
+    def _points_generation_mode_trigger(self, attr, old, new):
+        new_mode_str = self._points_generation_mode_button.labels[new]
+        new_mode = self._generation_modes[new_mode_str]
+        self.layout.children[self._am1].children[self._am2] = new_mode
+
     def _plot_source_change(self, attr, old, new):
         self._data_size_info.update(text="Points in dataset: " + str(len(new['x'])))
 
-    def _lasso_update(self, event):
-        pass
+    def _lasso_add(self, event):
+        if event.final and self._is_lasso_append_active():
 
-    def __save_dataset(self):
+            keys = event.geometry['x'].keys()  # 'x' and 'y' have the same keys which is the number of vertex
+            vertices = []
+            for key in keys:
+                vertices.append((event.geometry['x'][key], event.geometry['y'][key]))
+
+            self._append_to_source(vertices)
+
+    def _save_dataset(self):
         self._info("Saving dataset...")
-        abs_path = self.source_data.save_source(self.__save_path.value)
-        self.__save_info.update(text="Saved in: " + abs_path)
+        abs_path = self.source_data.save_source(self._save_path.value)
+        self._save_info.update(text="Saved in: " + abs_path)
         self._info("Saved in " + str(abs_path))
         self._info("Saving DONE")
+
+    """Other methods"""
+
+    def _append_to_source(self, vertices):
+        pass
+
+    def _get_lasso_density(self):
+        return self._lasso_density_slider.value
+
+    def _is_lasso_append_active(self):
+        active_mode = self._points_generation_mode_button.labels[
+            self._points_generation_mode_button.active]
+        return active_mode == LASSO_APPEND
 
 
 class RegressionDataSandbox(DataSandbox):
@@ -77,111 +155,6 @@ class RegressionDataSandbox(DataSandbox):
         self._fig.add_tools(point_draw_tool)
 
     """Methods for sublayout initialisation"""
-
-    def _init_button_layout(self):
-        basic_buttons = self._init_basic_buttons()
-
-        mode_button_labels = ["Lasso", "Approx poly"]
-        mode_button_width = 120 * (len(mode_button_labels) + 1)
-        self.__points_generation_mode = RadioButtonGroup(
-            labels=mode_button_labels, active=0, width=mode_button_width, width_policy="fixed")
-        self.__points_generation_mode.on_change('active', self.__points_generation_mode_trigger)
-        mode_text = Div(text="Data sandbox mode: ", style={'font-size': '150%'})
-
-        self.__generation_modes = {
-            0: self.__init_lasso_options(),
-            1: self.__aprox_poly_options()
-        }
-
-        active_mode = self.__generation_modes[self.__points_generation_mode.active]
-
-        self.__am1, self.__am2 = 1, 3  # active mode position
-        return column(basic_buttons,
-                      mode_text,
-                      self.__points_generation_mode,
-                      active_mode,
-                      )
-
-    def __init_lasso_options(self):
-        __lasso_general_info = Div(
-            text="Add new points by selecting \"Lasso Select\" in the figure toolbar. "
-                 "The count of new points can be set either roughly or precisely. "
-                 "If some points are not visible properly, click on \"Reset\" "
-                 "in the figure toolbar for resetting the view.")
-
-        self.__lasso_point_density_button = RadioButtonGroup(
-            labels=["auto", "±5", "±10", "±20", "±50", "±100"],
-            active=0, width=300, width_policy="fixed"
-        )
-        self.__lasso_point_density_button.on_change('active', self.__lasso_density_button_trigger)
-
-        self.__lasso_point_density_input = TextInput(value=DENS_INPUT_DEF_VAL, width=50)
-        self.__lasso_point_density_input.on_change('value', self.__lasso_density_input_trigger)
-        __lasso_options_info = Div(text="Lasso utilities: ", style={'font-size': '150%'})
-        __lasso_density_info = Div(text="Density options:", style={'font-size': '120%'})
-        __lasso_circa_info = Div(text="Circa: ")
-        __lasso_exact_info = Div(text="or Precise: ")
-        return column(__lasso_general_info,
-                      __lasso_options_info,
-                      __lasso_density_info,
-                      column(row(__lasso_circa_info, self.__lasso_point_density_button),
-                             row(__lasso_exact_info, self.__lasso_point_density_input))
-                      )
-
-    def __lasso_density_button_trigger(self, attr, old, new):
-        if self.__lasso_point_density_input.value != DENS_INPUT_DEF_VAL:
-            # make sure density input is not providing any value
-            self.__lasso_point_density_input.remove_on_change('value', self.__lasso_density_input_trigger)
-            self.__lasso_point_density_input.update(value=DENS_INPUT_DEF_VAL)
-            self.__lasso_point_density_input.on_change('value', self.__lasso_density_input_trigger)
-
-    def __lasso_density_input_trigger(self, attr, old, new):
-        """This method ensure that density_input widget value is ALWAYS either set to default value
-        or provides positive integer.
-        """
-        if self.__lasso_point_density_button.active is not None:  # make sure density button is not providing any value
-            self.__lasso_point_density_button.remove_on_change('active', self.__lasso_density_button_trigger)
-            self.__lasso_point_density_button.update(active=None)
-            self.__lasso_point_density_button.on_change('active', self.__lasso_density_button_trigger)
-
-        self.__lasso_point_density_input.remove_on_change('value', self.__lasso_density_input_trigger)
-        potential_cluster_size = 0
-        try:
-            potential_cluster_size = int(self.__lasso_point_density_input.value)
-        except ValueError:
-            self.__lasso_point_density_input.update(value=DENS_INPUT_DEF_VAL)
-        if potential_cluster_size < 1:
-            self.__lasso_point_density_input.update(value=DENS_INPUT_DEF_VAL)
-        self.__lasso_point_density_input.on_change('value', self.__lasso_density_input_trigger)
-
-    def __points_generation_mode_trigger(self, attr, old, new):
-        new_mode = self.__generation_modes[new]
-        self.layout.children[self.__am1].children[self.__am2] = new_mode
-
-    def _lasso_update(self, event):
-        if event.final and 0 == self.__points_generation_mode.active:
-
-            keys = event.geometry['x'].keys()  # 'x' and 'y' have the same keys which is the number of vertex
-            vertices = []
-            for key in keys:
-                vertices.append((event.geometry['x'][key], event.geometry['y'][key]))
-
-            cluster_size = self.__get_cluster_size()
-            x_new, y_new = dg.polygon_data(vertices, cluster_size)
-            self.source_data.append_data(x_new, y_new)
-
-    def __get_cluster_size(self):
-        if self.__lasso_point_density_input.value != DENS_INPUT_DEF_VAL:
-            # density input provides positive integer
-            return int(self.__lasso_point_density_input.value)
-
-        # TODO: exception self.__lasso_point_density_button.active is None
-        raw_cluster_size = self.__lasso_point_density_button.labels[self.__lasso_point_density_button.active][1:]
-        if raw_cluster_size == "uto":
-            return -1
-        precise_cluster_size = int(raw_cluster_size)
-        volatility = int(precise_cluster_size/2)
-        return precise_cluster_size + randint(-volatility, volatility)
 
     def __aprox_poly_options(self):
         __aprox_general_info = Div(
@@ -195,6 +168,12 @@ class RegressionDataSandbox(DataSandbox):
                       __aprox_options_info,
                       self.__aprox_density_slider
                       )
+
+    """Other methods"""
+
+    def _append_to_source(self, vertices):
+        density = self._get_lasso_density()
+        self.source_data.append_polygon_data(vertices, density)
 
 
 class ClassifierDataSandbox(DataSandbox):
@@ -211,30 +190,6 @@ class ClassifierDataSandbox(DataSandbox):
         self.source_data.plot_source.remove_on_change('data', self._plot_source_change)  # removing trigger
 
     """Methods for sublayout initialisation"""
-
-    def _init_button_layout(self):
-        basic_buttons = self._init_basic_buttons()
-
-        mode_button_labels = ["Lasso", "Automatic generation"]
-        mode_button_width = 120 * (len(mode_button_labels) + 1)
-        self.__points_generation_mode = RadioButtonGroup(
-            labels=mode_button_labels, active=0, width=mode_button_width, width_policy="fixed")
-        self.__points_generation_mode.on_change('active', self.__points_generation_mode_trigger)
-        mode_text = Div(text="Data sandbox mode: ", style={'font-size': '150%'})
-
-        self.__generation_modes = {
-            0: self.__init_lasso_options(),
-            1: self.__init_cluster_generating_options()
-        }
-
-        active_mode = self.__generation_modes[self.__points_generation_mode.active]
-
-        self.__am1, self.__am2 = 1, 3  # active mode position
-        return column(basic_buttons,
-                      mode_text,
-                      self.__points_generation_mode,
-                      active_mode,
-                      )
 
     def __init_lasso_options(self):
         __lasso_general_info = Div(
@@ -301,49 +256,6 @@ class ClassifierDataSandbox(DataSandbox):
 
     """Methods for interactive calling (called by on_change or on_click triggers)"""
 
-    def _lasso_update(self, event):
-        if event.final and 0 == self.__points_generation_mode.active:
-
-            keys = event.geometry['x'].keys()  # 'x' and 'y' have the same keys which is the number of vertex
-            vertices = []
-            for key in keys:
-                vertices.append((event.geometry['x'][key], event.geometry['y'][key]))
-
-            cluster_size = self.__get_cluster_size()
-            x_new, y_new = dg.polygon_data(vertices, cluster_size)
-            classification_new = self.__generate_classes(len(x_new))
-            self.source_data.append_data(x_new, y_new, classification_new)
-
-    def __points_generation_mode_trigger(self, attr, old, new):
-        new_mode = self.__generation_modes[new]
-        self.layout.children[self.__am1].children[self.__am2] = new_mode
-
-    def __lasso_density_button_trigger(self, attr, old, new):
-        if self.__lasso_point_density_input.value != DENS_INPUT_DEF_VAL:
-            # make sure density input is not providing any value
-            self.__lasso_point_density_input.remove_on_change('value', self.__lasso_density_input_trigger)
-            self.__lasso_point_density_input.update(value=DENS_INPUT_DEF_VAL)
-            self.__lasso_point_density_input.on_change('value', self.__lasso_density_input_trigger)
-
-    def __lasso_density_input_trigger(self, attr, old, new):
-        """This method provides that density_input widget value is ALWAYS either set to default value
-        or provides positive integer.
-        """
-        if self.__lasso_point_density_button.active is not None:  # make sure density button is not providing any value
-            self.__lasso_point_density_button.remove_on_change('active', self.__lasso_density_button_trigger)
-            self.__lasso_point_density_button.update(active=None)
-            self.__lasso_point_density_button.on_change('active', self.__lasso_density_button_trigger)
-
-        self.__lasso_point_density_input.remove_on_change('value', self.__lasso_density_input_trigger)
-        potential_cluster_size = 0
-        try:
-            potential_cluster_size = int(self.__lasso_point_density_input.value)
-        except ValueError:
-            self.__lasso_point_density_input.update(value=DENS_INPUT_DEF_VAL)
-        if potential_cluster_size < 1:
-            self.__lasso_point_density_input.update(value=DENS_INPUT_DEF_VAL)
-        self.__lasso_point_density_input.on_change('value', self.__lasso_density_input_trigger)
-
     def __generate_new_clusters(self):
         self._info("Generating new dataset...")
 
@@ -386,20 +298,7 @@ class ClassifierDataSandbox(DataSandbox):
         )
         return clusters_count, clusters_size, clusters_vol
 
-    def __get_cluster_size(self):
-        if self.__lasso_point_density_input.value != DENS_INPUT_DEF_VAL:
-            # density input provides positive integer
-            return int(self.__lasso_point_density_input.value)
-
-        # TODO: exception self.__lasso_point_density_button.active is None
-        raw_cluster_size = self.__lasso_point_density_button.labels[self.__lasso_point_density_button.active][1:]
-        if raw_cluster_size == "uto":
-            return -1
-        precise_cluster_size = int(raw_cluster_size)
-        volatility = int(precise_cluster_size/2)
-        return precise_cluster_size + randint(-volatility, volatility)
-
-    def __generate_classes(self, length):
-        if self.__class_of_cluster_button.active == 1:  # if Random classes active
-            return dg.classify(length, self.source_data.uniq_values())
-        return [self.source_data.uniq_values()[self.__class_select_button.active] for _ in range(length)]
+    def _append_to_source(self, vertices):
+        density = self._get_lasso_density()
+        cls = self.source_data.uniq_values()[self.__class_select_button.active]
+        self.source_data.append_polygon_data(vertices, density, cls)

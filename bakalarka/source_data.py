@@ -4,6 +4,7 @@ from bokeh.models import CategoricalColorMapper, ColumnDataSource
 import numpy as np
 
 from in_n_out import save_source
+import data_gen as dg
 
 
 # TODO: pamatovat algoritmy podle id figury
@@ -58,9 +59,14 @@ class RegressionSourceData(SourceData):
         )
         self.plot_source.on_change('data', self.plot_source_trigger)
 
-        self.append_data(np.empty(shape=0), np.empty(shape=0))
+        self.plot_source.stream({
+            'x': [],
+            'y': []
+        })
 
-    def append_data(self, x_new, y_new):
+    def append_polygon_data(self, vertices, density):
+        x_new, y_new = dg.polygon_data(vertices, cluster_size=density)
+
         new_data = {
             'x': x_new.tolist(),
             'y': y_new.tolist()
@@ -107,7 +113,9 @@ class ClassificationSourceData(SourceData):
 
         self.append_data(np.empty(shape=0), np.empty(shape=0), [])
 
-    def append_data(self, x_new, y_new, classification_new):
+    def append_polygon_data(self, vertices, density, cls):
+        x_new, y_new = dg.polygon_data(vertices, cluster_size=density)
+        classification_new = [cls] * len(x_new)
 
         colors = [self.color_dict[cls] for cls in classification_new]
         new_data = {

@@ -1,5 +1,5 @@
 from bokeh.layouts import row, column
-from bokeh.models import PointDrawTool, ColumnDataSource, Button, PanTool
+from bokeh.models import PointDrawTool, ColumnDataSource, Button, PanTool, Slider
 from bokeh.plotting import figure, curdoc
 from bokeh.models import CheckboxButtonGroup
 
@@ -49,5 +49,7 @@ def button_trigger(attr, old, new):
 button = CheckboxButtonGroup(labels=names, active=[i for i in range(SOURCES)])
 button.on_change('active', button_trigger)
 
-lay = row(column(fig, button), fig_static)
+slider = Slider(start=1, end=100, step=1, value=1)
+
+lay = row(column(fig, button), fig_static, slider)
 curdoc().add_root(lay)

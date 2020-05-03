@@ -1,12 +1,18 @@
 import bokeh
 
 """Those constants sets common behaviour (name of saved files, ...)"""
+
 SAVED_DATASETS_DIR_NAME = "saved_datasets"
 SAVED_DATASET_FILE_NAME = "my_dataset.csv"
 
 PALETTE = bokeh.palettes.Category10[10]
 
 """Those constants are for playing around"""
+
+LASSO_SLIDER_START = 1
+LASSO_SLIDER_END = 100
+LASSO_SLIDER_STEP = 1
+LASSO_SLIDER_STARTING_VAL = 10
 
 NEURAL_DEF_SLIDER_STEPS = 3
 NEURAL_DEF_MAX_ITER_STEPS = 100
@@ -20,6 +26,7 @@ CLUSTER_VOL_DEF = 1  # cluster size plus minus
 MAX_CLUSTERS = 10
 
 """Those constants are for experiments (interesting app behaviour, but possible (bigger) instability)"""
+
 # used in basic_sublayouts.py Sets the detail of classifier image
 MESH_STEP_SIZE = 0.05  # default: 0.05
 X_EXT = 1
@@ -29,6 +36,7 @@ POL_FROM_DGR = 1
 POL_TO_DGR = 10
 
 """Those constants should NOT be changed"""
+
 # used in data_sandbox.py
 DENS_INPUT_DEF_VAL = ""
 

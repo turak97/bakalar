@@ -1,11 +1,11 @@
-import bokeh
+from bokeh import palettes
 
 """Those constants sets common behaviour (name of saved files, ...)"""
 
 SAVED_DATASETS_DIR_NAME = "saved_datasets"
 SAVED_DATASET_FILE_NAME = "my_dataset.csv"
 
-PALETTE = bokeh.palettes.Category10[10]
+PALETTE = palettes.Category10[10]
 
 """Those constants are for playing around"""
 

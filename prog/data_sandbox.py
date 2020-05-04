@@ -1,8 +1,8 @@
 
 from basic_sublayouts import SubLayout
 
-from bokeh.models import PointDrawTool, CheckboxButtonGroup, \
-    Div, RadioButtonGroup, TextInput, Button, Select, Slider
+from bokeh.models import PointDrawTool, Div, RadioButtonGroup, TextInput, \
+    Button, Select, Slider
 from bokeh import events
 from bokeh.layouts import row, column
 
@@ -14,8 +14,12 @@ import data_gen as dg
 from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLUSTERS_COUNT_DEF, MAX_CLUSTERS, \
     SAVED_DATASET_FILE_NAME, EMPTY_VALUE_COLOR, LASSO_SLIDER_END, LASSO_SLIDER_START, LASSO_SLIDER_STARTING_VAL, \
     LASSO_SLIDER_STEP
+
 STANDARD_MODE = "Standard mode"
 LASSO_APPEND = "Append with Lasso"
+
+# classification data sandbox modes
+GENERATE_NEW_CLUSTERS = "New clusters"
 
 
 # TODO: at se to neodviji od uniqvalues
@@ -24,6 +28,7 @@ LASSO_APPEND = "Append with Lasso"
 # TODO: bug: unexpected chovani pri odstraneni vsech bodu
 # TODO: bug: points in dataset obcas zobrazuje o 1 mensi hodnotu, nez self.data.classification u BUGCHECKu
 # TODO: bug: pocet trid nahore 3, pridavani clusteru s clusres count 6 spadne
+
 
 class DataSandbox(SubLayout):
     def __init__(self, name, source_data):
@@ -91,18 +96,18 @@ class DataSandbox(SubLayout):
                       )
 
     @staticmethod
+    def _init_standard_option():
+        return Div(
+            text="You can move with points or delete the with Point Draw Tool or Lasso. "
+                 "For adding points with Lasso click on \"append with Lasso\".")
+
+    @staticmethod
     def _lasso_general_info():
         return Div(
             text="Add new points by selecting \"Lasso Select\" in the figure toolbar. "
                  "Then draw a polygon in the figure. "
                  "If some points are not visible properly, click on \"Reset\" "
                  "in the figure toolbar for resetting the view.")
-
-    @staticmethod
-    def _init_standard_option():
-        return Div(
-            text="You can move with points or delete the with Point Draw Tool or Lasso."
-                 "For adding points with Lasso click on \"append with Lasso\"")
 
     """Methods for interactive calling (called by on_change or on_click triggers)"""
 
@@ -189,6 +194,9 @@ class ClassifierDataSandbox(DataSandbox):
         self.source_data.plot_source.remove_on_change('data', self._plot_source_change)  # removing trigger
 
     """Methods for sublayout initialisation"""
+
+    def _add_special_modes(self):
+        self._generation_modes[GENERATE_NEW_CLUSTERS] = self.__init_cluster_generating_options()
 
     def __init_lasso_options(self):
         __lasso_general_info = Div(

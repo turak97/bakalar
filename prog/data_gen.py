@@ -6,6 +6,7 @@ from shapely.geometry.polygon import Polygon
 import numpy as np
 import pandas as pd
 
+# TODO: predelat na randint
 
 def classify(length, classes_list):
     return [random.choice(classes_list) for _ in range(length)]

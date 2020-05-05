@@ -6,7 +6,11 @@ from shapely.geometry.polygon import Polygon
 import numpy as np
 import pandas as pd
 
+from constants import BETA_MODE, UNIFORM_MODE
+
+
 # TODO: predelat na randint
+
 
 def classify(length, classes_list):
     return [random.choice(classes_list) for _ in range(length)]
@@ -197,3 +201,25 @@ def insert_point_x_sorted(x_arr, y_arr, x_val, y_val):
     x_arr = np.insert(x_arr, i, x_val)
     y_arr = np.insert(y_arr, i, y_val)
     return x_arr, y_arr
+
+
+def line2cluster(x_line, y_line, size, volatility, mode):
+    line_len = len(x_line)
+
+    x_vals = np.zeros(shape=size)
+    y_vals = np.zeros(shape=size)
+    alpha = random.randint(1, 10)
+    beta = random.randint(1, 10)
+    for i in range(size):
+        point_i = 0
+        if mode == BETA_MODE:
+            rand_beta = random.betavariate(alpha, beta)  # nonuniform number from 0 to 1
+            point_i = int(line_len * rand_beta)
+        if mode == UNIFORM_MODE:
+            point_i = random.randint(0, line_len - 1)
+
+        x_vol, y_vol = random.uniform(-volatility, volatility), random.uniform(-volatility, volatility)
+        x_vals[i], y_vals[i] = x_line[point_i] + x_vol, y_line[point_i] + y_vol
+
+    return x_vals, y_vals
+

@@ -2,7 +2,7 @@
 from basic_sublayouts import SubLayout
 
 from bokeh.models import PointDrawTool, Div, RadioButtonGroup, TextInput, \
-    Button, Select, Slider
+    Button, Select, Slider, RangeSlider, ColumnDataSource, FreehandDrawTool
 from bokeh import events
 from bokeh.layouts import row, column
 
@@ -13,10 +13,16 @@ import data_gen as dg
 
 from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLUSTERS_COUNT_DEF, MAX_CLUSTERS, \
     SAVED_DATASET_FILE_NAME, EMPTY_VALUE_COLOR, LASSO_SLIDER_END, LASSO_SLIDER_START, LASSO_SLIDER_STARTING_VAL, \
-    LASSO_SLIDER_STEP
+    LASSO_SLIDER_STEP, CLUSTER_RANGE_X, CLUSTER_RANGE_Y, CLUSTER_RANGE_STEP, FREEHAND_DENSITY_START, \
+    FREEHAND_DENSITY_END, FREEHAND_DENSITY_STEP, FREEHAND_DENSITY_STARTING_VAL, FREEHAND_VOLATILITY_END, \
+    FREEHAND_VOLATILITY_START, FREEHAND_VOLATILITY_STARTING_VAL, FREEHAND_VOLATILITY_STEP, \
+    UNIFORM_MODE, BETA_MODE
 
-STANDARD_MODE = "Standard mode"
-LASSO_APPEND = "Append with Lasso"
+
+STANDARD_MODE = "Standard"
+LASSO_APPEND = "Lasso append"
+FREEHAND_APPEND = "FreeHand"
+
 
 # classification data sandbox modes
 GENERATE_NEW_CLUSTERS = "New clusters"
@@ -24,6 +30,8 @@ GENERATE_NEW_CLUSTERS = "New clusters"
 
 # TODO: at se to neodviji od uniqvalues
 # TODO: APPROX
+
+# TODO: generovani novych clusteru vsechny parametry pres slidery?
 
 # TODO: bug: unexpected chovani pri odstraneni vsech bodu
 # TODO: bug: points in dataset obcas zobrazuje o 1 mensi hodnotu, nez self.data.classification u BUGCHECKu
@@ -35,6 +43,13 @@ class DataSandbox(SubLayout):
         SubLayout.__init__(self, name, source_data)
         self.source_data.plot_source.on_change('data', self._plot_source_change)  # DataSandbox can update statistics
 
+        self._freehand_source = ColumnDataSource(data=dict(x=[], y=[]))
+        freehand_renderer = self._fig.multi_line('x', 'y', source=self._freehand_source, color='black')
+        self._freehand_tool = FreehandDrawTool(renderers=[freehand_renderer])
+        self._fig.add_tools(self._freehand_tool)
+
+        """Set up Lasso and FreeHand triggers"""
+        self._freehand_source.on_change('data', self._freehand_add)
         self._fig.on_event(events.SelectionGeometry, self._lasso_add)
 
     """Methods for sublayout initialisation"""
@@ -49,14 +64,15 @@ class DataSandbox(SubLayout):
 
         self._generation_modes = {
             STANDARD_MODE: self._init_standard_option(),
-            LASSO_APPEND: self._init_lasso_option()
+            LASSO_APPEND: self._init_lasso_option(),
+            FREEHAND_APPEND: self._init_freehand_option()
         }
         self._add_special_modes()
 
         mode_button_labels = list(self._generation_modes.keys())
-        mode_button_width = 120 * (len(mode_button_labels) + 1)
+        mode_button_width = 20  # 60 * (len(mode_button_labels) + 1)
         self._points_generation_mode_button = RadioButtonGroup(
-            labels=mode_button_labels, active=0, width=mode_button_width, width_policy="fixed")
+            labels=mode_button_labels, active=0, width_policy="fixed")
         self._points_generation_mode_button.on_change('active', self._points_generation_mode_trigger)
         mode_text = Div(text="Data sandbox mode: ", style={'font-size': '150%'})
 
@@ -95,6 +111,25 @@ class DataSandbox(SubLayout):
                       self._lasso_density_slider
                       )
 
+    def _init_freehand_option(self):
+        freehand_info = Div(text="Add points around a line you draw by selecting"
+                                 " FreeHand Draw Tool in the toolbar")
+
+        self._freehand_density = Slider(start=FREEHAND_DENSITY_START, end=FREEHAND_DENSITY_END,
+                                        step=FREEHAND_DENSITY_STEP, value=FREEHAND_DENSITY_STARTING_VAL,
+                                        title="Density")
+        self._freehand_volatility = Slider(start=FREEHAND_VOLATILITY_START, end=FREEHAND_VOLATILITY_END,
+                                           step=FREEHAND_VOLATILITY_STEP, value=FREEHAND_VOLATILITY_STARTING_VAL,
+                                           title="Volatility (+-)")
+        freehand_mode_text = Div(text="Freehand mode:")
+        self._freehand_mode = RadioButtonGroup(labels=[UNIFORM_MODE, BETA_MODE],
+                                               active=0)
+
+        return column(freehand_info,
+                      self._freehand_density,
+                      self._freehand_volatility,
+                      row(freehand_mode_text, self._freehand_mode))
+
     @staticmethod
     def _init_standard_option():
         return Div(
@@ -127,7 +162,14 @@ class DataSandbox(SubLayout):
             for key in keys:
                 vertices.append((event.geometry['x'][key], event.geometry['y'][key]))
 
-            self._append_to_source(vertices)
+            self._append_polygon(vertices)
+
+    def _freehand_add(self, attr, old, new):
+        self._append_freehand()
+
+        self._freehand_source.remove_on_change('data', self._freehand_add)
+        self._freehand_source.update(data=dict(x=[], y=[]))
+        self._freehand_source.on_change('data', self._freehand_add)
 
     def _save_dataset(self):
         self._info("Saving dataset...")
@@ -138,11 +180,18 @@ class DataSandbox(SubLayout):
 
     """Other methods"""
 
-    def _append_to_source(self, vertices):
+    def _append_polygon(self, vertices):
+        pass
+
+    def _append_freehand(self):
         pass
 
     def _get_lasso_density(self):
         return self._lasso_density_slider.value
+
+    def _get_freehand_mode(self):
+        active = self._freehand_mode.active
+        return self._freehand_mode.labels[active]
 
     def _is_lasso_append_active(self):
         active_mode = self._points_generation_mode_button.labels[
@@ -158,26 +207,20 @@ class RegressionDataSandbox(DataSandbox):
         point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
         self._fig.add_tools(point_draw_tool)
 
-    """Methods for sublayout initialisation"""
-
-    def __aprox_poly_options(self):
-        __aprox_general_info = Div(
-            text="TODO")
-
-        self.__aprox_density_slider = Slider(start=5, end=100, value=20, step=5)
-
-        __aprox_options_info = Div(text="Aprox poly utilities: ", style={'font-size': '150%'})
-
-        return column(__aprox_general_info,
-                      __aprox_options_info,
-                      self.__aprox_density_slider
-                      )
-
     """Other methods"""
 
-    def _append_to_source(self, vertices):
+    def _append_polygon(self, vertices):
         density = self._get_lasso_density()
         self.source_data.append_polygon_data(vertices, density)
+
+    def _append_freehand(self):
+        [x_line] = self._freehand_source.data['x']
+        [y_line] = self._freehand_source.data['y']
+        size = self._freehand_density.value
+        volatility = self._freehand_volatility.value
+        mode = self._get_freehand_mode()
+        
+        self.source_data.append_freehand_data(x_line, y_line, size, volatility, mode)
 
 
 class ClassifierDataSandbox(DataSandbox):
@@ -198,40 +241,40 @@ class ClassifierDataSandbox(DataSandbox):
     def _add_special_modes(self):
         self._generation_modes[GENERATE_NEW_CLUSTERS] = self.__init_cluster_generating_options()
 
-    def __init_lasso_options(self):
-        __lasso_general_info = Div(
-            text="Add a new cluster by selecting \"Lasso Select\" in the figure toolbar. "
-                 "You can choose whether the class of cluster will be chosen by upwards selection (\"Seleted\") or "
-                 "the classes of all points in the cluster will be chosen at random (\"All points at random\"). "
-                 "Size of the generated cluster can be set either roughly or precisely. "
-                 "If some points are not visible properly, click on \"Reset\" "
-                 "in the figure toolbar for resetting the view.")
-
-        self.__class_of_cluster_button = RadioButtonGroup(
-            labels=["Selected", "All points at random"], active=0,
-            width=220
-        )
-        class_of_cluster_text = Div(text="Class of new cluster: ")
-
-        self.__lasso_point_density_button = RadioButtonGroup(
-            labels=["auto", "±5", "±10", "±20", "±50", "±100"],
-            active=0, width=300, width_policy="fixed"
-        )
-        self.__lasso_point_density_button.on_change('active', self.__lasso_density_button_trigger)
-
-        self.__lasso_point_density_input = TextInput(value=DENS_INPUT_DEF_VAL, width=50)
-        self.__lasso_point_density_input.on_change('value', self.__lasso_density_input_trigger)
-        __lasso_options_info = Div(text="Lasso utilities: ", style={'font-size': '150%'})
-        __lasso_density_info = Div(text="Density options:", style={'font-size': '120%'})
-        __lasso_circa_info = Div(text="Circa: ")
-        __lasso_exact_info = Div(text="or Precise: ")
-        return column(__lasso_general_info,
-                      __lasso_options_info,
-                      row(class_of_cluster_text, self.__class_of_cluster_button),
-                      __lasso_density_info,
-                      column(row(__lasso_circa_info, self.__lasso_point_density_button),
-                             row(__lasso_exact_info, self.__lasso_point_density_input))
-                      )
+    # def _init_lasso_options(self):
+    #     __lasso_general_info = Div(
+    #         text="Add a new cluster by selecting \"Lasso Select\" in the figure toolbar. "
+    #              "You can choose whether the class of cluster will be chosen by upwards selection (\"Seleted\") or "
+    #              "the classes of all points in the cluster will be chosen at random (\"All points at random\"). "
+    #              "Size of the generated cluster can be set either roughly or precisely. "
+    #              "If some points are not visible properly, click on \"Reset\" "
+    #              "in the figure toolbar for resetting the view.")
+    #
+    #     self.__class_of_cluster_button = RadioButtonGroup(
+    #         labels=["Selected", "All points at random"], active=0,
+    #         width=220
+    #     )
+    #     class_of_cluster_text = Div(text="Class of new cluster: ")
+    #
+    #     self.__lasso_point_density_button = RadioButtonGroup(
+    #         labels=["auto", "±5", "±10", "±20", "±50", "±100"],
+    #         active=0, width=300, width_policy="fixed"
+    #     )
+    #     self.__lasso_point_density_button.on_change('active', self._lasso_density_button_trigger)
+    #
+    #     self.__lasso_point_density_input = TextInput(value=DENS_INPUT_DEF_VAL, width=50)
+    #     self.__lasso_point_density_input.on_change('value', self._lasso_density_input_trigger)
+    #     __lasso_options_info = Div(text="Lasso utilities: ", style={'font-size': '150%'})
+    #     __lasso_density_info = Div(text="Density options:", style={'font-size': '120%'})
+    #     __lasso_circa_info = Div(text="Circa: ")
+    #     __lasso_exact_info = Div(text="or Precise: ")
+    #     return column(__lasso_general_info,
+    #                   __lasso_options_info,
+    #                   row(class_of_cluster_text, self.__class_of_cluster_button),
+    #                   __lasso_density_info,
+    #                   column(row(__lasso_circa_info, self.__lasso_point_density_button),
+    #                          row(__lasso_exact_info, self.__lasso_point_density_input))
+    #                   )
 
     def __init_cluster_generating_options(self):
         __generate_general_info = Div(
@@ -251,6 +294,12 @@ class ClassifierDataSandbox(DataSandbox):
         self.__cluster_size_input = TextInput(title="size ", value=str(CLUSTER_SIZE_DEF), width=50)
         self.__cluster_plusminus_input = TextInput(title="±", value=str(CLUSTER_VOL_DEF), width=50)
 
+        self.__cluster_x_range_slider = RangeSlider(start=CLUSTER_RANGE_X[0], end=CLUSTER_RANGE_X[1], step=CLUSTER_RANGE_STEP,
+                                                    value=CLUSTER_RANGE_X, title="x range")
+
+        self.__cluster_y_range_slider = RangeSlider(start=CLUSTER_RANGE_Y[0], end=CLUSTER_RANGE_Y[1], step=CLUSTER_RANGE_STEP,
+                                                    value=CLUSTER_RANGE_Y, title="y_range")
+
         __generate_new_clusters_button = Button(label="Generate", button_type="primary")
         __generate_new_clusters_button.on_click(self.__generate_new_clusters)
 
@@ -258,6 +307,8 @@ class ClassifierDataSandbox(DataSandbox):
                       __generate_info,
                       row(__new_clusters_mode_text, self.__new_clusters_mode_button),
                       row(self.__cluster_count_input, self.__cluster_size_input, self.__cluster_plusminus_input),
+                      self.__cluster_x_range_slider,
+                      self.__cluster_y_range_slider,
                       __generate_new_clusters_button
                       )
 
@@ -266,17 +317,10 @@ class ClassifierDataSandbox(DataSandbox):
     def __generate_new_clusters(self):
         self._info("Generating new dataset...")
 
-        clusters_count, clusters_size, clusters_vol = self.__get_cluster_generating_params()
-
-        x, y, classification = dg.cluster_data(x_interval=(0, 30), y_interval=(-10, 10),
-                                               clusters=clusters_count,
-                                               av_cluster_size=clusters_size,
-                                               clust_size_vol=clusters_vol)
-
-        if 0 == self.__new_clusters_mode_button.active:
-            self.source_data.replace_data(x=x, y=y, classification=classification)
-        else:
-            self.source_data.append_data(x_new=x, y_new=y, classification_new=classification)
+        count, density, volatility, x_range, y_range = \
+            self.__get_cluster_generating_params()
+        replace = (0 == self.__new_clusters_mode_button.active)
+        self.source_data.new_clusters(count, density, volatility, x_range, y_range, replace)
 
         self._info("Generating new dataset DONE")
 
@@ -303,9 +347,26 @@ class ClassifierDataSandbox(DataSandbox):
         clusters_vol = self.__get_int_set_error(
             text_input=self.__cluster_plusminus_input, lowest_val=0
         )
-        return clusters_count, clusters_size, clusters_vol
+        x_range = self.__cluster_x_range_slider.value
+        y_range = self.__cluster_y_range_slider.value
+        return clusters_count, clusters_size, clusters_vol, x_range, y_range
 
-    def _append_to_source(self, vertices):
+    def _append_polygon(self, vertices):
         density = self._get_lasso_density()
-        cls = self.source_data.uniq_values()[self.__class_select_button.active]
+        cls = self.__get_actual_class()
         self.source_data.append_polygon_data(vertices, density, cls)
+
+    def _append_freehand(self):
+        [x_line] = self._freehand_source.data['x']
+        [y_line] = self._freehand_source.data['y']
+        size = self._freehand_density.value
+        volatility = self._freehand_volatility.value
+        cls = self.__get_actual_class()
+        mode = self._get_freehand_mode()
+
+        self.source_data.append_freehand_data(
+            x_line, y_line, cls, size, volatility, mode
+        )
+
+    def __get_actual_class(self):
+        return self.source_data.uniq_values()[self.__class_select_button.active]

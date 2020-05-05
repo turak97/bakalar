@@ -61,14 +61,20 @@ class RegressionSourceData(SourceData):
             'y': []
         })
 
-    def append_polygon_data(self, vertices, density):
-        x_new, y_new = dg.polygon_data(vertices, cluster_size=density)
-
+    def append_data(self, x_new, y_new):
         new_data = {
             'x': x_new.tolist(),
             'y': y_new.tolist()
         }
         self.plot_source.stream(new_data)
+
+    def append_polygon_data(self, vertices, density):
+        x_new, y_new = dg.polygon_data(vertices, cluster_size=density)
+        self.append_data(x_new, y_new)
+
+    def append_freehand_data(self, x_line, y_line, size, volatility, mode):
+        x_new, y_new = dg.line2cluster(x_line, y_line, size, volatility, mode)
+        self.append_data(x_new, y_new)
 
 
 class ClassificationSourceData(SourceData):
@@ -88,6 +94,38 @@ class ClassificationSourceData(SourceData):
         data = self.plot_source.data
         cls_X = np.array([[data['x'][i], data['y'][i]] for i in range(len(data['x']))])
         return cls_X, self.plot_source.data['classification']
+
+    def new_clusters(self, count, density, volatility, x_range, y_range, replace=False):
+        x, y, classification = dg.cluster_data(x_interval=x_range, y_interval=y_range,
+                                               clusters=count,
+                                               av_cluster_size=density,
+                                               clust_size_vol=volatility)
+
+        if replace:
+            self.replace_data(x, y, classification)
+        else:
+            self.append_data(x, y, classification)
+
+    def append_polygon_data(self, vertices, density, cls):
+        x_new, y_new = dg.polygon_data(vertices, cluster_size=density)
+        classification_new = [cls] * len(x_new)
+        self.append_data(x_new, y_new, classification_new)
+
+    def append_freehand_data(self, x_line, y_line, cls, size, volatility, mode):
+        x_new, y_new = dg.line2cluster(x_line, y_line, size, volatility, mode)
+        classification_new = [cls] * len(x_new)
+
+        self.append_data(x_new, y_new, classification_new)
+
+    def append_data(self, x_new, y_new, classification_new):
+        colors = [self.color_dict[cls] for cls in classification_new]
+        new_data = {
+            'x': x_new.tolist(),
+            'y': y_new.tolist(),
+            'classification': classification_new,
+            'color': colors
+        }
+        self.plot_source.stream(new_data)
 
     def replace_data(self, x, y, classification):
         uniq_values = self.uniq_values()
@@ -109,19 +147,6 @@ class ClassificationSourceData(SourceData):
         self.plot_source.on_change('data', self.plot_source_trigger)
 
         self.append_data(np.empty(shape=0), np.empty(shape=0), [])
-
-    def append_polygon_data(self, vertices, density, cls):
-        x_new, y_new = dg.polygon_data(vertices, cluster_size=density)
-        classification_new = [cls] * len(x_new)
-
-        colors = [self.color_dict[cls] for cls in classification_new]
-        new_data = {
-            'x': x_new.tolist(),
-            'y': y_new.tolist(),
-            'classification': classification_new,
-            'color': colors
-        }
-        self.plot_source.stream(new_data)
 
     def uniq_values(self):
         return sorted(self.color_dict.keys())

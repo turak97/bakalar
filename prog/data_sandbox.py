@@ -13,8 +13,8 @@ import numpy as np
 from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLUSTERS_COUNT_DEF, MAX_CLUSTERS, \
     SAVED_DATASET_FILE_NAME, EMPTY_VALUE_COLOR, LASSO_SLIDER_END, LASSO_SLIDER_START, LASSO_SLIDER_STARTING_VAL, \
     LASSO_SLIDER_STEP, CLUSTER_RANGE_X, CLUSTER_RANGE_Y, CLUSTER_RANGE_STEP, FREEHAND_DENSITY_START, \
-    FREEHAND_DENSITY_END, FREEHAND_DENSITY_STEP, FREEHAND_DENSITY_STARTING_VAL, FREEHAND_VOLATILITY_END, \
-    FREEHAND_VOLATILITY_START, FREEHAND_VOLATILITY_STARTING_VAL, FREEHAND_VOLATILITY_STEP, \
+    FREEHAND_DENSITY_END, FREEHAND_DENSITY_STEP, FREEHAND_DENSITY_STARTING_VAL, FREEHAND_DEVIATION_END, \
+    FREEHAND_DEVIATION_START, FREEHAND_DEVIATION_STARTING_VAL, FREEHAND_DEVIATION_STEP, \
     UNIFORM_MODE, BETA_MODE, BETA_PLOT_SAMPLES, BETA_PLOT_DETAIL
 
 
@@ -121,8 +121,8 @@ class DataSandbox(SubLayout):
         self._freehand_density = Slider(start=FREEHAND_DENSITY_START, end=FREEHAND_DENSITY_END,
                                         step=FREEHAND_DENSITY_STEP, value=FREEHAND_DENSITY_STARTING_VAL,
                                         title="Density")
-        self._freehand_volatility = Slider(start=FREEHAND_VOLATILITY_START, end=FREEHAND_VOLATILITY_END,
-                                           step=FREEHAND_VOLATILITY_STEP, value=FREEHAND_VOLATILITY_STARTING_VAL,
+        self._freehand_volatility = Slider(start=FREEHAND_DEVIATION_START, end=FREEHAND_DEVIATION_END,
+                                           step=FREEHAND_DEVIATION_STEP, value=FREEHAND_DEVIATION_STARTING_VAL,
                                            title="Volatility (+-)")
         distribution_options = self._distribution_options
 
@@ -145,6 +145,7 @@ class DataSandbox(SubLayout):
         self._distribution_beta_slider.on_change('value', self._beta_plot_change)
 
         self._beta_plot = figure(x_axis_label=None, y_axis_label=None, toolbar_location=None,
+                                 x_axis_location=None, y_axis_location=None,
                                  plot_width=250, plot_height=int(250*0.66),
                                  x_range=(0, BETA_PLOT_DETAIL), y_range=(0, int(BETA_PLOT_SAMPLES/3)))
         self._beta_plot_source = ColumnDataSource(data=dict(
@@ -220,7 +221,6 @@ class DataSandbox(SubLayout):
         for val in vals:
             counts[int(BETA_PLOT_DETAIL * val)] += 1
         self._beta_plot_source.data['counts'] = counts
-
 
     """Other methods"""
 

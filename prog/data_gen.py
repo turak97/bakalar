@@ -9,11 +9,7 @@ import pandas as pd
 from constants import BETA_MODE, UNIFORM_MODE
 
 
-def classify(length, classes_list):
-    return [np.random.choice(classes_list) for _ in range(length)]
-
-
-def line2cluster(x_line, y_line, size, volatility, distribution_params):
+def line2cluster(x_line, y_line, size, deviation, distribution_params):
     line_len = len(x_line)
     mode, beta_rand, alpha, beta = distribution_params
 
@@ -24,15 +20,15 @@ def line2cluster(x_line, y_line, size, volatility, distribution_params):
         beta = np.random.randint(1, 10)
 
     for i in range(size):
-        point_i = 0
+        line_i = 0
         if mode == BETA_MODE:
             rand_beta = np.random.beta(alpha, beta)  # nonuniform number from 0 to 1
-            point_i = int(line_len * rand_beta)
+            line_i = int(line_len * rand_beta)
         if mode == UNIFORM_MODE:
-            point_i = np.random.randint(0, line_len - 1)
+            line_i = np.random.randint(0, line_len - 1)
 
-        x_vol, y_vol = np.random.uniform(-volatility, volatility), np.random.uniform(-volatility, volatility)
-        x_vals[i], y_vals[i] = x_line[point_i] + x_vol, y_line[point_i] + y_vol
+        x_dev, y_dev = np.random.uniform(-deviation, deviation), np.random.uniform(-deviation, deviation)
+        x_vals[i], y_vals[i] = x_line[line_i] + x_dev, y_line[line_i] + y_dev
 
     return x_vals, y_vals
 
@@ -72,19 +68,18 @@ def polygon_data(polygon_vertices, cluster_size=-1, distribution_params=(UNIFORM
         y_values[points_created] = y
         points_created += 1
 
-    return [x_values, y_values]
+    return x_values, y_values
 
 
 def cluster_data(x_interval=(-100, 100),
                  y_interval=(-100, 100),
                  clusters=3,
                  av_cluster_size=15,
-                 clust_size_vol=-1):
-    if clust_size_vol < 0:
-        clust_size_vol = av_cluster_size//2
+                 clust_size_dev=-1):
+    if clust_size_dev < 0:
+        clust_size_dev = av_cluster_size//2
 
     x_min, x_max = x_interval
-    y_min, y_max = y_interval
     scale = x_max - x_min
 
     x_values = np.array([])
@@ -96,7 +91,7 @@ def cluster_data(x_interval=(-100, 100),
         x_from, x_to = gen_interval(x_interval, scale / clust_range_coef(clusters))
         y_from, y_to = gen_interval(y_interval, scale / clust_range_coef(clusters))
 
-        cluster_size = av_cluster_size + np.random.randint(-clust_size_vol, clust_size_vol)
+        cluster_size = av_cluster_size + np.random.randint(-clust_size_dev, clust_size_dev)
         x_cluster = gen_clust_beta(x_from, x_to, cluster_size)
         y_cluster = gen_clust_beta(y_from, y_to, cluster_size)
 
@@ -106,7 +101,7 @@ def cluster_data(x_interval=(-100, 100),
 
         clusters_made += 1
 
-    return [x_values, y_values, classification]
+    return x_values, y_values, classification
 
 
 def cluster_data_pandas(column_names,
@@ -114,15 +109,19 @@ def cluster_data_pandas(column_names,
                         y_interval=(-100, 100),
                         clusters=3,
                         av_cluster_size=15,
-                        clust_size_vol=-1):
+                        clust_size_dev=-1):
     x_arr, y_arr, classification_arr = cluster_data(x_interval=x_interval,
                                                     y_interval=y_interval,
                                                     clusters=clusters,
                                                     av_cluster_size=av_cluster_size,
-                                                    clust_size_vol=clust_size_vol)
+                                                    clust_size_dev=clust_size_dev)
     x_name, y_name, classification_name = column_names
     d = {x_name: x_arr, y_name: y_arr, classification_name: classification_arr}
     return pd.DataFrame(data=d)
+
+
+def classify(length, classes_list):
+    return [np.random.choice(classes_list) for _ in range(length)]
 
 
 """Helper functions"""

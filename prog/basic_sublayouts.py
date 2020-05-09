@@ -6,7 +6,7 @@ from bokeh.models import PointDrawTool, Button, LassoSelectTool, Div, \
     CheckboxButtonGroup
 from bokeh.plotting import figure
 
-from constants import MESH_STEP_SIZE, EMPTY_VALUE_COLOR, X_EXT, Y_EXT
+from constants import MESH_STEP_SIZE, LINE_POINTS, EMPTY_VALUE_COLOR, X_EXT, Y_EXT
 
 # import matplotlib.pyplot as plt
 
@@ -34,8 +34,11 @@ class SubLayout:
 
 class ModelSubLayout(SubLayout):
     """Base class for classifier sub layouts, regressive sublayouts"""
-    def __init__(self, name, source_data):
+    def __init__(self, name, model, source_data):
         SubLayout.__init__(self, name, source_data)
+
+        self._model = model
+
         self._x_ext = X_EXT
         self._y_ext = Y_EXT
 
@@ -108,17 +111,14 @@ class ClassifierSubLayout(ModelSubLayout):
         data and source_data references are necessary to store due to updating
         figure based on user input (e.g. different neural activation function)
         """
-        ModelSubLayout.__init__(self, name, source_data)
+        ModelSubLayout.__init__(self, name, model, source_data)
 
         # add original data to the figure and prepare PointDrawTool to make them interactive
         # this renderer MUST be the FIRST one
-        move_circle = self._fig.circle('x', 'y', color='color', source=source_data.plot_source, size=7)
+        move_circle = self._fig.circle(source_data.x, source_data.y, color='color', source=source_data.plot_source, size=7)
         point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
         self._fig.add_tools(point_draw_tool)
 
-        self._info("Initialising ModelSubLayout and fitting data...")
-
-        self._model = model
         self.refit()
         self._info("Initialising DONE")
 
@@ -190,7 +190,7 @@ class RegressionSubLayout(ModelSubLayout):
             self.x_extension = (x_max - x_min) * x_ext
             self.x_min = x_min - self.x_extension
             self.x_max = x_max + self.x_extension
-            self.xx = np.linspace(self.x_min, self.x_max, 1000)
+            self.xx = np.linspace(self.x_min, self.x_max, LINE_POINTS)
             self.lines = []
 
         def add_line(self, y_data):
@@ -200,6 +200,8 @@ class RegressionSubLayout(ModelSubLayout):
 
         def cut_y_extreme(self, x_data, y_data):
             """returns new numpy array without extreme values"""
+            print(max(y_data))
+            return x_data, y_data
             new_y_data = []
             new_x_data = []
             extreme_out = self.x_extension * 10
@@ -211,15 +213,14 @@ class RegressionSubLayout(ModelSubLayout):
 
     def __init__(self, name, model, source_data):
 
-        ModelSubLayout.__init__(self, name, source_data)
+        ModelSubLayout.__init__(self, name, model, source_data)
 
         # add original data to the figure and prepare PointDrawTool to make them interactive
         # this renderer MUST be the FIRST one
-        move_circle = self._fig.circle('x', 'y', source=source_data.plot_source, size=7)
+        move_circle = self._fig.circle(source_data.x, source_data.y, source=source_data.plot_source, size=7)
         point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
         self._fig.add_tools(point_draw_tool)
 
-        self._model = model
         self.refit()
         self._info("Initialising DONE")
 

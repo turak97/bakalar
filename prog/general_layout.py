@@ -275,13 +275,6 @@ class ClassifierGeneralLayout(GeneralLayout):
 
     """Methods for interactive calling (called by on_change or on_click triggers)"""
 
-    def _new_class(self):
-        self.source_data.add_new_color(
-            class_name=self._new_name(prev=self.source_data.uniq_values()[-1])
-        )
-
-        self._class_selection_update()
-
     def _data_sandbox_trigger(self, attr, old, new):
         if 0 in new:  # sandbox button was activated
             sandbox = sr.classifier_data_sandbox(name="Data Sandbox", source_data=self.source_data,
@@ -289,6 +282,13 @@ class ClassifierGeneralLayout(GeneralLayout):
             self.layout.children[self._sb1].children[self._sb2] = sandbox.layout
         else:
             self.layout.children[self._sb1].children[self._sb2] = row()
+
+    def _new_class(self):
+        self.source_data.add_new_class(
+            class_name=self._new_name(prev=self.source_data.uniq_values()[-1])
+        )
+
+        self._class_selection_update()
 
     def _change_color(self, attr, old, new):
 
@@ -308,12 +308,12 @@ class ClassifierGeneralLayout(GeneralLayout):
     def _data_change(self, attr, old, new):
         self._info("Updating data...")
 
-        if len(old['x']) < len(new['x']):
+        if len(old[self.source_data.x]) < len(new[self.source_data.x]):
 
             if new['color'][-1] == EMPTY_VALUE_COLOR:
                 new_class = self.source_data.uniq_values()[self._class_select_button.active]
-                self.source_data.update_color_newly_added(new_class,
-                                                          new_i=len(old['x']))
+                self.source_data.update_cls_newly_added(new_class,
+                                                        new_i=len(old[self.source_data.x]))
 
         self._info("Updating data DONE")
 

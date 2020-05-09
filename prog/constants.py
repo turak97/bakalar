@@ -59,9 +59,15 @@ MAX_CLUSTERS = 10
 
 ########## Those constants are for experiments (interesting app behaviour, but possible (bigger) instability) ########
 
-# used in basic_sublayouts.py Sets the detail of classifier image
+"""used in basic_sublayouts.py"""
+
+# Sets the detail of classifier image
 MESH_STEP_SIZE = 0.05  # default: 0.05
-X_EXT = 1
+
+# Sets the detail of regression line
+LINE_POINTS = 1000  # default 1000
+
+X_EXT = 0.3
 Y_EXT = X_EXT
 
 ########## Those constants should NOT be changed ##########

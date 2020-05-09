@@ -1,7 +1,7 @@
 
 from basic_sublayouts import SubLayout
 
-from bokeh.models import PointDrawTool, Div, RadioButtonGroup, TextInput, \
+from bokeh.models import PointDrawTool, Div, RadioButtonGroup, TextInput, Toggle, \
     Button, Select, Slider, RangeSlider, ColumnDataSource, FreehandDrawTool
 from bokeh import events
 from bokeh.layouts import row, column
@@ -44,7 +44,8 @@ class DataSandbox(SubLayout):
         self.source_data.plot_source.on_change('data', self._plot_source_change)  # DataSandbox can update statistics
 
         self._freehand_source = ColumnDataSource(data=dict(x=[], y=[]))
-        freehand_renderer = self._fig.multi_line('x', 'y', source=self._freehand_source, color='black')
+        freehand_renderer = self._fig.multi_line(self.source_data.x, self.source_data.y,
+                                                 source=self._freehand_source, color='black')
         self._freehand_tool = FreehandDrawTool(renderers=[freehand_renderer])
         self._fig.add_tools(self._freehand_tool)
 
@@ -61,6 +62,7 @@ class DataSandbox(SubLayout):
     
     def _init_button_layout(self):
         basic_buttons = self._init_basic_buttons()
+        self._create_distribution_options()  # creates attribute _distribution_options and options for dist. settings
 
         self._generation_modes = {
             STANDARD_MODE: self._init_standard_option(),
@@ -89,7 +91,7 @@ class DataSandbox(SubLayout):
         pass
 
     def _init_basic_buttons(self):
-        self._data_size_info = Div(text="Points in dataset: " + str(len(self.source_data.plot_source.data['x'])))
+        self._data_size_info = Div(text="Points in dataset: " + str(len(self.source_data.plot_source.data[self.source_data.x])))
 
         self._save_button = Button(label="Save dataset", button_type="primary")
         self._save_button.on_click(self._save_dataset)
@@ -107,9 +109,11 @@ class DataSandbox(SubLayout):
         self._lasso_density_slider = Slider(start=LASSO_SLIDER_START, end=LASSO_SLIDER_END,
                                             step=LASSO_SLIDER_STEP, value=LASSO_SLIDER_STARTING_VAL)
 
+        distribution_options = self._distribution_options
+
         return column(lasso_general_info,
-                      self._lasso_density_slider
-                      )
+                      self._lasso_density_slider,
+                      distribution_options)
 
     def _init_freehand_option(self):
         freehand_info = Div(text="Add points around a line you draw by selecting"
@@ -121,14 +125,30 @@ class DataSandbox(SubLayout):
         self._freehand_volatility = Slider(start=FREEHAND_VOLATILITY_START, end=FREEHAND_VOLATILITY_END,
                                            step=FREEHAND_VOLATILITY_STEP, value=FREEHAND_VOLATILITY_STARTING_VAL,
                                            title="Volatility (+-)")
-        freehand_mode_text = Div(text="Freehand mode:")
-        self._freehand_mode = RadioButtonGroup(labels=[UNIFORM_MODE, BETA_MODE],
-                                               active=0)
+        distribution_options = self._distribution_options
 
         return column(freehand_info,
                       self._freehand_density,
                       self._freehand_volatility,
-                      row(freehand_mode_text, self._freehand_mode))
+                      distribution_options)
+
+    def _create_distribution_options(self):
+        """Create an attribute with distribution options uniform or beta and sliders for beta parameters.
+        This method sets widgets into _distribution_options and DOES NOT RETURN ANYTHING"""
+        mode_text = Div(text="Distribution:")
+        self._distribution_mode_button = RadioButtonGroup(labels=[UNIFORM_MODE, BETA_MODE],
+                                                          active=0)
+        beta_text = Div(text="Beta distribution options:")
+        self._beta_random_toggle = Toggle(label="Random alpha beta", active=True)
+        self._distribution_alpha_slider = Slider(start=1, end=10, step=1, value=2, title="Alpha")
+        self._distribution_beta_slider = Slider(start=1, end=10, step=1, value=2, title="Beta")
+
+        self._distribution_options = column(mode_text,
+                                            self._distribution_mode_button,
+                                            beta_text,
+                                            self._beta_random_toggle,
+                                            self._distribution_alpha_slider,
+                                            self._distribution_beta_slider)
 
     @staticmethod
     def _init_standard_option():
@@ -152,7 +172,7 @@ class DataSandbox(SubLayout):
         self.layout.children[self._am1].children[self._am2] = new_mode
 
     def _plot_source_change(self, attr, old, new):
-        self._data_size_info.update(text="Points in dataset: " + str(len(new['x'])))
+        self._data_size_info.update(text="Points in dataset: " + str(len(new[self.source_data.x])))
 
     def _lasso_add(self, event):
         if event.final and self._is_lasso_append_active():
@@ -186,12 +206,15 @@ class DataSandbox(SubLayout):
     def _append_freehand(self):
         pass
 
+    def _get_distribution_params(self):
+        mode = self._distribution_mode_button.labels[self._distribution_mode_button.active]
+        beta_random = self._beta_random_toggle.active
+        alpha = self._distribution_alpha_slider.value
+        beta = self._distribution_beta_slider.value
+        return mode, beta_random, alpha, beta
+
     def _get_lasso_density(self):
         return self._lasso_density_slider.value
-
-    def _get_freehand_mode(self):
-        active = self._freehand_mode.active
-        return self._freehand_mode.labels[active]
 
     def _is_lasso_append_active(self):
         active_mode = self._points_generation_mode_button.labels[
@@ -203,7 +226,7 @@ class RegressionDataSandbox(DataSandbox):
     def __init__(self, name, source_data):
         DataSandbox.__init__(self, name, source_data)
 
-        move_circle = self._fig.circle('x', 'y', source=source_data.plot_source, size=7)
+        move_circle = self._fig.circle(self.source_data.x, self.source_data.y, source=source_data.plot_source, size=7)
         point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
         self._fig.add_tools(point_draw_tool)
 
@@ -211,23 +234,24 @@ class RegressionDataSandbox(DataSandbox):
 
     def _append_polygon(self, vertices):
         density = self._get_lasso_density()
-        self.source_data.append_polygon_data(vertices, density)
+        distribution_params = self._get_distribution_params()
+        self.source_data.append_polygon_data(vertices, density, distribution_params)
 
     def _append_freehand(self):
         [x_line] = self._freehand_source.data['x']
         [y_line] = self._freehand_source.data['y']
         size = self._freehand_density.value
         volatility = self._freehand_volatility.value
-        mode = self._get_freehand_mode()
+        distribution_params = self._get_distribution_params()
         
-        self.source_data.append_freehand_data(x_line, y_line, size, volatility, mode)
+        self.source_data.append_freehand_data(x_line, y_line, size, volatility, distribution_params)
 
 
 class ClassifierDataSandbox(DataSandbox):
     def __init__(self, name, source_data, class_select_button):
         DataSandbox.__init__(self, name, source_data)
 
-        move_circle = self._fig.circle('x', 'y', color='color', source=source_data.plot_source, size=7)
+        move_circle = self._fig.circle(self.source_data.x, self.source_data.y, color='color', source=source_data.plot_source, size=7)
         point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
         self._fig.add_tools(point_draw_tool)
 
@@ -352,9 +376,10 @@ class ClassifierDataSandbox(DataSandbox):
         return clusters_count, clusters_size, clusters_vol, x_range, y_range
 
     def _append_polygon(self, vertices):
+        distribution_params = self._get_distribution_params()
         density = self._get_lasso_density()
         cls = self.__get_actual_class()
-        self.source_data.append_polygon_data(vertices, density, cls)
+        self.source_data.append_polygon_data(vertices, cls, density, distribution_params)
 
     def _append_freehand(self):
         [x_line] = self._freehand_source.data['x']
@@ -362,10 +387,10 @@ class ClassifierDataSandbox(DataSandbox):
         size = self._freehand_density.value
         volatility = self._freehand_volatility.value
         cls = self.__get_actual_class()
-        mode = self._get_freehand_mode()
+        distribution_params = self._get_distribution_params()
 
         self.source_data.append_freehand_data(
-            x_line, y_line, cls, size, volatility, mode
+            x_line, y_line, cls, size, volatility, distribution_params
         )
 
     def __get_actual_class(self):

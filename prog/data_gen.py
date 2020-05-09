@@ -1,4 +1,4 @@
-import random
+# import random
 import math
 
 from shapely.geometry import Point
@@ -9,31 +9,62 @@ import pandas as pd
 from constants import BETA_MODE, UNIFORM_MODE
 
 
-# TODO: predelat na randint
-
-
 def classify(length, classes_list):
-    return [random.choice(classes_list) for _ in range(length)]
+    return [np.random.choice(classes_list) for _ in range(length)]
+
+
+def line2cluster(x_line, y_line, size, volatility, distribution_params):
+    line_len = len(x_line)
+    mode, beta_rand, alpha, beta = distribution_params
+
+    x_vals = np.zeros(shape=size)
+    y_vals = np.zeros(shape=size)
+    if beta_rand:
+        alpha = np.random.randint(1, 10)
+        beta = np.random.randint(1, 10)
+
+    for i in range(size):
+        point_i = 0
+        if mode == BETA_MODE:
+            rand_beta = np.random.beta(alpha, beta)  # nonuniform number from 0 to 1
+            point_i = int(line_len * rand_beta)
+        if mode == UNIFORM_MODE:
+            point_i = np.random.randint(0, line_len - 1)
+
+        x_vol, y_vol = np.random.uniform(-volatility, volatility), np.random.uniform(-volatility, volatility)
+        x_vals[i], y_vals[i] = x_line[point_i] + x_vol, y_line[point_i] + y_vol
+
+    return x_vals, y_vals
 
 
 # generates cluster inside a polygon
 # generates only x and y values, NOT classification
-def polygon_data(polygon_vertices, cluster_size=-1):
+def polygon_data(polygon_vertices, cluster_size=-1, distribution_params=(UNIFORM_MODE, True, 1, 1)):
     polygon = Polygon(polygon_vertices)
+    mode, beta_rand, alpha, beta = distribution_params
 
     if cluster_size == 0:
-        return [np.empty(dtype=int), np.empty(dtype=int)]
+        return [np.empty(dtype=int, shape=0), np.empty(dtype=int, shape=0)]
 
     if cluster_size < 0:
-        cluster_size = max(int(polygon.area * random.uniform(0.3, 1.5)), 1)
+        cluster_size = max(int(polygon.area * np.random.uniform(0.3, 1.5)), 1)
 
     x_min, y_min, x_max, y_max = polygon.bounds
 
     x_values = np.zeros(shape=cluster_size)
     y_values = np.zeros(shape=cluster_size)
+    if beta_rand:
+        alpha = np.random.randint(1, 10)
+        beta = np.random.randint(1, 10)
+
     points_created = 0
     while points_created < cluster_size:
-        x, y = random.uniform(x_min, x_max), random.uniform(y_min, y_max)
+        x, y = 0, 0
+        if mode == UNIFORM_MODE:
+            x, y = np.random.uniform(x_min, x_max), np.random.uniform(y_min, y_max)
+        if mode == BETA_MODE:
+            x = x_min + (x_max - x_min) * np.random.beta(alpha, beta)
+            y = y_min + (y_max - y_min) * np.random.beta(alpha, beta)
         point_candidate = Point(x, y)
         if not polygon.contains(point_candidate):
             continue
@@ -44,48 +75,11 @@ def polygon_data(polygon_vertices, cluster_size=-1):
     return [x_values, y_values]
 
 
-# TODO: fce check values
-# generuje clustry na x ose, ty potom mergne (a seradi), dogeneruje y hodnoty a k nim pricte disperzi
-def polynom_data(polynom=np.array([1/100, 1/5, -1, 1]),
-                 interval=(-400, 400),
-                 clusters=3,
-                 noise=0.2,
-                 density=8,
-                 density_vol=-1,  # density volatility = 2 ... density can be from 6 to 10
-                 rand_seed=1):
-    if density_vol < 0:
-        density_vol = density//2
-
-    x_min, x_max = interval
-    scale = x_max - x_min
-
-    x_arr = np.array([])
-    clusters_made = 0
-    while clusters_made < clusters:
-        x_from, x_to = gen_interval(interval, scale / clust_range_coef(clusters))
-        cluster = gen_clust_beta(x_from, x_to, density, density_vol)
-        x_arr = np.append(x_arr, cluster)
-        clusters_made += 1
-
-    # sort array (merge clusters) and cut overlapping clusters
-    x_arr = np.sort(x_arr)
-
-    f = np.poly1d(polynom)
-    y_arr = f(x_arr)
-
-    if noise != 0:
-        y_arr = make_noise(y_arr, noise)
-
-    return [x_arr, y_arr]
-
-
 def cluster_data(x_interval=(-100, 100),
                  y_interval=(-100, 100),
                  clusters=3,
                  av_cluster_size=15,
-                 clust_size_vol=-1,
-                 size=0.2,
-                 rand_seed=1):
+                 clust_size_vol=-1):
     if clust_size_vol < 0:
         clust_size_vol = av_cluster_size//2
 
@@ -102,7 +96,7 @@ def cluster_data(x_interval=(-100, 100),
         x_from, x_to = gen_interval(x_interval, scale / clust_range_coef(clusters))
         y_from, y_to = gen_interval(y_interval, scale / clust_range_coef(clusters))
 
-        cluster_size = av_cluster_size + random.randint(-clust_size_vol, clust_size_vol)
+        cluster_size = av_cluster_size + np.random.randint(-clust_size_vol, clust_size_vol)
         x_cluster = gen_clust_beta(x_from, x_to, cluster_size)
         y_cluster = gen_clust_beta(y_from, y_to, cluster_size)
 
@@ -115,22 +109,23 @@ def cluster_data(x_interval=(-100, 100),
     return [x_values, y_values, classification]
 
 
-def cluster_data_pandas(x_interval=(-100, 100),
+def cluster_data_pandas(column_names,
+                        x_interval=(-100, 100),
                         y_interval=(-100, 100),
                         clusters=3,
                         av_cluster_size=15,
-                        clust_size_vol=-1,
-                        size=0.2,
-                        rand_seed=1):
-    x, y, classifiaction = cluster_data(x_interval=x_interval,
-                                        y_interval=y_interval,
-                                        clusters=clusters,
-                                        av_cluster_size=av_cluster_size,
-                                        clust_size_vol=clust_size_vol,
-                                        size=size,
-                                        rand_seed=rand_seed)
-    d = {'x': x, 'y': y, 'classification': classifiaction}
+                        clust_size_vol=-1):
+    x_arr, y_arr, classification_arr = cluster_data(x_interval=x_interval,
+                                                    y_interval=y_interval,
+                                                    clusters=clusters,
+                                                    av_cluster_size=av_cluster_size,
+                                                    clust_size_vol=clust_size_vol)
+    x_name, y_name, classification_name = column_names
+    d = {x_name: x_arr, y_name: y_arr, classification_name: classification_arr}
     return pd.DataFrame(data=d)
+
+
+"""Helper functions"""
 
 
 # TODO pridat vyjimky do intervalu (leva mez vetsi nez prava)
@@ -138,7 +133,7 @@ def cluster_data_pandas(x_interval=(-100, 100),
 def gen_coefficients(degr, ferocity):
     coef = []
     for i in range(0, degr + 1):  # don't forget the constant
-        coef.append(random.uniform(ferocity/1000, ferocity*2))
+        coef.append(np.random.uniform(ferocity/1000, ferocity*2))
 
     return np.array(coef)
 
@@ -146,7 +141,7 @@ def gen_coefficients(degr, ferocity):
 def make_noise(y_values, coef):
     max_noise = (max(y_values) - min(y_values))*coef
     for i in range(len(y_values)):
-        y_values[i] += random.uniform(-max_noise, max_noise)
+        y_values[i] += np.random.uniform(-max_noise, max_noise)
     return y_values
 
 
@@ -164,8 +159,8 @@ def rerange(arr, interval):
 # scale = scale of interval +- scale/2
 def gen_interval(interval, scale):
     x_min, x_max = interval
-    center = random.uniform(x_min, x_max)
-    x_from, x_to = (random.betavariate(2, 2), random.betavariate(2, 2))
+    center = np.random.uniform(x_min, x_max)
+    x_from, x_to = (np.random.beta(2, 2), np.random.beta(2, 2))
     if x_from > x_to:
         x_from, x_to = x_to, x_from
 
@@ -175,10 +170,10 @@ def gen_interval(interval, scale):
 
 def gen_clust_beta(from_, to_, size):
     vals = np.zeros(shape=size)
-    alpha = random.randint(1, 10)
-    beta = random.randint(1, 10)
+    alpha = np.random.randint(1, 10)
+    beta = np.random.randint(1, 10)
     for i in range(len(vals)):
-        vals[i] = random.betavariate(alpha, beta)
+        vals[i] = np.random.beta(alpha, beta)
     vals = rerange(vals, (from_, to_))
     return vals
 
@@ -203,23 +198,37 @@ def insert_point_x_sorted(x_arr, y_arr, x_val, y_val):
     return x_arr, y_arr
 
 
-def line2cluster(x_line, y_line, size, volatility, mode):
-    line_len = len(x_line)
-
-    x_vals = np.zeros(shape=size)
-    y_vals = np.zeros(shape=size)
-    alpha = random.randint(1, 10)
-    beta = random.randint(1, 10)
-    for i in range(size):
-        point_i = 0
-        if mode == BETA_MODE:
-            rand_beta = random.betavariate(alpha, beta)  # nonuniform number from 0 to 1
-            point_i = int(line_len * rand_beta)
-        if mode == UNIFORM_MODE:
-            point_i = random.randint(0, line_len - 1)
-
-        x_vol, y_vol = random.uniform(-volatility, volatility), random.uniform(-volatility, volatility)
-        x_vals[i], y_vals[i] = x_line[point_i] + x_vol, y_line[point_i] + y_vol
-
-    return x_vals, y_vals
+# # TODO: fce check values
+# # generuje clustry na x ose, ty potom mergne (a seradi), dogeneruje y hodnoty a k nim pricte disperzi
+# def polynom_data(polynom=np.array([1/100, 1/5, -1, 1]),
+#                  interval=(-400, 400),
+#                  clusters=3,
+#                  noise=0.2,
+#                  density=8,
+#                  density_vol=-1,  # density volatility = 2 ... density can be from 6 to 10
+#                  rand_seed=1):
+#     if density_vol < 0:
+#         density_vol = density//2
+#
+#     x_min, x_max = interval
+#     scale = x_max - x_min
+#
+#     x_arr = np.array([])
+#     clusters_made = 0
+#     while clusters_made < clusters:
+#         x_from, x_to = gen_interval(interval, scale / clust_range_coef(clusters))
+#         cluster = gen_clust_beta(x_from, x_to, density)
+#         x_arr = np.append(x_arr, cluster)
+#         clusters_made += 1
+#
+#     # sort array (merge clusters) and cut overlapping clusters
+#     x_arr = np.sort(x_arr)
+#
+#     f = np.poly1d(polynom)
+#     y_arr = f(x_arr)
+#
+#     if noise != 0:
+#         y_arr = make_noise(y_arr, noise)
+#
+#     return [x_arr, y_arr]
 

@@ -45,13 +45,14 @@ def parse_args():
 if __name__ == '__main__':
 
     args = parse_args()
+    column_names = args[1]
     if args[0] == '':
-        df = dg.cluster_data_pandas(x_interval=(0, 30), y_interval=(-10, 10),
+        df = dg.cluster_data_pandas(column_names=column_names,
+                                    x_interval=(0, 30), y_interval=(-10, 10),
                                     clusters=CLUSTERS_COUNT_DEF, av_cluster_size=CLUSTER_SIZE_DEF,
                                     clust_size_vol=CLUSTER_VOL_DEF)  # TODO: hezceji
     else:
-        path, column_names = args[0][0], args[1]
-
+        path = args[0][0]
         df = read_df(path, column_names)
 
     version = args[2]

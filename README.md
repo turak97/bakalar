@@ -4,7 +4,7 @@ Go to a directory, where you whish this a new home
 
 git clone https://github.com/turak97/bakalar.git
 
-cd bakalar/
+cd prog/
 
 python3 -m venv env
 

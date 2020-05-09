@@ -70,6 +70,9 @@ LINE_POINTS = 1000  # default 1000
 X_EXT = 0.3
 Y_EXT = X_EXT
 
+BETA_PLOT_SAMPLES = 200
+BETA_PLOT_DETAIL = 20
+
 ########## Those constants should NOT be changed ##########
 
 # used in data_sandbox.py

@@ -5,18 +5,17 @@ from bokeh.models import PointDrawTool, Div, RadioButtonGroup, TextInput, Toggle
     Button, Select, Slider, RangeSlider, ColumnDataSource, FreehandDrawTool
 from bokeh import events
 from bokeh.layouts import row, column
+from bokeh.plotting import figure
 
-from random import randint
+import numpy as np
 
-from in_n_out import save_source
-import data_gen as dg
 
 from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLUSTERS_COUNT_DEF, MAX_CLUSTERS, \
     SAVED_DATASET_FILE_NAME, EMPTY_VALUE_COLOR, LASSO_SLIDER_END, LASSO_SLIDER_START, LASSO_SLIDER_STARTING_VAL, \
     LASSO_SLIDER_STEP, CLUSTER_RANGE_X, CLUSTER_RANGE_Y, CLUSTER_RANGE_STEP, FREEHAND_DENSITY_START, \
     FREEHAND_DENSITY_END, FREEHAND_DENSITY_STEP, FREEHAND_DENSITY_STARTING_VAL, FREEHAND_VOLATILITY_END, \
     FREEHAND_VOLATILITY_START, FREEHAND_VOLATILITY_STARTING_VAL, FREEHAND_VOLATILITY_STEP, \
-    UNIFORM_MODE, BETA_MODE
+    UNIFORM_MODE, BETA_MODE, BETA_PLOT_SAMPLES, BETA_PLOT_DETAIL
 
 
 STANDARD_MODE = "Standard"
@@ -142,13 +141,26 @@ class DataSandbox(SubLayout):
         self._beta_random_toggle = Toggle(label="Random alpha beta", active=True)
         self._distribution_alpha_slider = Slider(start=1, end=10, step=1, value=2, title="Alpha")
         self._distribution_beta_slider = Slider(start=1, end=10, step=1, value=2, title="Beta")
+        self._distribution_alpha_slider.on_change('value', self._beta_plot_change)
+        self._distribution_beta_slider.on_change('value', self._beta_plot_change)
+
+        self._beta_plot = figure(x_axis_label=None, y_axis_label=None, toolbar_location=None,
+                                 plot_width=250, plot_height=int(250*0.66),
+                                 x_range=(0, BETA_PLOT_DETAIL), y_range=(0, int(BETA_PLOT_SAMPLES/3)))
+        self._beta_plot_source = ColumnDataSource(data=dict(
+            vals=[c for c in range(BETA_PLOT_DETAIL - 1, -1, -1)],
+            counts=[0] * BETA_PLOT_DETAIL)
+        )
+        self._beta_plot.vbar(x='vals', top='counts', source=self._beta_plot_source, width=1)
+        self._beta_plot_change(None, None, None)
 
         self._distribution_options = column(mode_text,
                                             self._distribution_mode_button,
                                             beta_text,
                                             self._beta_random_toggle,
                                             self._distribution_alpha_slider,
-                                            self._distribution_beta_slider)
+                                            self._distribution_beta_slider,
+                                            self._beta_plot)
 
     @staticmethod
     def _init_standard_option():
@@ -197,6 +209,18 @@ class DataSandbox(SubLayout):
         self._save_info.update(text="Saved in: " + abs_path)
         self._info("Saved in " + str(abs_path))
         self._info("Saving DONE")
+
+    def _beta_plot_change(self, attr, old, new):
+        alpha = self._distribution_beta_slider.value
+        beta = self._distribution_alpha_slider.value
+        vals = []
+        for i in range(BETA_PLOT_SAMPLES):
+            vals.append(np.random.beta(alpha, beta))
+        counts = [0] * BETA_PLOT_DETAIL
+        for val in vals:
+            counts[int(BETA_PLOT_DETAIL * val)] += 1
+        self._beta_plot_source.data['counts'] = counts
+
 
     """Other methods"""
 

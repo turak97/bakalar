@@ -25,7 +25,7 @@ def line2cluster(x_line, y_line, size, deviation, distribution_params):
             rand_beta = np.random.beta(alpha, beta)  # nonuniform number from 0 to 1
             line_i = int(line_len * rand_beta)
         if mode == UNIFORM_MODE:
-            line_i = np.random.randint(0, line_len - 1)
+            line_i = np.random.randint(0, line_len)
 
         x_dev, y_dev = np.random.uniform(-deviation, deviation), np.random.uniform(-deviation, deviation)
         x_vals[i], y_vals[i] = x_line[line_i] + x_dev, y_line[line_i] + y_dev
@@ -91,7 +91,7 @@ def cluster_data(x_interval=(-100, 100),
         x_from, x_to = gen_interval(x_interval, scale / clust_range_coef(clusters))
         y_from, y_to = gen_interval(y_interval, scale / clust_range_coef(clusters))
 
-        cluster_size = av_cluster_size + np.random.randint(-clust_size_dev, clust_size_dev)
+        cluster_size = av_cluster_size + np.random.randint(-clust_size_dev, clust_size_dev + 1)
         x_cluster = gen_clust_beta(x_from, x_to, cluster_size)
         y_cluster = gen_clust_beta(y_from, y_to, cluster_size)
 

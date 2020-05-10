@@ -24,7 +24,6 @@ from in_n_out import read_df
 # TODO: html stranky navic k proklikani a jako info
 
 # TODO: sjednotit jmena (cluster size, density...)
-# TODO: generictejsi generovani dat (volba alphy a bety u betavaribale)
 
 validation.silence(1002, True)  # silence bokeh plot warning
 

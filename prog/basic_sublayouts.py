@@ -73,7 +73,7 @@ class ModelSubLayout(SubLayout):
         self._fit_button.on_click(self.refit)
 
         self._immediate_update = CheckboxButtonGroup(
-            labels=["Immediate update when new points added"], active=[])
+            labels=["Immediate update on dataset change"], active=[])
 
         return row(self._immediate_update, self._fit_button)
 

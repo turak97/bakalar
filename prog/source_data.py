@@ -73,9 +73,9 @@ class RegressionSourceData(SourceData):
         x_new, y_new = dg.polygon_data(vertices, cluster_size=density, distribution_params=distribution_params)
         self.append_data(x_new, y_new)
 
-    def append_freehand_data(self, x_line, y_line, size, volatility,
+    def append_freehand_data(self, x_line, y_line, size, deviation,
                              distribution_params):
-        x_new, y_new = dg.line2cluster(x_line, y_line, size, volatility, distribution_params)
+        x_new, y_new = dg.line2cluster(x_line, y_line, size, deviation, distribution_params)
         self.append_data(x_new, y_new)
 
 
@@ -97,11 +97,11 @@ class ClassificationSourceData(SourceData):
         cls_X = np.array([[data[self.x][i], data[self.y][i]] for i in range(len(data[self.x]))])
         return cls_X, self.plot_source.data[self.classification]
 
-    def new_clusters(self, count, density, volatility, x_range, y_range, replace=False):
+    def new_clusters(self, count, density, deviation, x_range, y_range, replace=False):
         x, y, classification = dg.cluster_data(x_interval=x_range, y_interval=y_range,
                                                clusters=count,
                                                av_cluster_size=density,
-                                               clust_size_vol=volatility)
+                                               clust_size_dev=deviation)
 
         if replace:
             self.replace_data(x, y, classification)
@@ -113,8 +113,8 @@ class ClassificationSourceData(SourceData):
         classification_new = [cls] * len(x_new)
         self.append_data(x_new, y_new, classification_new)
 
-    def append_freehand_data(self, x_line, y_line, cls, size, volatility, distribution_params):
-        x_new, y_new = dg.line2cluster(x_line, y_line, size, volatility, distribution_params)
+    def append_freehand_data(self, x_line, y_line, cls, size, deviation, distribution_params):
+        x_new, y_new = dg.line2cluster(x_line, y_line, size, deviation, distribution_params)
         classification_new = [cls] * len(x_new)
 
         self.append_data(x_new, y_new, classification_new)

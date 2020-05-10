@@ -28,3 +28,6 @@ REG_MODELS = {
     "K nearest neighbours": KNeighborsRegressor()
 }
 
+REG_SLIDERS = {
+    "K nearest neighbours": ("n_neighbors", (1, 3, 1, 3))
+}

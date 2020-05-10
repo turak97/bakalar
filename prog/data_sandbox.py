@@ -20,7 +20,7 @@ from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_DEV_DEF, CLU
 
 STANDARD_MODE = "Standard"
 LASSO_APPEND = "Lasso append"
-FREEHAND_APPEND = "FreeHand"
+FREEHAND_APPEND = "Freehand"
 
 
 # classification data sandbox modes
@@ -28,7 +28,6 @@ GENERATE_NEW_CLUSTERS = "New clusters"
 
 
 # TODO: at se to neodviji od uniqvalues
-# TODO: APPROX
 
 # TODO: generovani novych clusteru vsechny parametry pres slidery?
 
@@ -106,7 +105,8 @@ class DataSandbox(SubLayout):
         lasso_general_info = self._lasso_general_info()
 
         self._lasso_density_slider = Slider(start=LASSO_SLIDER_START, end=LASSO_SLIDER_END,
-                                            step=LASSO_SLIDER_STEP, value=LASSO_SLIDER_STARTING_VAL)
+                                            step=LASSO_SLIDER_STEP, value=LASSO_SLIDER_STARTING_VAL,
+                                            title="Size")
 
         distribution_options = self._distribution_options
 

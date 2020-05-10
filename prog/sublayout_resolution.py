@@ -5,7 +5,7 @@ from extended_regression_sublayouts import PolynomialRegression, SliderRegressio
 from extended_classifier_sublayouts import \
     NeuralClassifier, SvmClassifier, SliderClassifierSubLayout
 
-from models import REG_MODELS, CLS_MODELS, CLS_SLIDERS
+from models import REG_MODELS, REG_SLIDERS, CLS_MODELS, CLS_SLIDERS
 
 from copy import deepcopy
 
@@ -44,8 +44,8 @@ def reg_resolution(model_name, source_data):
         return PolynomialRegression(model_name, model, source_data)
 
     """Generic model with sliders attached"""
-    if model_name in CLS_SLIDERS:
-        slider_params = CLS_SLIDERS[model_name]
+    if model_name in REG_SLIDERS:
+        slider_params = REG_SLIDERS[model_name]
         return SliderRegressionSubLayout(model_name, model, source_data, slider_params)
 
     """Total generic model"""

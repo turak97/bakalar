@@ -47,7 +47,7 @@ NEURAL_DEF_SLIDER_STEPS = 3
 NEURAL_DEF_MAX_ITER_STEPS = 100
 NEURAL_DEF_ACTIVATION = 1  # 0: identity, 1: sigmoid, 2: tanh, 3: linear
 NEURAL_DEF_SOLVER = 1  # 0: lbfgs, 1: gradient descent, 2: adam
-NEURAL_DEF_LAYERS = "20"  # more layers: "20, 10, 5, 20"
+NEURAL_DEF_LAYERS = "15, 15"  # more layers: "20, 10, 5, 20"
 
 POL_FROM_DGR = 1
 POL_TO_DGR = 5
@@ -70,7 +70,7 @@ LINE_POINTS = 1000  # default 1000
 X_EXT = 0.3
 Y_EXT = X_EXT
 
-BETA_PLOT_SAMPLES = 200
+BETA_PLOT_SAMPLES = 250
 BETA_PLOT_DETAIL = 20
 
 ########## Those constants should NOT be changed ##########

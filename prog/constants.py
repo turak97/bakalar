@@ -54,7 +54,7 @@ POL_TO_DGR = 5
 
 CLUSTERS_COUNT_DEF = 3
 CLUSTER_SIZE_DEF = 3
-CLUSTER_VOL_DEF = 1  # cluster size plus minus
+CLUSTER_DEV_DEF = 1  # cluster size plus minus
 MAX_CLUSTERS = 10
 
 ########## Those constants are for experiments (interesting app behaviour, but possible (bigger) instability) ########

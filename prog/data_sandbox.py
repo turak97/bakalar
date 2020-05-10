@@ -10,7 +10,7 @@ from bokeh.plotting import figure
 import numpy as np
 
 
-from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_VOL_DEF, CLUSTERS_COUNT_DEF, MAX_CLUSTERS, \
+from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_DEV_DEF, CLUSTERS_COUNT_DEF, MAX_CLUSTERS, \
     SAVED_DATASET_FILE_NAME, EMPTY_VALUE_COLOR, LASSO_SLIDER_END, LASSO_SLIDER_START, LASSO_SLIDER_STARTING_VAL, \
     LASSO_SLIDER_STEP, CLUSTER_RANGE_X, CLUSTER_RANGE_Y, CLUSTER_RANGE_STEP, FREEHAND_DENSITY_START, \
     FREEHAND_DENSITY_END, FREEHAND_DENSITY_STEP, FREEHAND_DENSITY_STARTING_VAL, FREEHAND_DEVIATION_END, \
@@ -340,7 +340,7 @@ class ClassifierDataSandbox(DataSandbox):
         self.__cluster_count_input = Select(title="Clusters count ", value=str(CLUSTERS_COUNT_DEF),
                                             options=[str(i) for i in range(1, MAX_CLUSTERS + 1)], width=80)
         self.__cluster_size_input = TextInput(title="size ", value=str(CLUSTER_SIZE_DEF), width=50)
-        self.__cluster_plusminus_input = TextInput(title="±", value=str(CLUSTER_VOL_DEF), width=50)
+        self.__cluster_plusminus_input = TextInput(title="±", value=str(CLUSTER_DEV_DEF), width=50)
 
         self.__cluster_x_range_slider = RangeSlider(start=CLUSTER_RANGE_X[0], end=CLUSTER_RANGE_X[1], step=CLUSTER_RANGE_STEP,
                                                     value=CLUSTER_RANGE_X, title="x range")

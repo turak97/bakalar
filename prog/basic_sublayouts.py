@@ -3,10 +3,14 @@ import numpy as np
 
 from bokeh.layouts import row, column
 from bokeh.models import PointDrawTool, Button, LassoSelectTool, Div, \
-    CheckboxButtonGroup, Slider
+    CheckboxButtonGroup, Slider, TextInput, Toggle, RadioButtonGroup
 from bokeh.plotting import figure
 
-from constants import MESH_STEP_SIZE, LINE_POINTS, EMPTY_VALUE_COLOR, X_EXT, Y_EXT
+from math import ceil
+
+from constants import MESH_STEP_SIZE, LINE_POINTS, EMPTY_VALUE_COLOR, X_EXT, Y_EXT, NEURAL_DEF_SOLVER, \
+    NEURAL_DEF_ACTIVATION, NEURAL_DEF_LAYERS, NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_SLIDER_STEPS
+
 
 # import matplotlib.pyplot as plt
 
@@ -102,6 +106,118 @@ class SliderLike:
 
     def _set_visible_renderer(self, visible):
         pass
+
+
+class NeuralLike:
+    class ButtonStr:
+        # activation button
+        IDENTITY = "identity"
+        SIGMOID = "logistic sigmoid"
+        TANH = "tanh"
+        LINEAR = "linear"
+        # solver button
+        LBFGS = "lbfgs"
+        GRADIENT = "gradient descent"
+        ADAM = "adam"
+
+    def __init__(self):
+        """Creates attribute self.name, self.classifier, self.fig, self.layout self.source_data from super"""
+        # initialise iteration parameters for slider and classifier fitting
+        self._update_iteration_params(NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_SLIDER_STEPS)
+        self._logarithmic_steps = False
+
+    def _init_button_layout(self):
+        """Creates buttons bellow the figure, sets the trigger functions on them
+        and add them to the subLayout."""
+        total_width = 500
+        self._iteration_slider = Slider(start=self._iter_step, end=self._max_iter_steps,
+                                        step=self._iter_step, value=self._max_iter_steps,
+                                        title="Iterations", width=total_width)
+        self._iteration_slider.on_change('value', self._slider_change)
+        max_iteration_text = Div(text="Max iterations:")
+        self._max_iterations_input = TextInput(value=str(self._max_iter_steps), width=63)
+        number_step_text = Div(text="Slider steps:")
+        self._slider_steps_input = TextInput(value=str(self._slider_steps), width=45)
+        self._logarithm_button = Toggle(label="Logarithmic slider", width=55)
+        slider_group = column(self._iteration_slider,
+                              row(max_iteration_text, self._max_iterations_input,
+                                  number_step_text, self._slider_steps_input,
+                                  self._logarithm_button)
+                              )
+
+        self._layers_input = TextInput(value=NEURAL_DEF_LAYERS)
+        layers_text = Div(text="Hidden layers sizes:")
+        layers_input = column(layers_text, row(self._layers_input))
+
+        self._activation_button = RadioButtonGroup(
+            labels=[self.ButtonStr.IDENTITY, self.ButtonStr.SIGMOID,
+                    self.ButtonStr.TANH, self.ButtonStr.LINEAR], active=NEURAL_DEF_ACTIVATION,
+            width=total_width
+        )
+        activation_text = Div(text="Activation function in hidden layers:")
+        activation_group = column(activation_text, self._activation_button)
+
+        self._solver_button = RadioButtonGroup(
+            labels=[self.ButtonStr.LBFGS, self.ButtonStr.GRADIENT, self.ButtonStr.ADAM],
+            active=NEURAL_DEF_SOLVER,
+            width=total_width
+        )
+        solver_text = Div(text="Weigh optimization solver:")
+        solver_group = column(solver_text, self._solver_button)
+
+        return column(slider_group,
+                      layers_input, activation_group,
+                      solver_group)
+
+    def _slider_change(self, attr, old, new):
+        visible = int(self._iteration_slider.value / self._iter_step)
+        self._set_visible_renderer(visible)
+
+    def _update_iteration_params(self, max_iter_steps, slider_steps):
+        """Update iteration parameters
+        and if _iteration_slider is initialised (typically after first fit), update slider parameters.
+        """
+
+        self._iter_step = ceil(max_iter_steps/slider_steps)
+        self._max_iter_steps = self._iter_step * slider_steps
+        self._slider_steps = slider_steps
+        try:
+            self._iteration_slider.update(
+                start=self._iter_step,
+                end=self._max_iter_steps,
+                step=self._iter_step,
+                value=self._max_iter_steps
+            )
+        except AttributeError:
+            pass
+
+    def _set_visible_renderer(self, visible):
+        pass
+
+    @staticmethod
+    def _text2layers(layers_str):
+        return tuple([int(i) for i in layers_str.split(",")])
+
+    @staticmethod
+    def _label2activation_str(label):
+        """transform string from button to string that classifier expects"""
+        if label == NeuralLike.ButtonStr.IDENTITY:
+            return "identity"
+        elif label == NeuralLike.ButtonStr.SIGMOID:
+            return "logistic"
+        elif label == NeuralLike.ButtonStr.TANH:
+            return "tanh"
+        else:
+            return "relu"
+
+    @staticmethod
+    def _label2solver_str(label):
+        if label == NeuralLike.ButtonStr.LBFGS:
+            return "lbfgs"
+        elif label == NeuralLike.ButtonStr.GRADIENT:
+            return "sgd"
+        else:
+            return "adam"
 
 
 class ClassifierSubLayout(ModelSubLayout):

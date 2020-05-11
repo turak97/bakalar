@@ -4,7 +4,7 @@ from bokeh.layouts import row, column
 
 from math import ceil
 
-from basic_sublayouts import ClassifierSubLayout
+from basic_sublayouts import ClassifierSubLayout, SliderLike
 from constants import NEURAL_DEF_ACTIVATION, NEURAL_DEF_LAYERS, KNN_DEF_NEIGHBOUR_N, \
     NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_SLIDER_STEPS, NEURAL_DEF_SOLVER, POLY_DEF_DGR
 
@@ -13,11 +13,10 @@ from sklearn.exceptions import ConvergenceWarning
 warnings.filterwarnings(action='ignore', category=ConvergenceWarning)
 
 
-class SliderClassifierSubLayout(ClassifierSubLayout):
+class SliderClassifierSubLayout(SliderLike, ClassifierSubLayout):
     def __init__(self, name, model, source_data, slider_params):
-        self._model_attr, slider_attr = slider_params
-        self._start, self._end, self._step, self._value = slider_attr
 
+        SliderLike.__init__(self, slider_params)
         ClassifierSubLayout.__init__(self, name, model, source_data)
 
     def refit(self):
@@ -31,7 +30,7 @@ class SliderClassifierSubLayout(ClassifierSubLayout):
         self._info("Updating model and fitting data...")
 
         (min_x, max_x), (min_y, max_y) = self.source_data.get_min_max_x(), self.source_data.get_min_max_y()
-        self._img_data = self.ImageData(min_x, max_x,
+        self._rend_data = self.ImageData(min_x, max_x,
                                         min_y, max_y,
                                         self._x_ext, self._y_ext)
 
@@ -42,18 +41,6 @@ class SliderClassifierSubLayout(ClassifierSubLayout):
             self._fit_and_render(i)
 
         self._info("Done")
-
-    def _init_button_layout(self):
-        self._slider = Slider(
-            title=self._model_attr,
-            start=self._start, end=self._end, step=self._step, value=self._value
-        )
-        self._slider.on_change("value", self._slider_change)
-        return self._slider
-
-    def _slider_change(self, attr, old, new):
-        visible = new
-        self._set_visible_renderer(visible)
 
     def _set_visible_renderer(self, visible):
         for renderer, i in zip(self._fig.renderers[1:], range(1, len(self._fig.renderers))):
@@ -177,9 +164,9 @@ class NeuralClassifier(ClassifierSubLayout):
         self._info("Updating model and fitting data...")
 
         (min_x, max_x), (min_y, max_y) = self.source_data.get_min_max_x(), self.source_data.get_min_max_y()
-        self._img_data = self.ImageData(min_x, max_x,
-                                        min_y, max_y,
-                                        self._x_ext, self._y_ext)
+        self._rend_data = self.ImageData(min_x, max_x,
+                                         min_y, max_y,
+                                         self._x_ext, self._y_ext)
         for iterations, renderer_i in zip(range(self.__iter_step, self.__max_iter_steps + 1,
                                                 self.__iter_step),
                                           range(1, self.__slider_steps + 1)):  # first one is Circle
@@ -200,7 +187,7 @@ class NeuralClassifier(ClassifierSubLayout):
 
     def _init_button_layout(self):
         """Creates buttons bellow the figure, sets the trigger functions on them
-        and add them to the subLayout"""
+        and add them to the subLayout."""
         total_width = 500
         self.__iteration_slider = Slider(start=self.__iter_step, end=self.__max_iter_steps,
                                          step=self.__iter_step, value=self.__max_iter_steps,
@@ -262,7 +249,7 @@ class NeuralClassifier(ClassifierSubLayout):
 
     def __update_iteration_params(self, max_iter_steps, slider_steps):
         """Update iteration parameters
-        and if __iteration_slider is initialised (typically after first fit), update slider parameters
+        and if __iteration_slider is initialised (typically after first fit), update slider parameters.
         """
 
         self.__iter_step = ceil(max_iter_steps/slider_steps)

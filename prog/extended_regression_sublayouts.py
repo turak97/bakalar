@@ -2,21 +2,17 @@
 from bokeh.layouts import row, column
 from bokeh.models import Slider, ColumnDataSource
 
-from sklearn.neighbors import KNeighborsRegressor
-import sklearn
-
-import numpy as np
-
-from basic_sublayouts import RegressionSubLayout
+from basic_sublayouts import RegressionSubLayout, SliderLike
 
 from constants import POL_FROM_DGR, POL_TO_DGR
 
 
-class SliderRegressionSubLayout(RegressionSubLayout):
+class SliderRegressionSubLayout(SliderLike, RegressionSubLayout):
     def __init__(self, name, model, source_data, slider_params):
-        self._model_attr, slider_attr = slider_params
-        self._start, self._end, self._step, self._value = slider_attr
+        # self._model_attr, slider_attr = slider_params
+        # self._start, self._end, self._step, self._value = slider_attr
 
+        SliderLike.__init__(self, slider_params)
         RegressionSubLayout.__init__(self, name, model, source_data)
 
     def refit(self):
@@ -30,7 +26,7 @@ class SliderRegressionSubLayout(RegressionSubLayout):
         self._info("Updating model and fitting data...")
 
         (x_min, x_max) = self.source_data.get_min_max_x()
-        self._line_data = self.LineData(x_min, x_max, self._x_ext)
+        self._rend_data = self.LineData(x_min, x_max, self._x_ext)
 
         for value, i in zip(range(self._start, self._end + 1, self._step),
                             range(1, self._end + 1, self._step)):
@@ -39,18 +35,6 @@ class SliderRegressionSubLayout(RegressionSubLayout):
             self._fit_and_render(i)
 
         self._info("Done")
-
-    def _init_button_layout(self):
-        self._slider = Slider(
-            title=self._model_attr,
-            start=self._start, end=self._end, step=self._step, value=self._value
-        )
-        self._slider.on_change("value", self._slider_change)
-        return self._slider
-
-    def _slider_change(self, attr, old, new):
-        visible = new
-        self._set_visible_renderer(visible)
 
     def _set_visible_renderer(self, visible):
         for renderer, i in zip(self._fig.renderers[1:], range(1, len(self._fig.renderers))):
@@ -79,9 +63,10 @@ class PolynomialRegression(SliderRegressionSubLayout):
         self._info("Updating model and fitting data...")
 
         (x_min, x_max) = self.source_data.get_min_max_x()
-        self._line_data = self.LineData(x_min, x_max, self._x_ext)
+        self._rend_data = self.LineData(x_min, x_max, self._x_ext)
 
-        for degree, i in zip(range(self._pol_from_degree, self._pol_to_degree + 1), range(1, self._pol_to_degree + 1)):
+        for degree, i in zip(range(self._pol_from_degree, self._pol_to_degree + 1),
+                             range(1, self._pol_to_degree + 1)):
             self._model.set_params(poly__degree=degree)
 
             self._fit_and_render(i)

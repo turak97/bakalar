@@ -3,7 +3,7 @@ import numpy as np
 
 from bokeh.layouts import row, column
 from bokeh.models import PointDrawTool, Button, LassoSelectTool, Div, \
-    CheckboxButtonGroup
+    CheckboxButtonGroup, Slider
 from bokeh.plotting import figure
 
 from constants import MESH_STEP_SIZE, LINE_POINTS, EMPTY_VALUE_COLOR, X_EXT, Y_EXT
@@ -33,7 +33,7 @@ class SubLayout:
 
 
 class ModelSubLayout(SubLayout):
-    """Base class for classifier sub layouts, regressive sublayouts"""
+    """Base class for classifier sub layouts, regressive subl_ayouts"""
     def __init__(self, name, model, source_data):
         SubLayout.__init__(self, name, source_data)
 
@@ -80,6 +80,27 @@ class ModelSubLayout(SubLayout):
     """Methods for updating figure"""
 
     def _figure_update(self):
+        pass
+
+
+class SliderLike:
+    def __init__(self, slider_params):
+        self._model_attr, slider_attr = slider_params
+        self._start, self._end, self._step, self._value = slider_attr
+
+    def _init_button_layout(self):
+        self._slider = Slider(
+            title=self._model_attr,
+            start=self._start, end=self._end, step=self._step, value=self._value
+        )
+        self._slider.on_change("value", self._slider_change)
+        return self._slider
+
+    def _slider_change(self, attr, old, new):
+        visible = new
+        self._set_visible_renderer(visible)
+
+    def _set_visible_renderer(self, visible):
         pass
 
 
@@ -200,8 +221,6 @@ class RegressionSubLayout(ModelSubLayout):
 
         def cut_y_extreme(self, x_data, y_data):
             """returns new numpy array without extreme values"""
-            print(max(y_data))
-            return x_data, y_data
             new_y_data = []
             new_x_data = []
             extreme_out = self.x_extension * 10

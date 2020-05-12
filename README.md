@@ -13,11 +13,16 @@ source env/bin/activate
 pip install -r requirements.txt 
 
 ## How to run:
-
+```
 source env/bin/activate
-
-python3 prog/bokeh_plot.py --ver {cls,reg}  # '--ver' and then 'cls' or 'reg'
-
-python3 prog/bokeh_plot.py -h  # for options
-
+python3 prog/bokeh_plot.py --ver cls
+```
+or
+```
+python3 prog/bokeh_plot.py --ver reg
+```
+#### For options:
+```
+python3 prog/bokeh_plot.py -h
+```
 ### Have a fun!

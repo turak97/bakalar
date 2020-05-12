@@ -12,7 +12,7 @@ source env/bin/activate
 
 pip install -r requirements.txt 
 
-## How to run:
+## How to run (be sure you are in the folder 'prog'):
 
 source evn/bin/activate
 

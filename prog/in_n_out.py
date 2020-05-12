@@ -18,7 +18,8 @@ def save_source(col_data_source, name):
         name += ".csv"
 
     pandas_df = col_data_source.to_df()
-    pandas_df = pandas_df.drop(columns='color')
+    if 'color' in pandas_df.columns:
+        pandas_df = pandas_df.drop(columns='color')
 
     if not os.path.exists(SAVED_DATASETS_DIR_NAME):
         os.makedirs(SAVED_DATASETS_DIR_NAME)

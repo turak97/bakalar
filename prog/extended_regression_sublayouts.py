@@ -2,13 +2,15 @@
 from bokeh.layouts import row, column
 from bokeh.models import Slider, ColumnDataSource
 
+import numpy as np
+
 from basic_sublayouts import RegressionSubLayout, SliderLike, NeuralLike
 
 from math import ceil
 from bokeh.models import PointDrawTool, Button, LassoSelectTool, Div, \
     CheckboxButtonGroup, Slider, TextInput, Toggle, RadioButtonGroup
 
-from constants import POL_FROM_DGR, POL_TO_DGR, \
+from constants import POL_FROM_DGR, POL_TO_DGR, LOSS_PRINT, \
     NEURAL_DEF_SLIDER_STEPS, NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_LAYERS, NEURAL_DEF_ACTIVATION, NEURAL_DEF_SOLVER
 
 
@@ -115,6 +117,8 @@ class NeuralRegression(RegressionSubLayout):
     def __init__(self, name, model, source_data):
         """Creates attribute self.name, self.classifier, self.fig, self.layout self.source_data from super"""
         # initialise iteration parameters for slider and classifier fitting
+        self._neural_data = []
+
         self.__update_iteration_params(NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_SLIDER_STEPS)
         self.__logarithmic_steps = False
 
@@ -140,6 +144,7 @@ class NeuralRegression(RegressionSubLayout):
 
         (x_min, x_max) = self.source_data.get_min_max_x()
         self._line_data = self.LineData(x_min, x_max, self._x_ext)
+        self._neural_data = []
 
         for iterations, renderer_i in zip(range(self.__iter_step, self.__max_iter_steps + 1,
                                                 self.__iter_step),
@@ -152,17 +157,48 @@ class NeuralRegression(RegressionSubLayout):
                 For  5000 iterations max and 10 steps it will be:
                 50, 111, 187, 285, 416, 600, 875, 1333, 2250, 5000
                 """
-                self._model.max_iter = int(iterations / (self.__slider_steps - renderer_i + 1))
+                self._model.max_iter = max(int(iterations / (self.__slider_steps - renderer_i + 1)),
+                                           1)
             else:
                 self._model.max_iter = iterations
             self._fit_and_render(renderer_i)
 
         self._info("Done")
 
+    def _fit_and_render(self, renderer_i):
+        """Fits the model, render image and add/update image to the figure
+        expects attribute self.__img_data
+        """
+        self._info("Fitting data and updating figure, step: " + str(renderer_i))
+
+        x_data, y_data = self.source_data.data_to_regression_fit()
+        self._model.fit(x_data, y_data)
+        print(self._model.max_iter)
+
+        self._neural_data.append(self._model.loss_)
+
+        y_line = self._model.predict(np.c_[self._line_data.xx.ravel()])
+        self._line_data.add_line(y_line)
+
+        if len(self._fig.renderers) - 1 < renderer_i:
+            print("adding renderer no " + str(renderer_i - 1))
+            self._new_fig_renderer(renderer_i - 1)
+        else:
+            print("updating render no " + str(renderer_i - 1))
+            self._update_fig_renderer(renderer_i)
+
     def _init_button_layout(self):
         """Creates buttons bellow the figure, sets the trigger functions on them
         and add them to the subLayout."""
         total_width = 500
+
+        if LOSS_PRINT == "app":
+            self._loss_info = Div(text="Validation loss: ")
+            self._loss_text = Div(text="")
+            loss_group = row(self._loss_info, self._loss_text)
+        else:
+            loss_group = row()
+
         self.__iteration_slider = Slider(start=self.__iter_step, end=self.__max_iter_steps,
                                          step=self.__iter_step, value=self.__max_iter_steps,
                                          title="Iterations", width=total_width)
@@ -198,14 +234,20 @@ class NeuralRegression(RegressionSubLayout):
         solver_text = Div(text="Weigh optimization solver:")
         solver_group = column(solver_text, self.__solver_button)
 
-        return column(slider_group,
+        return column(loss_group,
+                      slider_group,
                       layers_input, activation_group,
                       solver_group)
 
     def __set_visible_renderer(self, visible):
+        print(visible)
         for renderer, i in zip(self._fig.renderers[1:], range(1, len(self._fig.renderers))):
             if i == visible:
                 renderer.visible = True
+                if LOSS_PRINT == 'app':
+                    self._loss_text.update(text=str(self._neural_data[i - 1]))
+                elif LOSS_PRINT == 'log':
+                    self._info("Validation loss: " + str(self._neural_data[i - 1]))
             else:
                 renderer.visible = False
 

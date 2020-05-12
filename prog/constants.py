@@ -4,7 +4,7 @@ from bokeh import palettes
 
 ########## Those constants sets common behaviour (name of saved files, ...) ##########
 
-SAVED_DATASETS_DIR_NAME = "saved_datasets"
+SAVED_DATASETS_DIR_NAME = "def_datasets"
 SAVED_DATASET_FILE_NAME = "my_dataset.csv"
 
 PALETTE = palettes.Category10[10]
@@ -34,23 +34,26 @@ FREEHAND_DEVIATION_END = 20
 FREEHAND_DEVIATION_STEP = 1
 FREEHAND_DEVIATION_STARTING_VAL = 2
 
-"""Regression sublayouts"""
-
-POLY_DEF_DGR = 3
-
-"""Classification sublayouts"""
-
-KNN_DEF_NEIGHBOUR_N = 3
-
+"""Neural options"""
 
 NEURAL_DEF_SLIDER_STEPS = 3
 NEURAL_DEF_MAX_ITER_STEPS = 100
 NEURAL_DEF_ACTIVATION = 1  # 0: identity, 1: sigmoid, 2: tanh, 3: linear
 NEURAL_DEF_SOLVER = 1  # 0: lbfgs, 1: gradient descent, 2: adam
 NEURAL_DEF_LAYERS = "15, 15"  # more layers: "20, 10, 5, 20"
+LOSS_PRINT = "log"  # either "log", "app", None
+
+"""Regression sublayouts"""
+
+POLY_DEF_DGR = 3
 
 POL_FROM_DGR = 1
 POL_TO_DGR = 5
+
+"""Classification sublayouts"""
+
+KNN_DEF_NEIGHBOUR_N = 3
+
 
 CLUSTERS_COUNT_DEF = 3
 CLUSTER_SIZE_DEF = 3
@@ -67,7 +70,7 @@ MESH_STEP_SIZE = 0.05  # default: 0.05
 # Sets the detail of regression line
 LINE_POINTS = 1000  # default 1000
 
-X_EXT = 0.3
+X_EXT = 1
 Y_EXT = X_EXT
 
 BETA_PLOT_SAMPLES = 250

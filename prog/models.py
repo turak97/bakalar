@@ -26,7 +26,7 @@ REG_MODELS = {
     "Polynomial regression": Pipeline([('poly', PolynomialFeatures(degree=1)),
                                        ('linear', LinearRegression(fit_intercept=False))]),
     "K nearest neighbours": KNeighborsRegressor(),
-    "Neural classification": MLPRegressor()
+    "Neural regression": MLPRegressor()
 }
 
 REG_SLIDERS = {

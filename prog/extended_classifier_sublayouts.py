@@ -47,6 +47,7 @@ class SliderClassifierSubLayout(SliderLike, ClassifierSubLayout):
     def _set_visible_renderer(self, visible):
         for renderer, i in zip(self._fig.renderers[1:], range(1, len(self._fig.renderers))):
             if i == visible:
+                print("setting" + str(i) + visible)
                 renderer.visible = True
             else:
                 renderer.visible = False

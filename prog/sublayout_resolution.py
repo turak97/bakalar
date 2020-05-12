@@ -43,7 +43,7 @@ def reg_resolution(model_name, source_data):
     """Special models"""
     if model_name == "Polynomial regression":
         return PolynomialRegression(model_name, model, source_data)
-    if model_name == "Neural classification":
+    if model_name == "Neural regression":
         return NeuralRegression(model_name, model, source_data)
 
     """Generic model with sliders attached"""

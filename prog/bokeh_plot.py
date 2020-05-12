@@ -45,6 +45,8 @@ if __name__ == '__main__':
 
     args = parse_args()
     column_names = args[1]
+    version = args[2]
+
     if args[0] == '':
         df = dg.cluster_data_pandas(column_names=column_names,
                                     x_interval=(0, 30), y_interval=(-10, 10),
@@ -52,9 +54,10 @@ if __name__ == '__main__':
                                     clust_size_dev=CLUSTER_DEV_DEF)  # TODO: hezceji
     else:
         path = args[0][0]
+        if version == 'reg':
+            column_names = column_names[:2]
         df = read_df(path, column_names)
 
-    version = args[2]
 
     def bkapp(doc):
 

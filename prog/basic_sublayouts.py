@@ -383,8 +383,10 @@ class RegressionSubLayout(ModelSubLayout):
         self._line_data.add_line(y_line)
 
         if len(self._fig.renderers) - 1 < renderer_i:
+            print("adding renderer no " + str(renderer_i - 1))
             self._new_fig_renderer(renderer_i - 1)
         else:
+            print("updating render no " + str(renderer_i - 1))
             self._update_fig_renderer(renderer_i)
 
     def _new_fig_renderer(self, line_i):

@@ -4,7 +4,7 @@ from bokeh import palettes
 
 ########## Those constants sets common behaviour (name of saved files, ...) ##########
 
-SAVED_DATASETS_DIR_NAME = "def_datasets"
+SAVED_DATASETS_DIR_NAME = "datasets/"
 SAVED_DATASET_FILE_NAME = "my_dataset.csv"
 
 PALETTE = palettes.Category10[10]

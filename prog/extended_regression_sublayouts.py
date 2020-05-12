@@ -146,6 +146,8 @@ class NeuralRegression(RegressionSubLayout):
         self._line_data = self.LineData(x_min, x_max, self._x_ext)
         self._neural_data = []
 
+        self._model.max_iter = self.__iter_step
+        prev = 0  # used only with logarithmic slider
         for iterations, renderer_i in zip(range(self.__iter_step, self.__max_iter_steps + 1,
                                                 self.__iter_step),
                                           range(1, self.__slider_steps + 1)):  # first one is Circle
@@ -157,10 +159,12 @@ class NeuralRegression(RegressionSubLayout):
                 For  5000 iterations max and 10 steps it will be:
                 50, 111, 187, 285, 416, 600, 875, 1333, 2250, 5000
                 """
-                self._model.max_iter = max(int(iterations / (self.__slider_steps - renderer_i + 1)),
+                log_iter_total = int(iterations / (self.__slider_steps - renderer_i + 1))
+                self._model.max_iter = max(log_iter_total - prev,
                                            1)
-            else:
-                self._model.max_iter = iterations
+                print(self._model.max_iter)
+                prev = log_iter_total
+
             self._fit_and_render(renderer_i)
 
         self._info("Done")

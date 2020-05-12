@@ -21,9 +21,17 @@ def save_source(col_data_source, name):
     if 'color' in pandas_df.columns:
         pandas_df = pandas_df.drop(columns='color')
 
-    if not os.path.exists(SAVED_DATASETS_DIR_NAME):
-        os.makedirs(SAVED_DATASETS_DIR_NAME)
-    path = Path(SAVED_DATASETS_DIR_NAME)
+    dir_name = SAVED_DATASETS_DIR_NAME
+    if dir_name[-1] != '/':
+        dir_name += '/'
+    dir_name += name[:name.rfind('/') + 1]
+    name = name[name.rfind('/') + 1:]
+    print(dir_name)
+    print(name)
+
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
+    path = Path(dir_name)
     path = path / name
 
     pandas_df.to_csv(path, encoding='utf-8')

@@ -99,7 +99,7 @@ class GeneralLayout:
         self._info("Updating all sublayouts")
 
         for sub_lay in self._sub_layouts:
-            self._info("Updating figure " + sub_lay.name + "...")
+            self._info("Updating figure " + sub_lay.subl_name + "...")
             sub_lay.refit()
 
         self._info("Updating DONE")
@@ -114,7 +114,7 @@ class GeneralLayout:
         self._info("Immediate update of sublayouts...")
 
         for sub_lay in sub_layouts_to_update:
-            self._info("Updating figure " + sub_lay.name + "...")
+            self._info("Updating figure " + sub_lay.subl_name + "...")
             sub_lay.refit()
 
         self._info("Updating sublayouts DONE")
@@ -122,7 +122,7 @@ class GeneralLayout:
     def _update_checkbox_column(self):
         """Updates column with checkbox and dropdown buttons.
         Change labels in checkbox by creating a new one."""
-        labels = [sub_lay.name for sub_lay in self._sub_layouts]
+        labels = [sub_lay.subl_name for sub_lay in self._sub_layouts]
         checkbox_button = CheckboxButtonGroup(labels=labels, default_size=200*len(self._sub_layouts),
                                               active=[])
         checkbox_button.on_change('active', self._del_sub_layout)

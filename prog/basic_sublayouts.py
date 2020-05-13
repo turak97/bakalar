@@ -8,8 +8,12 @@ from bokeh.plotting import figure
 
 from math import ceil
 
+import copy
+
 from constants import MESH_STEP_SIZE, LINE_POINTS, EMPTY_VALUE_COLOR, X_EXT, Y_EXT, NEURAL_DEF_SOLVER, \
-    NEURAL_DEF_ACTIVATION, NEURAL_DEF_LAYERS, NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_SLIDER_STEPS
+    NEURAL_DEF_ACTIVATION, NEURAL_DEF_LAYERS, NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_SLIDER_STEPS, LOSS_PRINT
+
+from models import REG_MODELS, CLS_MODELS
 
 
 # import matplotlib.pyplot as plt
@@ -17,9 +21,8 @@ from constants import MESH_STEP_SIZE, LINE_POINTS, EMPTY_VALUE_COLOR, X_EXT, Y_E
 
 class SubLayout:
     """Base class for ModelSubLayout and DataSandbox"""
-    def __init__(self, name, source_data):
-        self.name = name
-        self.source_data = source_data
+    def __init__(self, subl_name):
+        self.subl_name = subl_name
 
         self.layout = self._layout_init()
 
@@ -33,24 +36,207 @@ class SubLayout:
         return self._fig
 
     def _info(self, message):
-        print(self.name + " " + self._fig.id + ": " + message)
+        print(self.subl_name + " " + self._fig.id + ": " + message)
 
 
-class ModelSubLayout(SubLayout):
-    """Base class for classifier sub layouts, regressive subl_ayouts"""
-    def __init__(self, name, model, source_data):
-        SubLayout.__init__(self, name, source_data)
-
-        self._model = model
+class ModelInterface:
+    def __init__(self, model_name, source_data):
+        self._model = None
+        self._model_name = model_name
+        self.source_data = source_data
 
         self._x_ext = X_EXT
         self._y_ext = Y_EXT
+
+    def _init_circle_renderer(self, fig):
+        pass
+
+    def _update_model_params(self):
+        pass
+
+    def _init_data(self):
+        pass
+
+    def _init_model(self):
+        pass
+
+    def _fit(self):
+        pass
+
+    def _render(self, fig, renderer_i):
+        pass
+
+    def _set_visible_renderer(self, renderer_i):
+        pass
+
+
+class RegressionLike(ModelInterface):
+    class LineData:
+        """Class for line representation of model results"""
+
+        def __init__(self, x_min, x_max, x_ext):
+            self.x_extension = (x_max - x_min) * x_ext
+            self.x_min = x_min - self.x_extension
+            self.x_max = x_max + self.x_extension
+            self.xx = np.linspace(self.x_min, self.x_max, LINE_POINTS)
+            self.lines = []
+
+        def add_line(self, y_data):
+            x_data, y_data = self.cut_y_extreme(self.xx, y_data)
+
+            self.lines.append((x_data, y_data))
+
+        def cut_y_extreme(self, x_data, y_data):
+            """returns new numpy array without extreme values"""
+            new_y_data = []
+            new_x_data = []
+            extreme_out = self.x_extension * 10
+            for x, y in zip(x_data, y_data):
+                if self.x_max + extreme_out > y > self.x_min - extreme_out:
+                    new_x_data.append(x)
+                    new_y_data.append(y)
+            return np.asarray(new_x_data), np.asarray(new_y_data)
+
+    def __init__(self, name, source_data):
+        ModelInterface.__init__(self, name, source_data)
+
+    def _init_circle_renderer(self, fig):
+        """Add original data to the figure and prepare PointDrawTool to make them interactive
+        this renderer MUST be the FIRST one.
+        """
+        move_circle = fig.circle(self.source_data.x, self.source_data.y,
+                                 source=self.source_data.plot_source, size=7)
+        point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
+        fig.add_tools(point_draw_tool)
+
+    def _init_model(self):
+        self._model = copy.deepcopy(REG_MODELS[self._model_name])
+
+    def _init_data(self):
+        (x_min, x_max) = self.source_data.get_min_max_x()
+        self._line_data = self.LineData(x_min, x_max, self._x_ext)
+
+    def _fit(self):
+        x_data, y_data = self.source_data.data_to_regression_fit()
+        self._model.fit(x_data, y_data)
+
+    def _render(self, fig, renderer_i):
+        y_line = self._model.predict(np.c_[self._line_data.xx.ravel()])
+        self._line_data.add_line(y_line)
+
+        if len(fig.renderers) - 1 < renderer_i:
+            self._new_fig_renderer(fig, renderer_i - 1)
+        else:
+            self._update_fig_renderer(fig, renderer_i)
+
+    def _new_fig_renderer(self, fig, line_i):
+        """Creates a new line renderer from data at line_i in self._line_data.lines"""
+        x_data, y_data = self._line_data.lines[line_i]
+        fig.line(x_data, y_data)
+
+    def _update_fig_renderer(self, fig, i):
+        """Update image data by directly changing them in the figure renderers"""
+        x_data, y_data = self._line_data.lines[i - 1]
+        fig.renderers[i].data_source.update(
+            data=dict(
+                x=x_data,
+                y=y_data
+            )
+        )
+
+
+class ClassificationLike(ModelInterface):
+    class ImageData:
+        """Class for image representation of model results"""
+
+        def __init__(self, x_min, x_max, y_min, y_max, x_ext, y_ext):
+            x_extension = (x_max - x_min) * x_ext
+            y_extension = (y_max - y_min) * y_ext
+            self.x_min = x_min - x_extension
+            self.x_max = x_max + x_extension
+            self.y_min = y_min - y_extension
+            self.y_max = y_max + y_extension
+
+            self.dw = self.x_max - self.x_min
+            self.dh = self.y_max - self.y_min
+            self.xx, self.yy = np.meshgrid(np.arange(self.x_min, self.x_max, MESH_STEP_SIZE),
+                                           np.arange(self.y_min, self.y_max, MESH_STEP_SIZE))
+
+            self.images = []
+
+        def add_image(self, d):
+            self.images.append(d)
+
+    def __init__(self, name, source_data):
+        ModelInterface.__init__(self, name, source_data)
+
+    def _init_circle_renderer(self, fig):
+        """Add original data to the figure and prepare PointDrawTool to make them interactive
+        this renderer MUST be the FIRST one.
+        """
+        move_circle = fig.circle(self.source_data.x, self.source_data.y,
+                                 color='color', source=self.source_data.plot_source, size=7)
+        point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
+        fig.add_tools(point_draw_tool)
+
+    def _init_model(self):
+        self._model = copy.deepcopy(CLS_MODELS[self._model_name])
+
+    def _init_data(self):
+        (min_x, max_x), (min_y, max_y) = self.source_data.get_min_max_x(), self.source_data.get_min_max_y()
+        self._img_data = self.ImageData(min_x, max_x,
+                                        min_y, max_y,
+                                        self._x_ext, self._y_ext)
+
+    def _fit(self):
+        cls_X, classification = self.source_data.data_to_classifier_fit()
+        self._model.fit(cls_X, classification)
+
+    def _render(self, fig, renderer_i):
+        raw_image = self._model.predict(np.c_[self._img_data.xx.ravel(),
+                                              self._img_data.yy.ravel()])
+        self._img_data.add_image(raw_image.reshape(self._img_data.xx.shape))
+
+        if len(fig.renderers) - 1 < renderer_i:
+            self._new_fig_renderer(fig, renderer_i - 1)
+        else:
+            self._update_fig_renderer(fig, renderer_i)
+
+    def _new_fig_renderer(self, fig, img_i):
+        """Create a new image renderer.
+        """
+        fig.image(image=[self._img_data.images[img_i]], x=self._img_data.x_min, y=self._img_data.y_min,
+                  dw=self._img_data.dw, dh=self._img_data.dh,
+                  color_mapper=self.source_data.color_mapper, global_alpha=0.5)
+
+    def _update_fig_renderer(self, fig, i):
+        """Update image data by directly changing them in the figure renderers.
+        """
+        img_patch = {
+            'image': [(0, self._img_data.images[i - 1])]  # images are indexed from 0, image renderers from 1
+        }
+        fig.renderers[i].data_source.patch(img_patch)
+
+        fig.renderers[i].glyph.update(
+            color_mapper=self.source_data.color_mapper,
+            x=self._img_data.x_min,
+            y=self._img_data.y_min,
+            dw=self._img_data.dw,
+            dh=self._img_data.dh
+        )
+
+
+class ModelSubLayout(SubLayout, ModelInterface):
+    """Base class for classifier sub layouts, regressive subl_ayouts"""
+    def __init__(self, model_name):
+        SubLayout.__init__(self, model_name)
+
+        self._init_circle_renderer(self._fig)
 
     """Methods used by GeneralLayout"""
 
     def refit(self):
         self._info("Updating model and fitting data...")
-        self._update_model_params()
         self._figure_update()
         self._info("Fitting and updating DONE")
 
@@ -87,10 +273,24 @@ class ModelSubLayout(SubLayout):
         pass
 
 
-class SliderLike:
-    def __init__(self, slider_params):
+class BasicSubLayout(ModelSubLayout):
+    def __init__(self, subl_name):
+        ModelSubLayout.__init__(self, subl_name)
+
+    def _figure_update(self):
+        self._init_data()
+        self._init_model()
+        self._update_model_params()
+        self._fit()
+        self._render(self._fig, 1)
+
+
+class SliderSubLayout(ModelSubLayout):
+    def __init__(self, subl_name, slider_params):
         self._model_attr, slider_attr = slider_params
         self._start, self._end, self._step, self._value = slider_attr
+
+        ModelSubLayout.__init__(self, subl_name)
 
     def _init_button_layout(self):
         self._slider = Slider(
@@ -100,15 +300,32 @@ class SliderLike:
         self._slider.on_change("value", self._slider_change)
         return self._slider
 
+    def _figure_update(self):
+        self._init_data()
+        self._init_model()
+
+        for value, i in zip(range(self._start, self._end + 1, self._step),
+                            range(1, self._end + 1, self._step)):
+            setattr(self._model, self._model_attr, value)
+
+            self._fit()
+            self._render(self._fig, i)
+
+        self._set_visible_renderer(self._value)
+
     def _slider_change(self, attr, old, new):
         visible = new
         self._set_visible_renderer(visible)
 
     def _set_visible_renderer(self, visible):
-        pass
+        for renderer, i in zip(self._fig.renderers[1:], range(1, len(self._fig.renderers))):
+            if i == visible:
+                renderer.visible = True
+            else:
+                renderer.visible = False
 
 
-class NeuralLike:
+class NeuralSubLayout(ModelSubLayout):
     class ButtonStr:
         # activation button
         IDENTITY = "identity"
@@ -120,16 +337,27 @@ class NeuralLike:
         GRADIENT = "gradient descent"
         ADAM = "adam"
 
-    def __init__(self):
+    def __init__(self, subl_name):
         """Creates attribute self.name, self.classifier, self.fig, self.layout self.source_data from super"""
         # initialise iteration parameters for slider and classifier fitting
         self._update_iteration_params(NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_SLIDER_STEPS)
         self._logarithmic_steps = False
+        self._neural_data = []
+
+        ModelSubLayout.__init__(self, subl_name)
 
     def _init_button_layout(self):
         """Creates buttons bellow the figure, sets the trigger functions on them
         and add them to the subLayout."""
         total_width = 500
+
+        if LOSS_PRINT == "app":
+            self._loss_info = Div(text="Validation loss: ")
+            self._loss_text = Div(text="")
+            loss_group = row(self._loss_info, self._loss_text)
+        else:
+            loss_group = row()
+
         self._iteration_slider = Slider(start=self._iter_step, end=self._max_iter_steps,
                                         step=self._iter_step, value=self._max_iter_steps,
                                         title="Iterations", width=total_width)
@@ -165,9 +393,45 @@ class NeuralLike:
         solver_text = Div(text="Weigh optimization solver:")
         solver_group = column(solver_text, self._solver_button)
 
-        return column(slider_group,
+        return column(loss_group,
+                      slider_group,
                       layers_input, activation_group,
                       solver_group)
+
+    def _figure_update(self):
+        self._init_data()
+        self._init_model()
+        self._update_model_params()
+
+        self._logarithmic_steps = self._logarithm_button.active
+        self._update_iteration_params(int(self._max_iterations_input.value),
+                                      int(self._slider_steps_input.value))
+
+        self._model.max_iter = self._iter_step
+        prev = 0  # used only with logarithmic slider
+        for iterations, renderer_i in zip(range(self._iter_step, self._max_iter_steps + 1,
+                                                self._iter_step),
+                                          range(1, self._slider_steps + 1)):  # first one is Circle
+            if self._logarithmic_steps:
+                """
+                in fact it is not logarithmic (I chose this name because I find it rather intuitive).
+                This option allows user to see the begging of the learning
+                process when the changes are much more significant in more detail.
+                For  5000 iterations max and 10 steps it will be:
+                50, 111, 187, 285, 416, 600, 875, 1333, 2250, 5000
+                """
+                log_iter_total = int(iterations / (self._slider_steps - renderer_i + 1))
+                self._model.max_iter = max(log_iter_total - prev,
+                                           1)
+                prev = log_iter_total
+
+            if hasattr(self._model, "classes_"):
+                del self._model.classes_  # necessary for MLPClassifier warm star
+            self._fit()
+            self._neural_data.append(self._model.loss_)
+
+            self._render(self._fig, renderer_i)
+        self._set_visible_renderer(self._slider_steps)
 
     def _slider_change(self, attr, old, new):
         visible = int(self._iteration_slider.value / self._iter_step)
@@ -191,8 +455,37 @@ class NeuralLike:
         except AttributeError:
             pass
 
+    def _update_model_params(self):
+        new_activation = self._label2activation_str(
+            self._activation_button.labels[self._activation_button.active]
+        )
+        self._model.activation = new_activation
+
+        new_solver = self._label2solver_str(
+            self._solver_button.labels[self._solver_button.active]
+        )
+        self._model.solver = new_solver
+
+        self._model.hidden_layer_sizes = self._text2layers(self._layers_input.value)
+
     def _set_visible_renderer(self, visible):
-        pass
+        for renderer, i in zip(self._fig.renderers[1:], range(1, len(self._fig.renderers))):
+            if i == visible:
+                renderer.visible = True
+                if LOSS_PRINT == 'app':
+                    self._loss_text.update(text=str(self._neural_data[i - 1]))
+                elif LOSS_PRINT == 'log':
+                    self._info("Validation loss: " + str(self._neural_data[i - 1]))
+            else:
+                renderer.visible = False
+
+        if self._logarithmic_steps:
+            self._iteration_slider.show_value = False
+            self._iteration_slider.title = "Iterations logarithmic: " + str(
+                int(self._iteration_slider.value / (self._slider_steps - visible + 1)))
+        else:
+            self._iteration_slider.show_value = True
+            self._iteration_slider.title = "Iterations"
 
     @staticmethod
     def _text2layers(layers_str):
@@ -201,205 +494,20 @@ class NeuralLike:
     @staticmethod
     def _label2activation_str(label):
         """transform string from button to string that classifier expects"""
-        if label == NeuralLike.ButtonStr.IDENTITY:
+        if label == NeuralSubLayout.ButtonStr.IDENTITY:
             return "identity"
-        elif label == NeuralLike.ButtonStr.SIGMOID:
+        elif label == NeuralSubLayout.ButtonStr.SIGMOID:
             return "logistic"
-        elif label == NeuralLike.ButtonStr.TANH:
+        elif label == NeuralSubLayout.ButtonStr.TANH:
             return "tanh"
         else:
             return "relu"
 
     @staticmethod
     def _label2solver_str(label):
-        if label == NeuralLike.ButtonStr.LBFGS:
+        if label == NeuralSubLayout.ButtonStr.LBFGS:
             return "lbfgs"
-        elif label == NeuralLike.ButtonStr.GRADIENT:
+        elif label == NeuralSubLayout.ButtonStr.GRADIENT:
             return "sgd"
         else:
             return "adam"
-
-
-class ClassifierSubLayout(ModelSubLayout):
-    class ImageData:
-        """Class for image representation of model results"""
-        def __init__(self, x_min, x_max, y_min, y_max, x_ext, y_ext):
-            x_extension = (x_max - x_min) * x_ext
-            y_extension = (y_max - y_min) * y_ext
-            self.x_min = x_min - x_extension
-            self.x_max = x_max + x_extension
-            self.y_min = y_min - y_extension
-            self.y_max = y_max + y_extension
-
-            self.dw = self.x_max - self.x_min
-            self.dh = self.y_max - self.y_min
-            self.xx, self.yy = np.meshgrid(np.arange(self.x_min, self.x_max, MESH_STEP_SIZE),
-                                           np.arange(self.y_min, self.y_max, MESH_STEP_SIZE))
-
-            self.images = []
-
-        def add_image(self, d):
-            self.images.append(d)
-
-    def __init__(self, name, model, source_data):
-        """Create attribute self._model and self.layout
-        plus self.name, self.source_data and self.fig from super
-
-        data and source_data references are necessary to store due to updating
-        figure based on user input (e.g. different neural activation function)
-        """
-        ModelSubLayout.__init__(self, name, model, source_data)
-
-        # add original data to the figure and prepare PointDrawTool to make them interactive
-        # this renderer MUST be the FIRST one
-        move_circle = self._fig.circle(source_data.x, source_data.y, color='color', source=source_data.plot_source, size=7)
-        point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
-        self._fig.add_tools(point_draw_tool)
-
-        self.refit()
-        self._info("Initialising DONE")
-
-    """Methods used by ClassifierGeneralLayout"""
-
-    def update_renderer_colors(self):
-        """Triggers update of data_source for the figure color update.
-        """
-        for renderer, new_image in zip(self._fig.renderers[1:], self._img_data.images):
-            renderer.data_source.data['image'] = [new_image]
-
-    """Methods for updating figure"""
-
-    def _figure_update(self):
-        """Figure must have an 'image' renderer as SECOND (at index 1) renderer,
-        where will be directly changed data
-        """
-        (min_x, max_x), (min_y, max_y) = self.source_data.get_min_max_x(), self.source_data.get_min_max_y()
-        self._img_data = self.ImageData(min_x, max_x,
-                                        min_y, max_y,
-                                        self._x_ext, self._y_ext)
-
-        self._fit_and_render(1)
-
-    def _fit_and_render(self, renderer_i):
-        """Fits the model, render image and add/update image to the figure
-        expects attribute self.__img_data
-        """
-        self._info("Fitting data and updating figure, step: " + str(renderer_i))
-
-        cls_X, classification = self.source_data.data_to_classifier_fit()
-        self._model.fit(cls_X, classification)
-
-        raw_image = self._model.predict(np.c_[self._img_data.xx.ravel(),
-                                              self._img_data.yy.ravel()])
-        self._img_data.add_image(raw_image.reshape(self._img_data.xx.shape))
-
-        if len(self._fig.renderers) - 1 < renderer_i:
-            self._new_fig_renderer(renderer_i - 1)  # images are indexed from 0, image renderers from 1
-        else:
-            self._update_fig_renderer(renderer_i)
-
-    def _new_fig_renderer(self, d_index):
-        # create a new image renderer
-        self._fig.image(image=[self._img_data.images[d_index]], x=self._img_data.x_min, y=self._img_data.y_min,
-                        dw=self._img_data.dw, dh=self._img_data.dh,
-                        color_mapper=self.source_data.color_mapper, global_alpha=0.5)
-
-    def _update_fig_renderer(self, i):
-        """Update image data by directly changing them in the figure renderers"""
-        img_patch = {
-            'image': [(0, self._img_data.images[i - 1])]  # images are indexed from 0, image renderers from 1
-        }
-        self._fig.renderers[i].data_source.patch(img_patch)
-
-        self._fig.renderers[i].glyph.update(
-            color_mapper=self.source_data.color_mapper,
-            x=self._img_data.x_min,
-            y=self._img_data.y_min,
-            dw=self._img_data.dw,
-            dh=self._img_data.dh
-        )
-
-
-class RegressionSubLayout(ModelSubLayout):
-    class LineData:
-        """Class for line representation of model results"""
-        def __init__(self, x_min, x_max, x_ext):
-            self.x_extension = (x_max - x_min) * x_ext
-            self.x_min = x_min - self.x_extension
-            self.x_max = x_max + self.x_extension
-            self.xx = np.linspace(self.x_min, self.x_max, LINE_POINTS)
-            self.lines = []
-
-        def add_line(self, y_data):
-            x_data, y_data = self.cut_y_extreme(self.xx, y_data)
-
-            self.lines.append((x_data, y_data))
-
-        def cut_y_extreme(self, x_data, y_data):
-            """returns new numpy array without extreme values"""
-            new_y_data = []
-            new_x_data = []
-            extreme_out = self.x_extension * 10
-            for x, y in zip(x_data, y_data):
-                if self.x_max + extreme_out > y > self.x_min - extreme_out:
-                    new_x_data.append(x)
-                    new_y_data.append(y)
-            return np.asarray(new_x_data), np.asarray(new_y_data)
-
-    def __init__(self, name, model, source_data):
-
-        ModelSubLayout.__init__(self, name, model, source_data)
-
-        # add original data to the figure and prepare PointDrawTool to make them interactive
-        # this renderer MUST be the FIRST one
-        move_circle = self._fig.circle(source_data.x, source_data.y, source=source_data.plot_source, size=7)
-        point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
-        self._fig.add_tools(point_draw_tool)
-
-        self.refit()
-        self._info("Initialising DONE")
-
-    """Methods for updating figure"""
-
-    def _figure_update(self):
-        """Figure must have an 'image' renderer as SECOND (at index 1) renderer,
-        where will be directly changed data..
-        """
-        (x_min, x_max) = self.source_data.get_min_max_x()
-        self._line_data = self.LineData(x_min, x_max, self._x_ext)
-
-        self._fit_and_render(1)
-
-    def _fit_and_render(self, renderer_i):
-        """Fits the model, render image and add/update image to the figure
-        expects attribute self.__img_data
-        """
-        self._info("Fitting data and updating figure, step: " + str(renderer_i))
-
-        x_data, y_data = self.source_data.data_to_regression_fit()
-        self._model.fit(x_data, y_data)
-
-        y_line = self._model.predict(np.c_[self._line_data.xx.ravel()])
-        self._line_data.add_line(y_line)
-
-        if len(self._fig.renderers) - 1 < renderer_i:
-            print("adding renderer no " + str(renderer_i - 1))
-            self._new_fig_renderer(renderer_i - 1)
-        else:
-            print("updating render no " + str(renderer_i - 1))
-            self._update_fig_renderer(renderer_i)
-
-    def _new_fig_renderer(self, line_i):
-        """Creates a new line renderer from data at line_i in self._line_data.lines"""
-        x_data, y_data = self._line_data.lines[line_i]
-        self._fig.line(x_data, y_data)
-
-    def _update_fig_renderer(self, i):
-        """Update image data by directly changing them in the figure renderers"""
-        x_data, y_data = self._line_data.lines[i - 1]
-        self._fig.renderers[i].data_source.update(
-            data=dict(
-                x=x_data,
-                y=y_data
-            )
-        )

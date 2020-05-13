@@ -38,7 +38,9 @@ GENERATE_NEW_CLUSTERS = "New clusters"
 
 class DataSandbox(SubLayout):
     def __init__(self, name, source_data):
-        SubLayout.__init__(self, name, source_data)
+        self.source_data = source_data
+        SubLayout.__init__(self, name)
+
         self.source_data.plot_source.on_change('data', self._plot_source_change)  # DataSandbox can update statistics
 
         self._freehand_source = ColumnDataSource(data=dict(x=[], y=[]))

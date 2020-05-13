@@ -13,7 +13,7 @@ CLS_MODELS = {
     "Stochastic gradient descent": SGDClassifier(),
     "K nearest neighbours": KNeighborsClassifier(),
     "Naive Bayes (Gaussian)": GaussianNB(),
-    "Neural classification": MLPClassifier()
+    "Neural classification": MLPClassifier(warm_start=True, tol=0)
 }
 
 # ("name of the figure", (start, end, step, value))
@@ -25,7 +25,8 @@ REG_MODELS = {
     "Polynomial regression": Pipeline([('poly', PolynomialFeatures(degree=1)),
                                        ('linear', LinearRegression(fit_intercept=False))]),
     "K nearest neighbours": KNeighborsRegressor(),
-    "Neural regression": MLPRegressor(warm_start=True)
+    "K nearest basic": KNeighborsRegressor(),
+    "Neural regression": MLPRegressor(warm_start=True, tol=0)
 }
 
 REG_SLIDERS = {

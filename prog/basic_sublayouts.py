@@ -70,6 +70,16 @@ class ModelInterface:
     def _set_visible_renderer(self, renderer_i):
         pass
 
+    def _new_fig_renderer(self, fig, img_i):
+        """Create a new image renderer.
+        """
+        pass
+
+    def _update_fig_renderer(self, fig, i):
+        """Update image data by directly changing them in the figure renderers.
+        """
+        pass
+
 
 class RegressionLike(ModelInterface):
     class LineData:
@@ -227,12 +237,10 @@ class ClassificationLike(ModelInterface):
         )
 
 
-class ModelSubLayout(SubLayout, ModelInterface):
+class ModelSubLayout(SubLayout):
     """Base class for classifier sub layouts, regressive subl_ayouts"""
     def __init__(self, model_name):
         SubLayout.__init__(self, model_name)
-
-        self._init_circle_renderer(self._fig)
 
     """Methods used by GeneralLayout"""
 
@@ -253,9 +261,6 @@ class ModelSubLayout(SubLayout, ModelInterface):
         button_layout = self._init_button_layout()
         return column(fig_layout, fit_layout, button_layout)
 
-    def _init_model_params(self):
-        pass
-
     def _init_button_layout(self):
         return row()
 
@@ -274,9 +279,10 @@ class ModelSubLayout(SubLayout, ModelInterface):
         pass
 
 
-class BasicSubLayout(ModelSubLayout):
+class BasicSubLayout(ModelSubLayout, ModelInterface):
     def __init__(self, subl_name):
         ModelSubLayout.__init__(self, subl_name)
+        self._init_circle_renderer(self._fig)
 
     def _figure_update(self):
         self._info("Initialising model and render data...")
@@ -290,12 +296,13 @@ class BasicSubLayout(ModelSubLayout):
         self._render(self._fig, 1)
 
 
-class SliderSubLayout(ModelSubLayout):
+class SliderSubLayout(ModelSubLayout, ModelInterface):
     def __init__(self, subl_name, slider_params):
         self._model_attr, slider_attr = slider_params
         self._start, self._end, self._step, self._value = slider_attr
 
         ModelSubLayout.__init__(self, subl_name)
+        self._init_circle_renderer(self._fig)
 
     def _init_button_layout(self):
         self._slider = Slider(
@@ -335,7 +342,7 @@ class SliderSubLayout(ModelSubLayout):
                 renderer.visible = False
 
 
-class NeuralSubLayout(ModelSubLayout):
+class NeuralSubLayout(ModelSubLayout, ModelInterface):
     class ButtonStr:
         # activation button
         IDENTITY = "identity"
@@ -355,6 +362,7 @@ class NeuralSubLayout(ModelSubLayout):
         self._neural_data = []
 
         ModelSubLayout.__init__(self, subl_name)
+        self._init_circle_renderer(self._fig)
 
     def _init_button_layout(self):
         """Creates buttons bellow the figure, sets the trigger functions on them

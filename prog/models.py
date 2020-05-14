@@ -7,13 +7,15 @@ from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import Pipeline
 
+import math
+
 
 CLS_MODELS = {
     "SVM classification": SVC(),
     "Stochastic gradient descent": SGDClassifier(),
     "K nearest neighbours": KNeighborsClassifier(),
     "Naive Bayes (Gaussian)": GaussianNB(),
-    "Neural classification": MLPClassifier(warm_start=True, tol=0)
+    "Neural classification": MLPClassifier(warm_start=True, tol=0, n_iter_no_change=math.inf)
 }
 
 # ("name of the figure", (start, end, step, value))
@@ -26,7 +28,7 @@ REG_MODELS = {
                                        ('linear', LinearRegression(fit_intercept=False))]),
     "K nearest neighbours": KNeighborsRegressor(),
     "K nearest basic": KNeighborsRegressor(),
-    "Neural regression": MLPRegressor(warm_start=True, tol=0)
+    "Neural regression": MLPRegressor(warm_start=True, n_iter_no_change=math.inf)
 }
 
 REG_SLIDERS = {

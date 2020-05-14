@@ -36,19 +36,18 @@ FREEHAND_DEVIATION_STARTING_VAL = 2
 
 """Neural options"""
 
-NEURAL_DEF_SLIDER_STEPS = 3
-NEURAL_DEF_MAX_ITER_STEPS = 100
-NEURAL_DEF_ACTIVATION = 1  # 0: identity, 1: sigmoid, 2: tanh, 3: linear
-NEURAL_DEF_SOLVER = 1  # 0: lbfgs, 1: gradient descent, 2: adam
-NEURAL_DEF_LAYERS = "15, 15"  # more layers: "20, 10, 5, 20"
+NEURAL_DEF_SLIDER_STEPS = 5
+NEURAL_DEF_MAX_ITER_STEPS = 1000
+NEURAL_DEF_ACTIVATION = 2  # 0: identity, 1: sigmoid, 2: tanh, 3: linear
+NEURAL_DEF_SOLVER = 2  # 0: lbfgs, 1: gradient descent, 2: adam
+NEURAL_DEF_LAYERS = "80, 40, 20"  # more layers: "20, 10, 5, 20"
 LOSS_PRINT = "log"  # either "log", "app", None
 
 """Regression sublayouts"""
 
 POLY_DEF_DGR = 3
-
 POL_FROM_DGR = 1
-POL_TO_DGR = 5
+POL_TO_DGR = 8
 
 """Classification sublayouts"""
 

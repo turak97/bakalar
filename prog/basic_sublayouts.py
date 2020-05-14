@@ -51,7 +51,8 @@ class ModelInterface:
     def _init_circle_renderer(self, fig):
         pass
 
-    def _update_model_params(self):
+    def _init_model_params(self):
+        """Initialise the model parameters before training."""
         pass
 
     def _init_data(self):
@@ -236,9 +237,9 @@ class ModelSubLayout(SubLayout, ModelInterface):
     """Methods used by GeneralLayout"""
 
     def refit(self):
-        self._info("Updating model and fitting data...")
+        self._info("Training model and updating figure...")
         self._figure_update()
-        self._info("Fitting and updating DONE")
+        self._info("Training and updating DONE")
 
     def immediate_update(self):
         """Returns whether figure should be immediately updated (after dataset change)"""
@@ -252,7 +253,7 @@ class ModelSubLayout(SubLayout, ModelInterface):
         button_layout = self._init_button_layout()
         return column(fig_layout, fit_layout, button_layout)
 
-    def _update_model_params(self):
+    def _init_model_params(self):
         pass
 
     def _init_button_layout(self):
@@ -278,10 +279,14 @@ class BasicSubLayout(ModelSubLayout):
         ModelSubLayout.__init__(self, subl_name)
 
     def _figure_update(self):
+        self._info("Initialising model and render data...")
         self._init_data()
         self._init_model()
-        self._update_model_params()
+        self._info("Updating model parameters...")
+        self._init_model_params()
+        self._info("Training model...")
         self._fit()
+        self._info("Adding renderer...")
         self._render(self._fig, 1)
 
 
@@ -301,20 +306,25 @@ class SliderSubLayout(ModelSubLayout):
         return self._slider
 
     def _figure_update(self):
+        self._info("Initialising model and render data...")
         self._init_data()
         self._init_model()
 
         for value, i in zip(range(self._start, self._end + 1, self._step),
                             range(1, self._end + 1, self._step)):
+            self._info("Setting model attribute: " + str(self._model_attr) + " to value " + str(value))
             setattr(self._model, self._model_attr, value)
 
+            self._info("Training model...")
             self._fit()
+            self._info("Adding renderer number " + str(i) + "...")
             self._render(self._fig, i)
 
-        self._set_visible_renderer(self._value)
+        visible = int((self._slider.value - self._start)/self._step) + 1
+        self._set_visible_renderer(visible)
 
     def _slider_change(self, attr, old, new):
-        visible = new
+        visible = int((new - self._start)/self._step) + 1
         self._set_visible_renderer(visible)
 
     def _set_visible_renderer(self, visible):
@@ -382,7 +392,7 @@ class NeuralSubLayout(ModelSubLayout):
                     self.ButtonStr.TANH, self.ButtonStr.LINEAR], active=NEURAL_DEF_ACTIVATION,
             width=total_width
         )
-        activation_text = Div(text="Activation function in hidden layers:")
+        activation_text = Div(text="Activation function:")
         activation_group = column(activation_text, self._activation_button)
 
         self._solver_button = RadioButtonGroup(
@@ -399,9 +409,11 @@ class NeuralSubLayout(ModelSubLayout):
                       solver_group)
 
     def _figure_update(self):
+        self._info("Initialising model and render data...")
         self._init_data()
         self._init_model()
-        self._update_model_params()
+        self._info("Updating model attributes...")
+        self._init_model_params()
 
         self._logarithmic_steps = self._logarithm_button.active
         self._update_iteration_params(int(self._max_iterations_input.value),
@@ -426,10 +438,15 @@ class NeuralSubLayout(ModelSubLayout):
                 prev = log_iter_total
 
             if hasattr(self._model, "classes_"):
-                del self._model.classes_  # necessary for MLPClassifier warm star
+                del self._model.classes_  # necessary for MLPClassifier warm start
+
+            self._info("Training model...")
             self._fit()
+            self._info("Training DONE, total iterations: " + str(self._model.n_iter_))
+
             self._neural_data.append(self._model.loss_)
 
+            self._info("Adding renderer number " + str(renderer_i) + "...")
             self._render(self._fig, renderer_i)
         self._set_visible_renderer(self._slider_steps)
 
@@ -455,7 +472,7 @@ class NeuralSubLayout(ModelSubLayout):
         except AttributeError:
             pass
 
-    def _update_model_params(self):
+    def _init_model_params(self):
         new_activation = self._label2activation_str(
             self._activation_button.labels[self._activation_button.active]
         )

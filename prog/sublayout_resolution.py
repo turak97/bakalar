@@ -1,13 +1,11 @@
 
 from data_sandbox import ClassifierDataSandbox, RegressionDataSandbox
 
-from regression_sublayouts import BasicRegression, SliderRegression, NeuralRegression
+from regression_sublayouts import BasicRegression, SliderRegression, NeuralRegression, PolynomialRegression
 from classifier_sublayouts import BasicClassification, SliderClassification, \
     SvmClassification, NeuralClassification
 
 from models import REG_MODELS, REG_SLIDERS, CLS_MODELS, CLS_SLIDERS
-
-from copy import deepcopy
 
 import sklearn
 
@@ -39,7 +37,7 @@ def cls_resolution(model_name, source_data):
 def reg_resolution(model_name, source_data):
     """Special models"""
     if model_name == "Polynomial regression":
-        return PolynomialRegression(model_name, model_name, source_data)
+        return PolynomialRegression(model_name, source_data)
     if model_name == "Neural regression":
         return NeuralRegression(model_name, source_data)
 

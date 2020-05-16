@@ -1,5 +1,5 @@
 
-from sklearn.svm import SVC
+from sklearn.svm import SVC, SVR
 from sklearn.linear_model import SGDClassifier, LinearRegression
 from sklearn.neighbors import KNeighborsRegressor, KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
@@ -12,8 +12,8 @@ import math
 
 CLS_MODELS = {
     "SVM classification": SVC(),
-    "Stochastic gradient descent": SGDClassifier(),
     "K nearest neighbours": KNeighborsClassifier(),
+    "Stochastic gradient descent": SGDClassifier(),
     "Naive Bayes (Gaussian)": GaussianNB(),
     "Neural classification": MLPClassifier(warm_start=True, tol=0, n_iter_no_change=math.inf)
 }
@@ -24,13 +24,13 @@ CLS_SLIDERS = {
 }
 
 REG_MODELS = {
+    "SVM regression": SVR(),
+    "K nearest neighbours": KNeighborsRegressor(),
     "Polynomial regression": Pipeline([('poly', PolynomialFeatures(degree=1)),
                                        ('linear', LinearRegression(fit_intercept=False))]),
-    "K nearest neighbours": KNeighborsRegressor(),
-    "K nearest basic": KNeighborsRegressor(),
     "Neural regression": MLPRegressor(warm_start=True, n_iter_no_change=math.inf)
 }
 
 REG_SLIDERS = {
-    "K nearest neighbours": ("n_neighbors", (1, 3, 1, 3))
+    "K nearest neighbours": ("n_neighbors", (1, 10, 1, 3))
 }

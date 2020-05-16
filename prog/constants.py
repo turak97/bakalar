@@ -19,8 +19,8 @@ LASSO_SLIDER_STEP = 1  # positive integer expected
 LASSO_SLIDER_STARTING_VAL = 10
 
 
-CLUSTER_RANGE_X = (-20, 20)
-CLUSTER_RANGE_Y = (-20, 20)
+CLUSTER_RANGE_X = (-200, 200)
+CLUSTER_RANGE_Y = (-200, 200)
 CLUSTER_RANGE_STEP = 1
 
 
@@ -40,7 +40,7 @@ NEURAL_DEF_SLIDER_STEPS = 5
 NEURAL_DEF_MAX_ITER_STEPS = 1000
 NEURAL_DEF_ACTIVATION = 2  # 0: identity, 1: sigmoid, 2: tanh, 3: linear
 NEURAL_DEF_SOLVER = 2  # 0: lbfgs, 1: gradient descent, 2: adam
-NEURAL_DEF_LAYERS = "80, 40, 20"  # more layers: "20, 10, 5, 20"
+NEURAL_DEF_LAYERS = "20, 20"  # more layers: "20, 10, 5, 20"
 LOSS_PRINT = "log"  # either "log", "app", None
 
 """Regression sublayouts"""
@@ -61,15 +61,15 @@ MAX_CLUSTERS = 10
 
 ########## Those constants are for experiments (interesting app behaviour, but possible (bigger) instability) ########
 
-"""used in basic_sublayouts.py"""
+"""used in generic_sublayouts.py"""
 
 # Sets the detail of classifier image
-MESH_STEP_SIZE = 0.05  # default: 0.05
+MESH_STEP_SIZE = 0.1  # default: 0.05
 
 # Sets the detail of regression line
 LINE_POINTS = 1000  # default 1000
 
-X_EXT = 1
+X_EXT = 0.5
 Y_EXT = X_EXT
 
 BETA_PLOT_SAMPLES = 250

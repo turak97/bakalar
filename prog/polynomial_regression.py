@@ -9,7 +9,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 
 import data_gen as dg
-from basic_sublayouts import SubLayout
+from generic_sublayouts import SubLayout
 
 
 # TODO: BUG - linearni regrese pro vice y bodu na jediny x bod

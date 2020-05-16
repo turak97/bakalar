@@ -1,7 +1,8 @@
 
 from data_sandbox import ClassifierDataSandbox, RegressionDataSandbox
 
-from regression_sublayouts import BasicRegression, SliderRegression, NeuralRegression, PolynomialRegression
+from regression_sublayouts import BasicRegression, SliderRegression, NeuralRegression, \
+    PolynomialRegression, SvmRegression
 from classifier_sublayouts import BasicClassification, SliderClassification, \
     SvmClassification, NeuralClassification
 
@@ -40,6 +41,8 @@ def reg_resolution(model_name, source_data):
         return PolynomialRegression(model_name, source_data)
     if model_name == "Neural regression":
         return NeuralRegression(model_name, source_data)
+    elif model_name == "SVM regression":
+        return SvmRegression(model_name, source_data)
 
     """Generic model with sliders attached"""
     if model_name in REG_SLIDERS:

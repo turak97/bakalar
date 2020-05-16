@@ -2,7 +2,7 @@
 import numpy as np
 
 from bokeh.layouts import row, column
-from bokeh.models import PointDrawTool, Button, LassoSelectTool, Div, \
+from bokeh.models import PointDrawTool, Button, LassoSelectTool, Div, Select, \
     CheckboxButtonGroup, Slider, TextInput, Toggle, RadioButtonGroup
 from bokeh.plotting import figure
 
@@ -11,7 +11,8 @@ from math import ceil
 import copy
 
 from constants import MESH_STEP_SIZE, LINE_POINTS, EMPTY_VALUE_COLOR, X_EXT, Y_EXT, NEURAL_DEF_SOLVER, \
-    NEURAL_DEF_ACTIVATION, NEURAL_DEF_LAYERS, NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_SLIDER_STEPS, LOSS_PRINT
+    NEURAL_DEF_ACTIVATION, NEURAL_DEF_LAYERS, NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_SLIDER_STEPS, LOSS_PRINT, \
+    POLY_DEF_DGR
 
 from models import REG_MODELS, CLS_MODELS
 
@@ -536,3 +537,74 @@ class NeuralSubLayout(ModelSubLayout, ModelInterface):
             return "sgd"
         else:
             return "adam"
+
+
+class SvmSubLayout(BasicSubLayout, ModelInterface):
+    class ButtonStr:
+        # kernel button
+        LINEAR = "linear"
+        POLY = "polynomial"
+        RBF = "radial"
+        SIGMOID = "sigmoid"
+
+    def __init__(self, model_name):
+        BasicSubLayout.__init__(self, model_name)
+
+    def _init_button_layout(self):
+        """Creates buttons bellow the figure, sets the trigger functions on them
+        and add them to the subLayout"""
+        total_width = 500
+
+        _kernel_text = Div(text="Algorithm kernel: ")
+        self._kernel_button = RadioButtonGroup(
+            labels=[self.ButtonStr.LINEAR, self.ButtonStr.POLY, self.ButtonStr.RBF, self.ButtonStr.SIGMOID],
+            active=0, width=total_width
+        )
+        _kernel_group = column(_kernel_text, self._kernel_button)
+
+        self._degree_button = Select(
+            title="", value=str(POLY_DEF_DGR),
+            options=[str(i) for i in range(20)], width=70)
+        degree_text = Div(text="Degree (" + self.ButtonStr.POLY + "): ")
+
+        self._regularization_parameter_input = TextInput(value="1.0", width=75)
+        regularization_parameter_text = Div(text="Regularization parameter: ")
+
+        return column(
+                      _kernel_group,
+                      row(regularization_parameter_text,
+                          self._regularization_parameter_input),
+                      row(degree_text, self._degree_button)
+                      )
+
+    def _init_model_params(self):
+        new_kernel = self._label2kernel_str(
+            self._chosen_kernel()
+        )
+        self._model.kernel = new_kernel
+
+        self._model.degree = int(self._degree_button.value)  # _degree_button has predefined values
+
+        self._model.C = self._get_regularization()
+
+    def _chosen_kernel(self):
+        return self._kernel_button.labels[self._kernel_button.active]
+
+    def _get_regularization(self):
+        res = 1.0
+        try:
+            res = float(self._regularization_parameter_input.value)
+        except ValueError:
+            self._regularization_parameter_input.value = "1.0"
+        return res
+
+    @staticmethod
+    def _label2kernel_str(label):
+        if label == SvmSubLayout.ButtonStr.LINEAR:
+            return "linear"
+        elif label == SvmSubLayout.ButtonStr.POLY:
+            return "poly"
+        elif label == SvmSubLayout.ButtonStr.RBF:
+            return "rbf"
+        else:
+            return "sigmoid"

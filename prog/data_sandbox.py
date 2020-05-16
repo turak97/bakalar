@@ -1,5 +1,5 @@
 
-from basic_sublayouts import SubLayout
+from generic_sublayouts import SubLayout
 
 from bokeh.models import PointDrawTool, Div, RadioButtonGroup, TextInput, Toggle, \
     Button, Select, Slider, RangeSlider, ColumnDataSource, FreehandDrawTool

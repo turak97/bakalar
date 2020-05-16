@@ -1,5 +1,5 @@
 
-from basic_sublayouts import RegressionLike, BasicSubLayout, SliderSubLayout, NeuralSubLayout
+from generic_sublayouts import RegressionLike, BasicSubLayout, SliderSubLayout, NeuralSubLayout, SvmSubLayout
 
 from constants import POL_TO_DGR, POL_FROM_DGR, POLY_DEF_DGR
 
@@ -52,5 +52,13 @@ class NeuralRegression(RegressionLike, NeuralSubLayout):
     def __init__(self, model_name, source_data):
         RegressionLike.__init__(self, model_name, source_data)
         NeuralSubLayout.__init__(self, model_name)
+
+        self.refit()
+
+
+class SvmRegression(RegressionLike, SvmSubLayout):
+    def __init__(self, model_name, source_data):
+        RegressionLike.__init__(self, model_name, source_data)
+        SvmSubLayout.__init__(self, model_name)
 
         self.refit()

@@ -13,7 +13,7 @@ source env/bin/activate
 pip install -r requirements.txt 
 ```
 ## How to run:
-make sure you are in folder ```bakalar/```
+make sure you are in the folder ```bakalar/```
 ```
 source env/bin/activate
 ```

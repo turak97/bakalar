@@ -544,7 +544,7 @@ class SvmSubLayout(BasicSubLayout, ModelInterface):
         # kernel button
         LINEAR = "linear"
         POLY = "polynomial"
-        RBF = "radial"
+        RBF = "radial (rbf)"
         SIGMOID = "sigmoid"
 
     def __init__(self, model_name):
@@ -565,10 +565,10 @@ class SvmSubLayout(BasicSubLayout, ModelInterface):
         self._degree_button = Select(
             title="", value=str(POLY_DEF_DGR),
             options=[str(i) for i in range(20)], width=70)
-        degree_text = Div(text="Degree (" + self.ButtonStr.POLY + "): ")
+        degree_text = Div(text="Degree (" + self.ButtonStr.POLY + " only): ")
 
         self._regularization_parameter_input = TextInput(value="1.0", width=75)
-        regularization_parameter_text = Div(text="Regularization parameter: ")
+        regularization_parameter_text = Div(text="Regularization parameter (C): ")
 
         return column(
                       _kernel_group,

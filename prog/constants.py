@@ -36,11 +36,11 @@ FREEHAND_DEVIATION_STARTING_VAL = 2
 
 """Neural options"""
 
-NEURAL_DEF_SLIDER_STEPS = 5
-NEURAL_DEF_MAX_ITER_STEPS = 1000
+NEURAL_DEF_SLIDER_STEPS = 4
+NEURAL_DEF_MAX_ITER_STEPS = 400
 NEURAL_DEF_ACTIVATION = 2  # 0: identity, 1: sigmoid, 2: tanh, 3: linear
 NEURAL_DEF_SOLVER = 2  # 0: lbfgs, 1: gradient descent, 2: adam
-NEURAL_DEF_LAYERS = "20, 20"  # more layers: "20, 10, 5, 20"
+NEURAL_DEF_LAYERS = "10, 10"  # more layers: "20, 10, 5, 20"
 LOSS_PRINT = "log"  # either "log", "app", None
 
 """Regression sublayouts"""

@@ -2,7 +2,7 @@
 from generic_sublayouts import SubLayout
 
 from bokeh.models import PointDrawTool, Div, RadioButtonGroup, TextInput, Toggle, \
-    Button, Select, Slider, RangeSlider, ColumnDataSource, FreehandDrawTool
+    Button, Select, Slider, RangeSlider, ColumnDataSource, FreehandDrawTool, Range1d
 from bokeh import events
 from bokeh.layouts import row, column
 from bokeh.plotting import figure
@@ -15,7 +15,7 @@ from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_DEV_DEF, CLU
     LASSO_SLIDER_STEP, CLUSTER_RANGE_X, CLUSTER_RANGE_Y, CLUSTER_RANGE_STEP, FREEHAND_DENSITY_START, \
     FREEHAND_DENSITY_END, FREEHAND_DENSITY_STEP, FREEHAND_DENSITY_STARTING_VAL, FREEHAND_DEVIATION_END, \
     FREEHAND_DEVIATION_START, FREEHAND_DEVIATION_STARTING_VAL, FREEHAND_DEVIATION_STEP, \
-    UNIFORM_MODE, BETA_MODE, BETA_PLOT_SAMPLES, BETA_PLOT_DETAIL, CLUSTER_DEV_MAX
+    UNIFORM_MODE, BETA_MODE, BETA_PLOT_SAMPLES, BETA_PLOT_DETAIL, CLUSTER_DEV_MAX, ALPHA_DEF, BETA_DEF
 
 
 STANDARD_MODE = "Standard"
@@ -26,12 +26,11 @@ FREEHAND_APPEND = "Freehand"
 # classification data sandbox modes
 GENERATE_NEW_CLUSTERS = "New clusters"
 
-
-# TODO: at se to neodviji od uniqvalues
+# local constants
+BETA_CONST = 1
 
 
 # TODO: bug: unexpected chovani pri odstraneni vsech bodu
-# TODO: vykresleni beta rozdeleni podle vzorce c*(x^(alpha - 1))*(1 - x)^(beta - 1)
 
 
 class DataSandbox(SubLayout):
@@ -139,20 +138,21 @@ class DataSandbox(SubLayout):
                                                           active=0)
         beta_text = Div(text="Beta distribution options:")
         self._beta_random_toggle = Toggle(label="Random alpha beta", active=True)
-        self._distribution_alpha_slider = Slider(start=0.2, end=5, step=0.2, value=2, title="Alpha")
-        self._distribution_beta_slider = Slider(start=0.2, end=5, step=0.2, value=2, title="Beta")
+        self._distribution_alpha_slider = Slider(start=0.2, end=5, step=0.2, value=ALPHA_DEF, title="Alpha")
+        self._distribution_beta_slider = Slider(start=0.2, end=5, step=0.2, value=BETA_DEF, title="Beta")
         self._distribution_alpha_slider.on_change('value', self._beta_plot_change)
         self._distribution_beta_slider.on_change('value', self._beta_plot_change)
 
         self._beta_plot = figure(x_axis_label=None, y_axis_label=None, toolbar_location=None,
                                  x_axis_location=None, y_axis_location=None,
                                  plot_width=250, plot_height=int(250*0.66),
-                                 x_range=(0, BETA_PLOT_DETAIL), y_range=(0, int(BETA_PLOT_SAMPLES/3)))
+                                 x_range=(0, 1), y_range=(0, 4))
+        x_arr = [i/100 for i in range(1, 100)]
         self._beta_plot_source = ColumnDataSource(data=dict(
-            vals=[c for c in range(BETA_PLOT_DETAIL - 1, -1, -1)],
-            counts=[0] * BETA_PLOT_DETAIL)
+            x=x_arr,
+            y=[0] * len(x_arr))
         )
-        self._beta_plot.vbar(x='vals', top='counts', source=self._beta_plot_source, width=1)
+        self._beta_plot.line(x='x', y='y', source=self._beta_plot_source)
         self._beta_plot_change(None, None, None)
 
         self._distribution_options = column(mode_text,
@@ -214,13 +214,17 @@ class DataSandbox(SubLayout):
     def _beta_plot_change(self, attr, old, new):
         alpha = self._distribution_beta_slider.value
         beta = self._distribution_alpha_slider.value
-        vals = []
-        for i in range(BETA_PLOT_SAMPLES):
-            vals.append(np.random.beta(alpha, beta))
-        counts = [0] * BETA_PLOT_DETAIL
-        for val in vals:
-            counts[int(BETA_PLOT_DETAIL * val)] += 1
-        self._beta_plot_source.data['counts'] = counts
+
+        x_arr = [c/100 for c in range(1, 100)]
+        y_arr = [BETA_CONST * pow(x, alpha - 1) * pow(1 - x, beta - 1) for x in x_arr]  # prob. dens. function
+
+        self._beta_plot.y_range.end = min(10.0, max(y_arr) * 1.2)
+        self._beta_plot_source.update(
+            data=dict(
+                x=x_arr,
+                y=y_arr
+            )
+        )
 
     """Other methods"""
 

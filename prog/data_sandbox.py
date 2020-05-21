@@ -2,35 +2,29 @@
 from generic_sublayouts import SubLayout
 
 from bokeh.models import PointDrawTool, Div, RadioButtonGroup, TextInput, Toggle, \
-    Button, Select, Slider, RangeSlider, ColumnDataSource, FreehandDrawTool, Range1d
+    Button, Slider, RangeSlider, ColumnDataSource, FreehandDrawTool
 from bokeh import events
 from bokeh.layouts import row, column
 from bokeh.plotting import figure
 
-import numpy as np
 
-
-from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_DEV_DEF, CLUSTER_SIZE_MAX, MAX_CLUSTERS, \
+from constants import CLUSTER_SIZE_DEF, CLUSTER_DEV_DEF, CLUSTER_SIZE_MAX, \
     SAVED_DATASET_FILE_NAME, EMPTY_VALUE_COLOR, LASSO_SLIDER_END, LASSO_SLIDER_START, LASSO_SLIDER_STARTING_VAL, \
     LASSO_SLIDER_STEP, CLUSTER_RANGE_X, CLUSTER_RANGE_Y, CLUSTER_RANGE_STEP, FREEHAND_DENSITY_START, \
     FREEHAND_DENSITY_END, FREEHAND_DENSITY_STEP, FREEHAND_DENSITY_STARTING_VAL, FREEHAND_DEVIATION_END, \
     FREEHAND_DEVIATION_START, FREEHAND_DEVIATION_STARTING_VAL, FREEHAND_DEVIATION_STEP, \
-    UNIFORM_MODE, BETA_MODE, BETA_PLOT_SAMPLES, BETA_PLOT_DETAIL, CLUSTER_DEV_MAX, ALPHA_DEF, BETA_DEF
+    CLUSTER_DEV_MAX, ALPHA_DEF, BETA_DEF, BETA_MODE, UNIFORM_MODE
 
 
 STANDARD_MODE = "Standard"
 LASSO_APPEND = "Lasso append"
 FREEHAND_APPEND = "Freehand"
 
-
 # classification data sandbox modes
 GENERATE_NEW_CLUSTERS = "New clusters"
 
 # local constants
 BETA_CONST = 1
-
-
-# TODO: bug: unexpected chovani pri odstraneni vsech bodu
 
 
 class DataSandbox(SubLayout):
@@ -132,7 +126,7 @@ class DataSandbox(SubLayout):
 
     def _create_distribution_options(self):
         """Create an attribute with distribution options uniform or beta and sliders for beta parameters.
-        This method sets widgets into _distribution_options and DOES NOT RETURN ANYTHING"""
+        This method sets widgets into _distribution_options and DOES NOT RETURN ANYTHING."""
         mode_text = Div(text="Distribution:")
         self._distribution_mode_button = RadioButtonGroup(labels=[UNIFORM_MODE, BETA_MODE],
                                                           active=0)
@@ -297,41 +291,6 @@ class ClassifierDataSandbox(DataSandbox):
     def _add_special_modes(self):
         self._generation_modes[GENERATE_NEW_CLUSTERS] = self.__init_cluster_generating_options()
 
-    # def _init_lasso_options(self):
-    #     __lasso_general_info = Div(
-    #         text="Add a new cluster by selecting \"Lasso Select\" in the figure toolbar. "
-    #              "You can choose whether the class of cluster will be chosen by upwards selection (\"Seleted\") or "
-    #              "the classes of all points in the cluster will be chosen at random (\"All points at random\"). "
-    #              "Size of the generated cluster can be set either roughly or precisely. "
-    #              "If some points are not visible properly, click on \"Reset\" "
-    #              "in the figure toolbar for resetting the view.")
-    #
-    #     self.__class_of_cluster_button = RadioButtonGroup(
-    #         labels=["Selected", "All points at random"], active=0,
-    #         width=220
-    #     )
-    #     class_of_cluster_text = Div(text="Class of new cluster: ")
-    #
-    #     self.__lasso_point_density_button = RadioButtonGroup(
-    #         labels=["auto", "±5", "±10", "±20", "±50", "±100"],
-    #         active=0, width=300, width_policy="fixed"
-    #     )
-    #     self.__lasso_point_density_button.on_change('active', self._lasso_density_button_trigger)
-    #
-    #     self.__lasso_point_density_input = TextInput(value=DENS_INPUT_DEF_VAL, width=50)
-    #     self.__lasso_point_density_input.on_change('value', self._lasso_density_input_trigger)
-    #     __lasso_options_info = Div(text="Lasso utilities: ", style={'font-size': '150%'})
-    #     __lasso_density_info = Div(text="Density options:", style={'font-size': '120%'})
-    #     __lasso_circa_info = Div(text="Circa: ")
-    #     __lasso_exact_info = Div(text="or Precise: ")
-    #     return column(__lasso_general_info,
-    #                   __lasso_options_info,
-    #                   row(class_of_cluster_text, self.__class_of_cluster_button),
-    #                   __lasso_density_info,
-    #                   column(row(__lasso_circa_info, self.__lasso_point_density_button),
-    #                          row(__lasso_exact_info, self.__lasso_point_density_input))
-    #                   )
-
     def __init_cluster_generating_options(self):
         __generate_general_info = Div(
             text="Automaticly generate a new clusters. "
@@ -350,11 +309,6 @@ class ClassifierDataSandbox(DataSandbox):
         self.__new_clusters_mode_button = RadioButtonGroup(
             labels=["Replace", "Append"], width=200, active=0, sizing_mode="fixed")
         __new_clusters_mode_text = Div(text="Clusters adding mode: ")
-
-        # self.__cluster_count_input = Select(title="Clusters count ", value=str(CLUSTERS_COUNT_DEF),
-        #                                     options=[str(i) for i in range(1, MAX_CLUSTERS + 1)], width=80)
-        # self.__cluster_size_input = TextInput(title="size ", value=str(CLUSTER_SIZE_DEF), width=50)
-        # self.__cluster_plusminus_input = TextInput(title="±", value=str(CLUSTER_DEV_DEF), width=50)
 
         self.__cluster_x_range_slider = RangeSlider(start=CLUSTER_RANGE_X[0], end=CLUSTER_RANGE_X[1], step=CLUSTER_RANGE_STEP,
                                                     value=CLUSTER_RANGE_X, title="x range")
@@ -383,9 +337,6 @@ class ClassifierDataSandbox(DataSandbox):
 
         count, density, volatility, x_range, y_range = \
             self.__get_cluster_generating_params()
-        # app_uniq_vals_len = len(self.source_data.uniq_values())
-        # if count > app_uniq_vals_len:
-        #     count = app_uniq_vals_len
         replace = (0 == self.__new_clusters_mode_button.active)
         self.source_data.new_clusters(count, density, volatility, x_range, y_range, replace)
 
@@ -407,13 +358,7 @@ class ClassifierDataSandbox(DataSandbox):
         return val
 
     def __get_cluster_generating_params(self):
-        # clusters_count = int(self.__cluster_count_slider.value)
-        # clusters_size = self.__get_int_set_error(
-        #     text_input=self.__cluster_size_input, lowest_val=1
-        # )
-        # clusters_vol = self.__get_int_set_error(
-        #     text_input=self.__cluster_plusminus_input, lowest_val=0
-        # )
+        """Get parameters for generating clusters"""
         clusters_count = self.__cluster_count_slider.value
         clusters_size = self.__cluster_size_slider.value
         cluster_dev = self.__cluster_deviation_slider.value

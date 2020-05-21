@@ -1,16 +1,11 @@
 from bokeh import palettes
 
-# TODO: nejake konstanty dat zpatky do soubory, kam patri (kde to ma smysl)
-
-########## Those constants sets common behaviour (name of saved files, ...) ##########
+########## Those constants sets common behaviour (name of saved files, default button values...) ##########
 
 SAVED_DATASETS_DIR_NAME = "datasets/"
 SAVED_DATASET_FILE_NAME = "my_dataset.csv"
 
 PALETTE = palettes.Category10[10]
-
-########## Those constants are for playing around ##########
-
 
 """used for app init in file bokeh_plot.py"""
 
@@ -80,24 +75,12 @@ LINE_POINTS = 1000  # default 1000
 X_EXT = 0.5
 Y_EXT = X_EXT
 
-BETA_PLOT_SAMPLES = 250
-BETA_PLOT_DETAIL = 20
-
 ########## Those constants should NOT be changed ##########
 
 MAX_CLUSTERS = 10
 
-# used in data_sandbox.py
-DENS_INPUT_DEF_VAL = ""
-
-# used in ClassifierLayout.py as a default point color which is immediately replaced
 EMPTY_VALUE_COLOR = 'black'
 
-# Used in DataSandbox
+# Used in DataSandbox and data_gen.py
 UNIFORM_MODE = "Uniform"
 BETA_MODE = "Beta"
-
-# used in general_layout.py
-CLASS_SELECT_BUTTON_WIDTH = 100  # in pixels, default: 100
-MAX_CLASS_NAME_LENGTH = 8  # default: 8
-

@@ -1,16 +1,15 @@
 
 from bokeh.models import CheckboxButtonGroup, RadioButtonGroup, ColorPicker, Button, Div
-from bokeh.models.widgets import Dropdown, Select
+from bokeh.models.widgets import Dropdown
 from bokeh.layouts import row, column
 
 import sublayout_resolution as sr
-from constants import CLASS_SELECT_BUTTON_WIDTH, MAX_CLASS_NAME_LENGTH, EMPTY_VALUE_COLOR
+from constants import EMPTY_VALUE_COLOR
 from models import REG_MODELS, CLS_MODELS
 
-# TODO: zkusit lip vyresit memeni children v layoutech (row, column)
-
-# TODO: pekneji osetrit picker (aby nenastal pripad dvou stejnych barev), reseni: zjistit, ktery picker triggnul funkci?
-# TODO: uniq values dat dokupy
+# used in general_layout.py
+CLASS_SELECT_BUTTON_WIDTH = 100  # in pixels, default: 100
+MAX_CLASS_NAME_LENGTH = 8  # default: 8
 
 
 class GeneralLayout:

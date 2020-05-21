@@ -1,12 +1,8 @@
 
 import argparse
 import sys
-from pathlib import Path
 
 from bokeh.layouts import row, column
-
-
-import bokeh
 from bokeh.server.server import Server
 from bokeh.core import validation
 
@@ -16,16 +12,7 @@ from general_layout import ClassifierGeneralLayout, RegressionGeneralLayout
 from constants import CLUSTER_SIZE_DEF, CLUSTER_DEV_DEF, INIT_DATASET_CLUSTERS_COUNT_DEF, PALETTE
 from in_n_out import read_df
 
-
-# TODO: @numba.njit()
-# TODO: https://docs.bokeh.org/en/latest/docs/reference/core/templates.html?fbclid=IwAR1AzUzA2gmpmO3bGqtM7bpNrop-bzbHA3jjgP786VuJirgANO8m7Ia5qAk
-
-# TODO: configurak v JSONu
-# TODO: html stranky navic k proklikani a jako info
-
-# TODO: sjednotit jmena (cluster size, density...)
-
-validation.silence(1002, True)  # silence bokeh plot warning
+validation.silence(1002, True)  # silence the bokeh plot warnings
 
 
 def parse_args():
@@ -51,7 +38,7 @@ if __name__ == '__main__':
         df = dg.cluster_data_pandas(column_names=column_names,
                                     x_interval=(0, 30), y_interval=(-10, 10),
                                     clusters=INIT_DATASET_CLUSTERS_COUNT_DEF, av_cluster_size=CLUSTER_SIZE_DEF,
-                                    clust_size_dev=CLUSTER_DEV_DEF)  # TODO: hezceji
+                                    clust_size_dev=CLUSTER_DEV_DEF)
     else:
         path = args[0][0]
         if version == 'reg':

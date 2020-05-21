@@ -6,9 +6,7 @@ from regression_sublayouts import BasicRegression, SliderRegression, NeuralRegre
 from classifier_sublayouts import BasicClassification, SliderClassification, \
     SvmClassification, NeuralClassification
 
-from models import REG_MODELS, REG_SLIDERS, CLS_MODELS, CLS_SLIDERS
-
-import sklearn
+from models import REG_SLIDERS, CLS_SLIDERS
 
 
 def classifier_data_sandbox(name, source_data, class_select_button):

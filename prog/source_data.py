@@ -18,7 +18,6 @@ class SourceData:
                 self.y: df[self.y].tolist()
             }
         )
-        # self.plot_source.remove('index')
 
         self.plot_source_trigger = None
 

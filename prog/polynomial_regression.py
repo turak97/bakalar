@@ -1,3 +1,4 @@
+
 import numpy as np
 from bokeh.layouts import row, column
 from bokeh.models import ColumnDataSource, Slider, PointDrawTool
@@ -10,9 +11,6 @@ from sklearn.pipeline import Pipeline
 
 import data_gen as dg
 from generic_sublayouts import SubLayout
-
-
-# TODO: BUG - linearni regrese pro vice y bodu na jediny x bod
 
 
 # fit model and return coefficients

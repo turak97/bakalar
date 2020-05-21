@@ -8,16 +8,13 @@ from bokeh.plotting import figure
 
 from math import ceil
 
-import copy
+from copy import deepcopy
 
 from constants import MESH_STEP_SIZE, LINE_POINTS, EMPTY_VALUE_COLOR, X_EXT, Y_EXT, NEURAL_DEF_SOLVER, \
     NEURAL_DEF_ACTIVATION, NEURAL_DEF_LAYERS, NEURAL_DEF_MAX_ITER_STEPS, NEURAL_DEF_SLIDER_STEPS, LOSS_PRINT, \
     POLY_DEF_DGR
 
 from models import REG_MODELS, CLS_MODELS
-
-
-# import matplotlib.pyplot as plt
 
 
 class SubLayout:
@@ -164,7 +161,7 @@ class RegressionLike(ModelInterface):
         fig.add_tools(point_draw_tool)
 
     def _init_model(self):
-        self._model = copy.deepcopy(REG_MODELS[self._model_name])
+        self._model = deepcopy(REG_MODELS[self._model_name])
 
     def _init_data(self):
         (x_min, x_max) = self.source_data.get_min_max_x()
@@ -234,7 +231,7 @@ class ClassificationLike(ModelInterface):
         fig.add_tools(point_draw_tool)
 
     def _init_model(self):
-        self._model = copy.deepcopy(CLS_MODELS[self._model_name])
+        self._model = deepcopy(CLS_MODELS[self._model_name])
 
     def _init_data(self):
         (min_x, max_x), (min_y, max_y) = self.source_data.get_min_max_x(), self.source_data.get_min_max_y()

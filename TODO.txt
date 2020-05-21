@@ -1,0 +1,13 @@
+# TODO: @numba.njit()
+# TODO: https://docs.bokeh.org/en/latest/docs/reference/core/templates.html?fbclid=IwAR1AzUzA2gmpmO3bGqtM7bpNrop-bzbHA3jjgP786VuJirgANO8m7Ia5qAk
+
+# TODO: configurak v JSONu
+# TODO: html stranky navic k proklikani a jako info
+# TODO: sjednotit jmena (cluster size, density...)
+
+# TODO: bug: unexpected chovani pri odstraneni vsech bodu
+
+# TODO: zkusit lip vyresit memeni children v layoutech (row, column)
+# TODO: pekneji osetrit picker (aby nenastal pripad dvou stejnych barev), reseni: zjistit, ktery picker triggnul funkci?
+
+

@@ -1,7 +1,4 @@
 
-from bokeh.models import RadioButtonGroup, TextInput, Div, Select
-from bokeh.layouts import row, column
-
 from generic_sublayouts import ClassificationLike, BasicSubLayout, SliderSubLayout, NeuralSubLayout, SvmSubLayout
 
 import warnings

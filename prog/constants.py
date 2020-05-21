@@ -2,7 +2,7 @@ from bokeh import palettes
 
 ########## Those constants sets common behaviour (name of saved files, default button values...) ##########
 
-SAVED_DATASETS_DIR_NAME = "datasets/"
+SAVED_DATASETS_DIR_NAME = "my_datasets/"
 SAVED_DATASET_FILE_NAME = "my_dataset.csv"
 
 PALETTE = palettes.Category10[10]
@@ -57,10 +57,10 @@ POL_TO_DGR = 8
 KNN_DEF_NEIGHBOUR_N = 3
 
 
-CLUSTER_SIZE_DEF = 3
-CLUSTER_SIZE_MAX = 20
-CLUSTER_DEV_DEF = 1  # cluster size plus minus
-CLUSTER_DEV_MAX = 10
+CLUSTER_SIZE_DEF = 20
+CLUSTER_SIZE_MAX = 50
+CLUSTER_DEV_DEF = 10  # cluster size plus minus
+CLUSTER_DEV_MAX = int(CLUSTER_SIZE_MAX*0.66)
 
 ########## Those constants are for experiments (interesting app behaviour, but possible (bigger) instability) ########
 

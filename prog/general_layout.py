@@ -10,6 +10,8 @@ from models import REG_MODELS, CLS_MODELS
 CLASS_SELECT_BUTTON_WIDTH = 100  # in pixels, default: 100
 MAX_CLASS_NAME_LENGTH = 8  # default: 8
 
+KILL_BUTTON_TEXT = "Kill me"
+
 
 class GeneralLayout:
     def __init__(self, source_data):
@@ -62,7 +64,15 @@ class GeneralLayout:
 
         return self._dropdown
 
+    def _kill_button_init(self):
+        kill_b = Button(button_type='danger', label='Kill me', width=100)
+        kill_b.on_click(self._exit)
+        return kill_b
+
     """Methods for interactive calling (called by on_change or on_click triggers)"""
+
+    def _exit(self):
+        exit()
 
     def _data_sandbox_trigger(self, attr, old, new):
         if 0 in new:  # sandbox button was activated
@@ -150,6 +160,7 @@ class RegressionGeneralLayout(GeneralLayout):
     """Methods for layout initialisation"""
 
     def _layout_init(self):
+        self._kill_b = self._kill_button_init()
         model_selection = self._model_selection_init()
         fit_all = self._fit_all_init()
         data_sandbox_button = self._sand_box_button_init()
@@ -167,7 +178,7 @@ class RegressionGeneralLayout(GeneralLayout):
             width=1000
         )
 
-        self.layout = column(column(general_info,
+        self.layout = column(column(self._kill_b, general_info,
                                     row(data_sandbox_button, fit_all, model_selection)
                                     ),
                              row(row(),  # this is a place for data sandbox
@@ -204,6 +215,7 @@ class ClassifierGeneralLayout(GeneralLayout):
     """Methods for layout initialisation"""
 
     def _layout_init(self):
+        self._kill_b = self._kill_button_init()
         model_selection = self._model_selection_init()
         fit_all = self._fit_all_init()
         class_selection = self._class_selection_init()
@@ -222,7 +234,7 @@ class ClassifierGeneralLayout(GeneralLayout):
             width=1000
         )
 
-        self.layout = column(column(general_info,
+        self.layout = column(column(self._kill_b, general_info,
                                     row(class_selection),
                                     row(data_sandbox_button, fit_all, model_selection)
                                     ),

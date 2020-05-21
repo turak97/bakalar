@@ -35,7 +35,7 @@ class DataSandbox(SubLayout):
         self.source_data.plot_source.on_change('data', self._plot_source_change)  # DataSandbox can update statistics
 
         self._freehand_source = ColumnDataSource(data=dict(x=[], y=[]))
-        freehand_renderer = self._fig.multi_line(self.source_data.x, self.source_data.y,
+        freehand_renderer = self._fig.multi_line('x', 'y',
                                                  source=self._freehand_source, color='black')
         self._freehand_tool = FreehandDrawTool(renderers=[freehand_renderer])
         self._fig.add_tools(self._freehand_tool)
@@ -273,7 +273,8 @@ class ClassifierDataSandbox(DataSandbox):
     def __init__(self, name, source_data, class_select_button):
         DataSandbox.__init__(self, name, source_data)
 
-        move_circle = self._fig.circle(self.source_data.x, self.source_data.y, color='color', source=source_data.plot_source, size=7)
+        move_circle = self._fig.circle(x=self.source_data.x, y=self.source_data.y, color='color',
+                                       source=source_data.plot_source, size=7)
         point_draw_tool = PointDrawTool(renderers=[move_circle], empty_value=EMPTY_VALUE_COLOR, add=True)
         self._fig.add_tools(point_draw_tool)
 
@@ -302,18 +303,22 @@ class ClassifierDataSandbox(DataSandbox):
 
         classes_count = len(self.source_data.uniq_values())
         self.__cluster_count_slider = Slider(start=1, end=classes_count, step=1, value=classes_count,
-                                             title="classes count (push 'add class' to add a new one):")
-        self.__cluster_size_slider = Slider(start=1, end=CLUSTER_SIZE_MAX, step=1, value=CLUSTER_SIZE_DEF)
-        self.__cluster_deviation_slider = Slider(start=0, end=CLUSTER_DEV_MAX, step=1, value=CLUSTER_DEV_DEF)
+                                             title="Classes count (push 'add class' to add a new one)")
+        self.__cluster_size_slider = Slider(start=1, end=CLUSTER_SIZE_MAX, step=1, value=CLUSTER_SIZE_DEF,
+                                            title="Clusters size:")
+        self.__cluster_deviation_slider = Slider(start=0, end=CLUSTER_DEV_MAX, step=1, value=CLUSTER_DEV_DEF,
+                                                 title="Size deviation:")
 
         self.__new_clusters_mode_button = RadioButtonGroup(
             labels=["Replace", "Append"], width=200, active=0, sizing_mode="fixed")
         __new_clusters_mode_text = Div(text="Clusters adding mode: ")
 
-        self.__cluster_x_range_slider = RangeSlider(start=CLUSTER_RANGE_X[0], end=CLUSTER_RANGE_X[1], step=CLUSTER_RANGE_STEP,
+        self.__cluster_x_range_slider = RangeSlider(start=CLUSTER_RANGE_X[0], end=CLUSTER_RANGE_X[1],
+                                                    step=CLUSTER_RANGE_STEP,
                                                     value=CLUSTER_RANGE_X, title="x range")
 
-        self.__cluster_y_range_slider = RangeSlider(start=CLUSTER_RANGE_Y[0], end=CLUSTER_RANGE_Y[1], step=CLUSTER_RANGE_STEP,
+        self.__cluster_y_range_slider = RangeSlider(start=CLUSTER_RANGE_Y[0], end=CLUSTER_RANGE_Y[1],
+                                                    step=CLUSTER_RANGE_STEP,
                                                     value=CLUSTER_RANGE_Y, title="y_range")
 
         __generate_new_clusters_button = Button(label="Generate", button_type="primary")

@@ -37,7 +37,7 @@ class SourceData:
 
 
 class RegressionSourceData(SourceData):
-    def __init__(self, df, column_names=('x', 'y')):
+    def __init__(self, df, column_names):
         SourceData.__init__(self, df, column_names)
 
     def data_to_regression_fit(self):
@@ -79,7 +79,7 @@ class RegressionSourceData(SourceData):
 
 
 class ClassificationSourceData(SourceData):
-    def __init__(self, df, palette, column_names=('x', 'y', 'classification')):
+    def __init__(self, df, palette, column_names):
         SourceData.__init__(self, df, column_names=column_names[:2])
         self.palette = palette
         self.classification = column_names[2]
@@ -150,7 +150,7 @@ class ClassificationSourceData(SourceData):
         self.append_data(np.empty(shape=0), np.empty(shape=0), [])
 
     def uniq_values(self):
-        return sorted(self.color_dict.keys())
+        return list(self.color_dict.keys())
 
     def add_new_class(self, class_name):
         """Add a new color option."""

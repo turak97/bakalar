@@ -49,10 +49,10 @@ if __name__ == '__main__':
     def bkapp(doc):
 
         if version == 'reg':
-            source_data = RegressionSourceData(df=df)
+            source_data = RegressionSourceData(df=df, column_names=column_names)
             lay = RegressionGeneralLayout(source_data=source_data)
         elif version == 'cls':
-            source_data = ClassificationSourceData(df=df, palette=PALETTE)
+            source_data = ClassificationSourceData(df=df, palette=PALETTE, column_names=column_names)
             lay = ClassifierGeneralLayout(source_data=source_data)
         else:
             lay = row()

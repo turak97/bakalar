@@ -7,14 +7,12 @@ import sublayout_resolution as sr
 from constants import EMPTY_VALUE_COLOR
 from models import REG_MODELS, CLS_MODELS
 
-# used in general_layout.py
 CLASS_SELECT_BUTTON_WIDTH = 100  # in pixels, default: 100
 MAX_CLASS_NAME_LENGTH = 8  # default: 8
 
 
 class GeneralLayout:
-    def __init__(self, source_data, log=True):
-        self._log = log  # TODO: dodelat
+    def __init__(self, source_data):
 
         self.source_data = source_data
         self.source_data.set_plot_source_trigger(self._data_change)
@@ -146,8 +144,8 @@ class GeneralLayout:
 
 
 class RegressionGeneralLayout(GeneralLayout):
-    def __init__(self, source_data, log=True):
-        GeneralLayout.__init__(self, source_data, log)
+    def __init__(self, source_data):
+        GeneralLayout.__init__(self, source_data)
 
     """Methods for layout initialisation"""
 
@@ -180,13 +178,6 @@ class RegressionGeneralLayout(GeneralLayout):
 
     """Methods for interactive calling (called by on_change or on_click triggers)"""
 
-    # def _data_sandbox_trigger(self, attr, old, new):
-    #     if 0 in new:  # sandbox button was activated
-    #         sandbox = sr.regression_data_sandbox(name="Data Sandbox", source_data=self.source_data)
-    #         self.layout.children[self._sb1].children[self._sb2] = sandbox.layout
-    #     else:
-    #         self.layout.children[self._sb1].children[self._sb2] = row()
-
     def _data_change(self, attr, old, new):
         self._update_immediate_sublayouts()
 
@@ -207,8 +198,8 @@ class RegressionGeneralLayout(GeneralLayout):
 
 
 class ClassifierGeneralLayout(GeneralLayout):
-    def __init__(self, source_data, log=True):
-        GeneralLayout.__init__(self, source_data, log)
+    def __init__(self, source_data):
+        GeneralLayout.__init__(self, source_data)
 
     """Methods for layout initialisation"""
 

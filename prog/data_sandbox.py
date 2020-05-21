@@ -129,9 +129,9 @@ class DataSandbox(SubLayout):
         This method sets widgets into _distribution_options and DOES NOT RETURN ANYTHING."""
         mode_text = Div(text="Distribution:")
         self._distribution_mode_button = RadioButtonGroup(labels=[UNIFORM_MODE, BETA_MODE],
-                                                          active=0)
+                                                          active=1)
         beta_text = Div(text="Beta distribution options:")
-        self._beta_random_toggle = Toggle(label="Random alpha beta", active=True)
+        self._beta_random_toggle = Toggle(label="Random alpha beta", active=False)
         self._distribution_alpha_slider = Slider(start=0.2, end=5, step=0.2, value=ALPHA_DEF, title="Alpha")
         self._distribution_beta_slider = Slider(start=0.2, end=5, step=0.2, value=BETA_DEF, title="Beta")
         self._distribution_alpha_slider.on_change('value', self._beta_plot_change)

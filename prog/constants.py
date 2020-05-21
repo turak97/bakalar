@@ -11,6 +11,11 @@ PALETTE = palettes.Category10[10]
 
 ########## Those constants are for playing around ##########
 
+
+"""used for app init in file bokeh_plot.py"""
+
+INIT_DATASET_CLUSTERS_COUNT_DEF = 3
+
 """Data sandbox widget values"""
 
 LASSO_SLIDER_START = 1
@@ -54,10 +59,10 @@ POL_TO_DGR = 8
 KNN_DEF_NEIGHBOUR_N = 3
 
 
-CLUSTERS_COUNT_DEF = 3
 CLUSTER_SIZE_DEF = 3
+CLUSTER_SIZE_MAX = 20
 CLUSTER_DEV_DEF = 1  # cluster size plus minus
-MAX_CLUSTERS = 10
+CLUSTER_DEV_MAX = 10
 
 ########## Those constants are for experiments (interesting app behaviour, but possible (bigger) instability) ########
 
@@ -76,6 +81,8 @@ BETA_PLOT_SAMPLES = 250
 BETA_PLOT_DETAIL = 20
 
 ########## Those constants should NOT be changed ##########
+
+MAX_CLUSTERS = 10
 
 # used in data_sandbox.py
 DENS_INPUT_DEF_VAL = ""

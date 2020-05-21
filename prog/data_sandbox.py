@@ -10,12 +10,12 @@ from bokeh.plotting import figure
 import numpy as np
 
 
-from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_DEV_DEF, CLUSTERS_COUNT_DEF, MAX_CLUSTERS, \
+from constants import DENS_INPUT_DEF_VAL, CLUSTER_SIZE_DEF, CLUSTER_DEV_DEF, CLUSTER_SIZE_MAX, MAX_CLUSTERS, \
     SAVED_DATASET_FILE_NAME, EMPTY_VALUE_COLOR, LASSO_SLIDER_END, LASSO_SLIDER_START, LASSO_SLIDER_STARTING_VAL, \
     LASSO_SLIDER_STEP, CLUSTER_RANGE_X, CLUSTER_RANGE_Y, CLUSTER_RANGE_STEP, FREEHAND_DENSITY_START, \
     FREEHAND_DENSITY_END, FREEHAND_DENSITY_STEP, FREEHAND_DENSITY_STARTING_VAL, FREEHAND_DEVIATION_END, \
     FREEHAND_DEVIATION_START, FREEHAND_DEVIATION_STARTING_VAL, FREEHAND_DEVIATION_STEP, \
-    UNIFORM_MODE, BETA_MODE, BETA_PLOT_SAMPLES, BETA_PLOT_DETAIL
+    UNIFORM_MODE, BETA_MODE, BETA_PLOT_SAMPLES, BETA_PLOT_DETAIL, CLUSTER_DEV_MAX
 
 
 STANDARD_MODE = "Standard"
@@ -29,11 +29,9 @@ GENERATE_NEW_CLUSTERS = "New clusters"
 
 # TODO: at se to neodviji od uniqvalues
 
-# TODO: generovani novych clusteru vsechny parametry pres slidery?
 
 # TODO: bug: unexpected chovani pri odstraneni vsech bodu
-# TODO: bug: points in dataset obcas zobrazuje o 1 mensi hodnotu, nez self.data.classification u BUGCHECKu
-# TODO: bug: pocet trid nahore 3, pridavani clusteru s clusres count 6 spadne
+# TODO: vykresleni beta rozdeleni podle vzorce c*(x^(alpha - 1))*(1 - x)^(beta - 1)
 
 
 class DataSandbox(SubLayout):
@@ -141,8 +139,8 @@ class DataSandbox(SubLayout):
                                                           active=0)
         beta_text = Div(text="Beta distribution options:")
         self._beta_random_toggle = Toggle(label="Random alpha beta", active=True)
-        self._distribution_alpha_slider = Slider(start=1, end=10, step=1, value=2, title="Alpha")
-        self._distribution_beta_slider = Slider(start=1, end=10, step=1, value=2, title="Beta")
+        self._distribution_alpha_slider = Slider(start=0.2, end=5, step=0.2, value=2, title="Alpha")
+        self._distribution_beta_slider = Slider(start=0.2, end=5, step=0.2, value=2, title="Beta")
         self._distribution_alpha_slider.on_change('value', self._beta_plot_change)
         self._distribution_beta_slider.on_change('value', self._beta_plot_change)
 
@@ -286,6 +284,10 @@ class ClassifierDataSandbox(DataSandbox):
     def __del__(self):
         self.source_data.plot_source.remove_on_change('data', self._plot_source_change)  # removing trigger
 
+    def update_slider_classes_count(self):
+        """Update classes count on __cluster_count_slider."""
+        self.__cluster_count_slider.update(end=len(self.source_data.uniq_values()))
+
     """Methods for sublayout initialisation"""
 
     def _add_special_modes(self):
@@ -335,14 +337,20 @@ class ClassifierDataSandbox(DataSandbox):
 
         __generate_info = Div(text="New clusters: ", style={'font-size': '150%'})
 
+        classes_count = len(self.source_data.uniq_values())
+        self.__cluster_count_slider = Slider(start=1, end=classes_count, step=1, value=classes_count,
+                                             title="classes count (push 'add class' to add a new one):")
+        self.__cluster_size_slider = Slider(start=1, end=CLUSTER_SIZE_MAX, step=1, value=CLUSTER_SIZE_DEF)
+        self.__cluster_deviation_slider = Slider(start=0, end=CLUSTER_DEV_MAX, step=1, value=CLUSTER_DEV_DEF)
+
         self.__new_clusters_mode_button = RadioButtonGroup(
             labels=["Replace", "Append"], width=200, active=0, sizing_mode="fixed")
         __new_clusters_mode_text = Div(text="Clusters adding mode: ")
 
-        self.__cluster_count_input = Select(title="Clusters count ", value=str(CLUSTERS_COUNT_DEF),
-                                            options=[str(i) for i in range(1, MAX_CLUSTERS + 1)], width=80)
-        self.__cluster_size_input = TextInput(title="size ", value=str(CLUSTER_SIZE_DEF), width=50)
-        self.__cluster_plusminus_input = TextInput(title="±", value=str(CLUSTER_DEV_DEF), width=50)
+        # self.__cluster_count_input = Select(title="Clusters count ", value=str(CLUSTERS_COUNT_DEF),
+        #                                     options=[str(i) for i in range(1, MAX_CLUSTERS + 1)], width=80)
+        # self.__cluster_size_input = TextInput(title="size ", value=str(CLUSTER_SIZE_DEF), width=50)
+        # self.__cluster_plusminus_input = TextInput(title="±", value=str(CLUSTER_DEV_DEF), width=50)
 
         self.__cluster_x_range_slider = RangeSlider(start=CLUSTER_RANGE_X[0], end=CLUSTER_RANGE_X[1], step=CLUSTER_RANGE_STEP,
                                                     value=CLUSTER_RANGE_X, title="x range")
@@ -356,7 +364,9 @@ class ClassifierDataSandbox(DataSandbox):
         return column(__generate_general_info,
                       __generate_info,
                       row(__new_clusters_mode_text, self.__new_clusters_mode_button),
-                      row(self.__cluster_count_input, self.__cluster_size_input, self.__cluster_plusminus_input),
+                      self.__cluster_count_slider,
+                      self.__cluster_size_slider,
+                      self.__cluster_deviation_slider,
                       self.__cluster_x_range_slider,
                       self.__cluster_y_range_slider,
                       __generate_new_clusters_button
@@ -369,6 +379,9 @@ class ClassifierDataSandbox(DataSandbox):
 
         count, density, volatility, x_range, y_range = \
             self.__get_cluster_generating_params()
+        # app_uniq_vals_len = len(self.source_data.uniq_values())
+        # if count > app_uniq_vals_len:
+        #     count = app_uniq_vals_len
         replace = (0 == self.__new_clusters_mode_button.active)
         self.source_data.new_clusters(count, density, volatility, x_range, y_range, replace)
 
@@ -390,16 +403,20 @@ class ClassifierDataSandbox(DataSandbox):
         return val
 
     def __get_cluster_generating_params(self):
-        clusters_count = int(self.__cluster_count_input.value)
-        clusters_size = self.__get_int_set_error(
-            text_input=self.__cluster_size_input, lowest_val=1
-        )
-        clusters_vol = self.__get_int_set_error(
-            text_input=self.__cluster_plusminus_input, lowest_val=0
-        )
+        # clusters_count = int(self.__cluster_count_slider.value)
+        # clusters_size = self.__get_int_set_error(
+        #     text_input=self.__cluster_size_input, lowest_val=1
+        # )
+        # clusters_vol = self.__get_int_set_error(
+        #     text_input=self.__cluster_plusminus_input, lowest_val=0
+        # )
+        clusters_count = self.__cluster_count_slider.value
+        clusters_size = self.__cluster_size_slider.value
+        cluster_dev = self.__cluster_deviation_slider.value
+
         x_range = self.__cluster_x_range_slider.value
         y_range = self.__cluster_y_range_slider.value
-        return clusters_count, clusters_size, clusters_vol, x_range, y_range
+        return clusters_count, clusters_size, cluster_dev, x_range, y_range
 
     def _append_polygon(self, vertices):
         distribution_params = self._get_distribution_params()

@@ -13,7 +13,7 @@ from bokeh.core import validation
 import data_gen as dg
 from source_data import RegressionSourceData, ClassificationSourceData
 from general_layout import ClassifierGeneralLayout, RegressionGeneralLayout
-from constants import CLUSTER_SIZE_DEF, CLUSTER_DEV_DEF, CLUSTERS_COUNT_DEF, PALETTE
+from constants import CLUSTER_SIZE_DEF, CLUSTER_DEV_DEF, INIT_DATASET_CLUSTERS_COUNT_DEF, PALETTE
 from in_n_out import read_df
 
 
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     if args[0] == '':
         df = dg.cluster_data_pandas(column_names=column_names,
                                     x_interval=(0, 30), y_interval=(-10, 10),
-                                    clusters=CLUSTERS_COUNT_DEF, av_cluster_size=CLUSTER_SIZE_DEF,
+                                    clusters=INIT_DATASET_CLUSTERS_COUNT_DEF, av_cluster_size=CLUSTER_SIZE_DEF,
                                     clust_size_dev=CLUSTER_DEV_DEF)  # TODO: hezceji
     else:
         path = args[0][0]

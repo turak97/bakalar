@@ -24,6 +24,8 @@ class GeneralLayout:
 
         self._layout_init()
 
+        self._data_sandbox = self._create_data_sandbox()
+
     """Methods for layout initialisation"""
 
     def _layout_init(self):
@@ -65,6 +67,13 @@ class GeneralLayout:
 
     """Methods for interactive calling (called by on_change or on_click triggers)"""
 
+    def _data_sandbox_trigger(self, attr, old, new):
+        if 0 in new:  # sandbox button was activated
+            sandbox = self._data_sandbox
+            self.layout.children[self._sb1].children[self._sb2] = sandbox.layout
+        else:
+            self.layout.children[self._sb1].children[self._sb2] = row()
+
     def _new_sub_layout(self, value):
         model_name = value.item
         self._info("Adding a new " + model_name + " plot...")
@@ -89,9 +98,6 @@ class GeneralLayout:
         self._update_checkbox_column()
         self._info("Deleting DONE")
 
-    def _data_sandbox_trigger(self, attr, old, new):
-        pass
-
     def _data_change(self, attr, old, new):
         self._update_immediate_sublayouts()
 
@@ -105,6 +111,9 @@ class GeneralLayout:
         self._info("Updating DONE")
 
     """Other methods"""
+
+    def _create_data_sandbox(self):
+        pass
 
     def _update_immediate_sublayouts(self):
         sub_layouts_to_update = [sub_lay for sub_lay in self._sub_layouts if sub_lay.immediate_update()]
@@ -172,17 +181,20 @@ class RegressionGeneralLayout(GeneralLayout):
 
     """Methods for interactive calling (called by on_change or on_click triggers)"""
 
-    def _data_sandbox_trigger(self, attr, old, new):
-        if 0 in new:  # sandbox button was activated
-            sandbox = sr.regression_data_sandbox(name="Data Sandbox", source_data=self.source_data)
-            self.layout.children[self._sb1].children[self._sb2] = sandbox.layout
-        else:
-            self.layout.children[self._sb1].children[self._sb2] = row()
+    # def _data_sandbox_trigger(self, attr, old, new):
+    #     if 0 in new:  # sandbox button was activated
+    #         sandbox = sr.regression_data_sandbox(name="Data Sandbox", source_data=self.source_data)
+    #         self.layout.children[self._sb1].children[self._sb2] = sandbox.layout
+    #     else:
+    #         self.layout.children[self._sb1].children[self._sb2] = row()
 
     def _data_change(self, attr, old, new):
         self._update_immediate_sublayouts()
 
     """Other methods"""
+
+    def _create_data_sandbox(self):
+        return sr.regression_data_sandbox(name="Data Sandbox", source_data=self.source_data)
 
     @staticmethod
     def _menu_init():
@@ -274,20 +286,20 @@ class ClassifierGeneralLayout(GeneralLayout):
                       row(self._class_select_button, self._new_class_button))
 
     """Methods for interactive calling (called by on_change or on_click triggers)"""
-
-    def _data_sandbox_trigger(self, attr, old, new):
-        if 0 in new:  # sandbox button was activated
-            sandbox = sr.classifier_data_sandbox(name="Data Sandbox", source_data=self.source_data,
-                                                 class_select_button=self._class_select_button)
-            self.layout.children[self._sb1].children[self._sb2] = sandbox.layout
-        else:
-            self.layout.children[self._sb1].children[self._sb2] = row()
+    #
+    # def _data_sandbox_trigger(self, attr, old, new):
+    #     if 0 in new:  # sandbox button was activated
+    #         sandbox = sr.classifier_data_sandbox(name="Data Sandbox", source_data=self.source_data,
+    #                                              class_select_button=self._class_select_button)
+    #         self.layout.children[self._sb1].children[self._sb2] = sandbox.layout
+    #     else:
+    #         self.layout.children[self._sb1].children[self._sb2] = row()
 
     def _new_class(self):
         self.source_data.add_new_class(
             class_name=self._new_name(prev=self.source_data.uniq_values()[-1])
         )
-
+        self._data_sandbox.update_slider_classes_count()
         self._class_selection_update()
 
     def _change_color(self, attr, old, new):
@@ -320,6 +332,10 @@ class ClassifierGeneralLayout(GeneralLayout):
         self._update_immediate_sublayouts()
 
     """Other methods"""
+
+    def _create_data_sandbox(self):
+        return sr.classifier_data_sandbox(name="Data Sandbox", source_data=self.source_data,
+                                          class_select_button=self._class_select_button)
 
     def _class_selection_update(self):
         classes_count = len(self.source_data.uniq_values())
@@ -375,4 +391,3 @@ class ClassifierGeneralLayout(GeneralLayout):
         if classes_count <= 6:
             return 8
         return 9
-

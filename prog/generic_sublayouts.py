@@ -40,6 +40,48 @@ class SubLayout:
         print(self.subl_name + " " + self._fig.id + ": " + message)
 
 
+class ModelSubLayout(SubLayout):
+    """Base class for classifier sub layouts, regressive subl_ayouts"""
+    def __init__(self, model_name):
+        SubLayout.__init__(self, model_name)
+
+    """Methods used by GeneralLayout"""
+
+    def refit(self):
+        self._info("Training model and updating figure...")
+        self._figure_update()
+        self._info("Training and updating DONE")
+
+    def immediate_update(self):
+        """Returns whether figure should be immediately updated (after dataset change)"""
+        return 0 in self._immediate_update.active  # immediate update option is at index 0
+
+    """Methods for initialising layout"""
+
+    def _layout_init(self):
+        fig_layout = self._init_figure()
+        fit_layout = self._init_fit_layout()
+        button_layout = self._init_button_layout()
+        return column(fig_layout, fit_layout, button_layout)
+
+    def _init_button_layout(self):
+        return row()
+
+    def _init_fit_layout(self):
+        self._fit_button = Button(label="Solo Fit", button_type="success")
+        self._fit_button.on_click(self.refit)
+
+        self._immediate_update = CheckboxButtonGroup(
+            labels=["Immediate update on dataset change"], active=[])
+
+        return row(self._immediate_update, self._fit_button)
+
+    """Methods for updating figure"""
+
+    def _figure_update(self):
+        pass
+
+
 class ModelInterface:
     def __init__(self, model_name, source_data):
         self._model = None
@@ -236,48 +278,6 @@ class ClassificationLike(ModelInterface):
             dw=self._img_data.dw,
             dh=self._img_data.dh
         )
-
-
-class ModelSubLayout(SubLayout):
-    """Base class for classifier sub layouts, regressive subl_ayouts"""
-    def __init__(self, model_name):
-        SubLayout.__init__(self, model_name)
-
-    """Methods used by GeneralLayout"""
-
-    def refit(self):
-        self._info("Training model and updating figure...")
-        self._figure_update()
-        self._info("Training and updating DONE")
-
-    def immediate_update(self):
-        """Returns whether figure should be immediately updated (after dataset change)"""
-        return 0 in self._immediate_update.active  # immediate update option is at index 0
-
-    """Methods for initialising layout"""
-
-    def _layout_init(self):
-        fig_layout = self._init_figure()
-        fit_layout = self._init_fit_layout()
-        button_layout = self._init_button_layout()
-        return column(fig_layout, fit_layout, button_layout)
-
-    def _init_button_layout(self):
-        return row()
-
-    def _init_fit_layout(self):
-        self._fit_button = Button(label="Solo Fit", button_type="success")
-        self._fit_button.on_click(self.refit)
-
-        self._immediate_update = CheckboxButtonGroup(
-            labels=["Immediate update on dataset change"], active=[])
-
-        return row(self._immediate_update, self._fit_button)
-
-    """Methods for updating figure"""
-
-    def _figure_update(self):
-        pass
 
 
 class BasicSubLayout(ModelSubLayout, ModelInterface):

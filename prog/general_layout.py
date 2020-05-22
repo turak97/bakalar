@@ -178,7 +178,7 @@ class RegressionGeneralLayout(GeneralLayout):
             width=1000
         )
 
-        self.layout = column(column(self._kill_b, general_info,
+        self.layout = column(column(row(self._kill_b, general_info),
                                     row(data_sandbox_button, fit_all, model_selection)
                                     ),
                              row(row(),  # this is a place for data sandbox
@@ -234,7 +234,7 @@ class ClassifierGeneralLayout(GeneralLayout):
             width=1000
         )
 
-        self.layout = column(column(self._kill_b, general_info,
+        self.layout = column(column(row(self._kill_b, general_info),
                                     row(class_selection),
                                     row(data_sandbox_button, fit_all, model_selection)
                                     ),

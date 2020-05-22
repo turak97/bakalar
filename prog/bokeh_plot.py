@@ -45,6 +45,7 @@ if __name__ == '__main__':
             column_names = column_names[:2]
         df = read_df(path, column_names)
 
+    column_names = column_names[:2]
 
     def bkapp(doc):
 

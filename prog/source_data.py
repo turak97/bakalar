@@ -100,7 +100,8 @@ class ClassificationSourceData(SourceData):
         x, y, classification = dg.cluster_data(x_interval=x_range, y_interval=y_range,
                                                clusters=count,
                                                av_cluster_size=density,
-                                               clust_size_dev=deviation)
+                                               clust_size_dev=deviation,
+                                               classes=self.uniq_values())
 
         if replace:
             self.replace_data(x, y, classification)
@@ -138,13 +139,21 @@ class ClassificationSourceData(SourceData):
 
         self.plot_source.remove_on_change('data', self.plot_source_trigger)
         self.plot_source.update(
-            data=dict(
-                x=x.tolist(),
-                y=y.tolist(),
-                classification=classification,
-                color=[self.color_dict[val] for val in classification]
-            )
+            data={
+                self.x: x.tolist(),
+                self.y: y.tolist(),
+                self.classification: classification,
+                'color': [self.color_dict[val] for val in classification]
+            }
         )
+        # self.plot_source.update(
+        #     data=dict(
+        #         x=x.tolist(),
+        #         y=y.tolist(),
+        #         classification=classification,
+        #         color=[self.color_dict[val] for val in classification]
+        #     )
+        # )
         self.plot_source.on_change('data', self.plot_source_trigger)
 
         self.append_data(np.empty(shape=0), np.empty(shape=0), [])

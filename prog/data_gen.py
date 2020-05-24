@@ -75,9 +75,13 @@ def cluster_data(x_interval=(-100, 100),
                  y_interval=(-100, 100),
                  clusters=3,
                  av_cluster_size=15,
-                 clust_size_dev=-1):
+                 clust_size_dev=-1,
+                 classes=None):
     if clust_size_dev < 0:
         clust_size_dev = av_cluster_size//2
+
+    if classes is None:
+        classes = [str(i) for i in range(clusters)]
 
     x_min, x_max = x_interval
     scale = x_max - x_min
@@ -97,7 +101,7 @@ def cluster_data(x_interval=(-100, 100),
 
         x_values = np.append(x_values, x_cluster)
         y_values = np.append(y_values, y_cluster)
-        classification += [str(clusters_made)] * cluster_size
+        classification += [classes[clusters_made]] * cluster_size
 
         clusters_made += 1
 

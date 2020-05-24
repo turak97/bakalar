@@ -9,7 +9,6 @@ import data_gen as dg
 
 class SourceData:
     def __init__(self, df, column_names):
-        print(column_names)
         self.x, self.y = column_names
         self.immediate_update = False
 

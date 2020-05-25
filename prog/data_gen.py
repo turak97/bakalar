@@ -1,4 +1,4 @@
-# import random
+
 import math
 
 from shapely.geometry import Point
@@ -199,39 +199,3 @@ def insert_point_x_sorted(x_arr, y_arr, x_val, y_val):
     x_arr = np.insert(x_arr, i, x_val)
     y_arr = np.insert(y_arr, i, y_val)
     return x_arr, y_arr
-
-
-# # TODO: fce check values
-# # generuje clustry na x ose, ty potom mergne (a seradi), dogeneruje y hodnoty a k nim pricte disperzi
-# def polynom_data(polynom=np.array([1/100, 1/5, -1, 1]),
-#                  interval=(-400, 400),
-#                  clusters=3,
-#                  noise=0.2,
-#                  density=8,
-#                  density_vol=-1,  # density volatility = 2 ... density can be from 6 to 10
-#                  rand_seed=1):
-#     if density_vol < 0:
-#         density_vol = density//2
-#
-#     x_min, x_max = interval
-#     scale = x_max - x_min
-#
-#     x_arr = np.array([])
-#     clusters_made = 0
-#     while clusters_made < clusters:
-#         x_from, x_to = gen_interval(interval, scale / clust_range_coef(clusters))
-#         cluster = gen_clust_beta(x_from, x_to, density)
-#         x_arr = np.append(x_arr, cluster)
-#         clusters_made += 1
-#
-#     # sort array (merge clusters) and cut overlapping clusters
-#     x_arr = np.sort(x_arr)
-#
-#     f = np.poly1d(polynom)
-#     y_arr = f(x_arr)
-#
-#     if noise != 0:
-#         y_arr = make_noise(y_arr, noise)
-#
-#     return [x_arr, y_arr]
-
